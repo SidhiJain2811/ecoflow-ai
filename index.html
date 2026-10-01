@@ -3,2831 +3,992 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EcoAI Flow — Incident Prediction, Explanation & Action</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;500;600;700;800&display=swap');
-
-    :root {
-      --bg-base: #070d18;
-      --bg-panel: #0d192c;
-      --bg-panel-elevated: #13243d;
-      --bg-input: #0a1424;
-      --border-subtle: #1c3252;
-      --border-highlight: #2f4e79;
-
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted: #64748b;
-
-      --teal-water: #14b8a6;
-      --teal-water-deep: #0f766e;
-      --teal-glow: rgba(20, 184, 166, 0.25);
-
-      --amber-caution: #f59e0b;
-      --amber-bg: rgba(245, 158, 11, 0.16);
-      --amber-border: rgba(245, 158, 11, 0.4);
-
-      --red-danger: #ef4444;
-      --red-bg: rgba(239, 68, 68, 0.16);
-      --red-border: rgba(239, 68, 68, 0.45);
-
-      --green-safe: #10b981;
-      --green-bg: rgba(16, 185, 129, 0.16);
-      --green-border: rgba(16, 185, 129, 0.4);
-
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --font-stack: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: var(--font-stack);
-      background-color: var(--bg-base);
-      color: var(--text-primary);
-      min-height: 100vh;
-      line-height: 1.5;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .app-shell {
-      width: 100%;
-      max-width: 1140px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* HEADER & TELEMETRY */
-    header {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 18px 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .brand-section {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo-badge {
-      width: 38px;
-      height: 38px;
-      border-radius: var(--radius-sm);
-      background: linear-gradient(135deg, var(--teal-water) 0%, var(--teal-water-deep) 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #042f2e;
-      box-shadow: 0 0 15px var(--teal-glow);
-    }
-
-    .app-name {
-      font-size: 1.6rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .app-tagline {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .badges-strip {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .badge-chip {
-      font-size: 0.76rem;
-      font-weight: 600;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-      padding: 4px 10px;
-      border-radius: 9999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--teal-water);
-      box-shadow: 0 0 8px var(--teal-water);
-    }
-
-    .status-pills {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .pill-risk {
-      padding: 6px 14px;
-      border-radius: 9999px;
-      font-size: 0.88rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid transparent;
-      transition: all 0.25s ease;
-    }
-
-    .pill-risk.critical {
-      background: var(--red-bg);
-      border-color: var(--red-border);
-      color: var(--red-danger);
-    }
-
-    .pill-risk.moderate {
-      background: var(--amber-bg);
-      border-color: var(--amber-border);
-      color: var(--amber-caution);
-    }
-
-    .pill-risk.low {
-      background: var(--green-bg);
-      border-color: var(--green-border);
-      color: var(--green-safe);
-    }
-
-    .pill-confidence {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      color: var(--teal-water);
-      padding: 6px 12px;
-      border-radius: 9999px;
-      font-size: 0.82rem;
-      font-weight: 700;
-    }
-
-    /* FLOW STRIP */
-    .flow-strip {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      overflow-x: auto;
-      padding: 10px 14px;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      gap: 6px;
-      scrollbar-width: none;
-    }
-
-    .flow-strip::-webkit-scrollbar {
-      display: none;
-    }
-
-    .flow-step {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      white-space: nowrap;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: transparent;
-      border: 1px solid transparent;
-      transition: all 0.25s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .flow-step.active {
-      color: var(--text-primary);
-      background: var(--bg-panel-elevated);
-      border-color: var(--border-highlight);
-    }
-
-    .flow-step.danger {
-      color: var(--red-danger);
-      background: var(--red-bg);
-      border-color: var(--red-border);
-    }
-
-    .flow-step.safe {
-      color: var(--green-safe);
-      background: var(--green-bg);
-      border-color: var(--green-border);
-    }
-
-    .flow-arrow {
-      color: var(--text-muted);
-      font-size: 0.75rem;
-      user-select: none;
-    }
-
-    /* TABS NAVIGATION */
-    .tabs-nav {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 6px;
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .tab-item {
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-secondary);
-      padding: 10px 8px;
-      border-radius: var(--radius-md);
-      font-family: inherit;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      white-space: nowrap;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-
-    .tab-item:hover:not([aria-selected="true"]) {
-      background: var(--bg-panel-elevated);
-      color: var(--text-primary);
-    }
-
-    .tab-item:focus-visible {
-      outline: 2px solid var(--teal-water);
-      outline-offset: -2px;
-    }
-
-    .tab-item[aria-selected="true"] {
-      background: var(--bg-panel-elevated);
-      color: var(--teal-water);
-      border-color: var(--teal-water);
-      box-shadow: 0 0 14px var(--teal-glow);
-    }
-
-    /* MAIN VIEW PANELS */
-    main {
-      width: 100%;
-    }
-
-    .tab-panel {
-      display: none;
-      animation: fadeIn 0.2s ease-in-out;
-    }
-
-    .tab-panel.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .panel-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
-
-    /* HERO BANNER (Tab 1) */
-    .hero-banner {
-      background: linear-gradient(135deg, var(--bg-panel-elevated) 0%, var(--bg-input) 100%);
-      border: 1px solid var(--border-highlight);
-      border-left: 5px solid var(--red-danger);
-      border-radius: var(--radius-md);
-      padding: 20px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      transition: border-color 0.25s ease;
-    }
-
-    .hero-text {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      max-width: 680px;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      font-family: inherit;
-      font-size: 0.88rem;
-      font-weight: 700;
-      padding: 10px 18px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      border: none;
-      text-decoration: none;
-    }
-
-    .btn-primary {
-      background: var(--teal-water);
-      color: #042f2e;
-      box-shadow: 0 2px 10px var(--teal-glow);
-    }
-
-    .btn-primary:hover {
-      filter: brightness(1.12);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background: var(--bg-input);
-      border: 1px solid var(--border-highlight);
-      color: var(--text-primary);
-    }
-
-    .btn-secondary:hover {
-      background: var(--border-subtle);
-    }
-
-    .btn-danger {
-      background: var(--red-danger);
-      color: #ffffff;
-    }
-
-    .btn-success {
-      background: var(--green-safe);
-      color: #022c22;
-    }
-
-    /* METRIC CARDS GRID */
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-    }
-
-    .metric-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .metric-card::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: var(--teal-water);
-    }
-
-    .metric-card.danger::before { background: var(--red-danger); }
-    .metric-card.warning::before { background: var(--amber-caution); }
-    .metric-card.safe::before { background: var(--green-safe); }
-
-    .metric-val {
-      font-size: 2.1rem;
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-    }
-
-    .metric-label {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .metric-sub {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    /* RISK LADDER */
-    .ladder-card {
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .ladder-bar {
-      height: 24px;
-      border-radius: 12px;
-      background: linear-gradient(90deg, 
-        var(--green-safe) 0%, 
-        var(--green-safe) 35%, 
-        var(--amber-caution) 35%, 
-        var(--amber-caution) 70%, 
-        var(--red-danger) 70%, 
-        var(--red-danger) 100%
-      );
-      position: relative;
-      margin: 30px 10px 35px 10px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-    }
-
-    .ladder-pin {
-      position: absolute;
-      top: -8px;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      transition: left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    .ladder-pin-stem {
-      width: 4px;
-      height: 40px;
-      background: #ffffff;
-      border-radius: 2px;
-      box-shadow: 0 0 6px rgba(0,0,0,0.8);
-    }
-
-    .ladder-pin-tag {
-      position: absolute;
-      top: -30px;
-      font-size: 0.75rem;
-      font-weight: 800;
-      white-space: nowrap;
-      padding: 3px 8px;
-      border-radius: 4px;
-      border: 1px solid var(--border-highlight);
-      background: var(--bg-base);
-      color: var(--text-primary);
-    }
-
-    .ladder-pin.after-action .ladder-pin-stem {
-      background: var(--green-safe);
-    }
-
-    .ladder-pin.after-action .ladder-pin-tag {
-      top: 44px;
-      border-color: var(--green-safe);
-      color: var(--green-safe);
-    }
-
-    .ladder-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-
-    /* 3 QUESTION CARDS */
-    .question-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .question-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .question-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .question-desc {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-
-    /* HOW IT WORKS BOX */
-    .how-it-works {
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .how-steps-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .how-step-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .how-step-num {
-      font-size: 0.82rem;
-      font-weight: 800;
-      color: var(--teal-water);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .how-step-text {
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-    }
-
-    /* TAB 2: MAP & REPLAY */
-    .map-controls-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 14px 18px;
-    }
-
-    .replay-control-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-grow: 1;
-      max-width: 650px;
-    }
-
-    .range-slider {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 8px;
-      border-radius: 4px;
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-subtle);
-      outline: none;
-      cursor: pointer;
-    }
-
-    .range-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--teal-water);
-      cursor: pointer;
-      box-shadow: 0 0 10px var(--teal-glow);
-      border: 2px solid #ffffff;
-    }
-
-    .range-slider::-moz-range-thumb {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--teal-water);
-      cursor: pointer;
-      box-shadow: 0 0 10px var(--teal-glow);
-      border: 2px solid #ffffff;
-    }
-
-    .replay-step-label {
-      font-size: 1rem;
-      font-weight: 800;
-      color: var(--teal-water);
-      min-width: 70px;
-      text-align: right;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .svg-container {
-      background: #06111f;
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .map-svg {
-      width: 100%;
-      height: auto;
-      max-height: 520px;
-      display: block;
-    }
-
-    /* BREACH PULSING RING */
-    @keyframes pulseRing {
-      0% { r: 18px; opacity: 0.9; }
-      100% { r: 48px; opacity: 0; }
-    }
-
-    .breach-ring {
-      fill: none;
-      stroke: var(--red-danger);
-      stroke-width: 2.5;
-      animation: pulseRing 2s infinite ease-out;
-    }
-
-    .map-chips-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .chip-item {
-      font-size: 0.8rem;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 6px;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .chip-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .time-card-box {
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-highlight);
-      border-radius: var(--radius-md);
-      padding: 18px 22px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .time-card-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .time-card-title {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .time-card-val {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    /* TAB 3: WHY THIS RISK? */
-    .equation-row {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 18px 20px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .equation-pill {
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-highlight);
-      padding: 4px 10px;
-      border-radius: 6px;
-      color: var(--teal-water);
-    }
-
-    .plain-reasoning-box {
-      background: var(--bg-panel-elevated);
-      border-left: 4px solid var(--amber-caution);
-      padding: 16px 20px;
-      border-radius: 0 var(--radius-md) var(--radius-md) 0;
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .contribution-bars {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .contrib-item {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .contrib-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.88rem;
-      font-weight: 600;
-    }
-
-    .contrib-track {
-      height: 12px;
-      background: var(--bg-input);
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid var(--border-subtle);
-    }
-
-    .contrib-fill {
-      height: 100%;
-      border-radius: 6px;
-      background: linear-gradient(90deg, var(--teal-water), var(--amber-caution));
-      transition: width 0.3s ease;
-    }
-
-    .mitigation-options-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    .mitigation-option-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .mitigation-option-score {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--teal-water);
-    }
-
-    /* TAB 4: AI ACTION */
-    .actions-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    .action-dispatch-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 14px;
-      transition: all 0.2s ease;
-    }
-
-    .action-dispatch-card.applied {
-      border-color: var(--green-safe);
-      background: var(--green-bg);
-    }
-
-    .action-dispatch-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .action-dispatch-effect {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-
-    .action-score-chip {
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--teal-water);
-    }
-
-    /* ACTION PLAYBOOK */
-    .playbook-card {
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .playbook-row {
-      display: grid;
-      grid-template-columns: 140px 1fr 100px;
-      align-items: center;
-      gap: 16px;
-      padding: 10px 14px;
-      background: var(--bg-input);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
-    }
-
-    .playbook-time {
-      font-weight: 800;
-      color: var(--amber-caution);
-      font-size: 0.9rem;
-    }
-
-    .playbook-status {
-      text-align: right;
-      font-weight: 700;
-      font-size: 0.85rem;
-    }
-
-    /* TAB 5: WHAT-IF SIMULATOR */
-    .presets-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .simulator-grid {
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 20px;
-    }
-
-    .sliders-column {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 20px;
-    }
-
-    .slider-block {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .slider-label-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      font-weight: 700;
-    }
-
-    .live-result-line {
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-highlight);
-      border-radius: var(--radius-md);
-      padding: 16px 20px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--teal-water);
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    /* TAB 6: POLLUTION JOURNEY */
-    .journey-timeline {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      position: relative;
-    }
-
-    .journey-stop-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      transition: all 0.2s ease;
-    }
-
-    .journey-stop-card.at-risk {
-      border-color: var(--red-danger);
-      background: var(--red-bg);
-    }
-
-    .journey-stop-card.safe {
-      border-color: var(--green-safe);
-      background: var(--green-bg);
-    }
-
-    .journey-stop-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .journey-stop-badge {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--bg-panel-elevated);
-      border: 2px solid var(--border-highlight);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 0.85rem;
-    }
-
-    .journey-stop-card.at-risk .journey-stop-badge {
-      border-color: var(--red-danger);
-      color: var(--red-danger);
-    }
-
-    .journey-stop-card.safe .journey-stop-badge {
-      border-color: var(--green-safe);
-      color: var(--green-safe);
-    }
-
-    .journey-stop-action {
-      font-size: 0.88rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .journey-stop-time {
-      font-weight: 800;
-      font-size: 0.95rem;
-      min-width: 90px;
-      text-align: right;
-    }
-
-    /* TAB 7: BEFORE VS AFTER */
-    .comparison-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-
-    .comparison-card {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .comparison-card.after {
-      border-color: var(--green-safe);
-      background: var(--green-bg);
-    }
-
-    .comparison-title {
-      font-size: 1.15rem;
-      font-weight: 800;
-    }
-
-    .comparison-score-row {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-    }
-
-    .comparison-big-score {
-      font-size: 3rem;
-      font-weight: 800;
-      line-height: 1;
-    }
-
-    .delta-sentence-box {
-      background: var(--bg-panel-elevated);
-      border: 1px solid var(--border-highlight);
-      border-radius: var(--radius-md);
-      padding: 16px 20px;
-      font-size: 1.15rem;
-      font-weight: 700;
-      text-align: center;
-      color: var(--green-safe);
-    }
-
-    /* RISK OVER TIME CHART */
-    .timeline-bars-chart {
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .chart-columns {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 12px;
-      height: 180px;
-      align-items: flex-end;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .chart-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100%;
-      justify-content: flex-end;
-      gap: 6px;
-    }
-
-    .dual-bars {
-      display: flex;
-      align-items: flex-end;
-      gap: 4px;
-      width: 100%;
-      height: 140px;
-      justify-content: center;
-    }
-
-    .bar-without {
-      width: 18px;
-      background: var(--red-danger);
-      border-radius: 4px 4px 0 0;
-      transition: height 0.3s ease;
-    }
-
-    .bar-after {
-      width: 18px;
-      background: var(--green-safe);
-      border-radius: 4px 4px 0 0;
-      transition: height 0.3s ease;
-    }
-
-    .chart-col-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: var(--text-muted);
-    }
-
-    /* FOOTER */
-    footer {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 14px 20px;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      text-align: center;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 900px) {
-      .tabs-nav {
-        grid-template-columns: repeat(4, 1fr);
-      }
-      .metric-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .question-grid, .actions-grid, .how-steps-grid {
-        grid-template-columns: 1fr;
-      }
-      .simulator-grid {
-        grid-template-columns: 1fr;
-      }
-      .time-card-box {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .mitigation-options-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 600px) {
-      body {
-        padding: 8px;
-      }
-      .tabs-nav {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .metric-grid {
-        grid-template-columns: 1fr;
-      }
-      .comparison-grid {
-        grid-template-columns: 1fr;
-      }
-      .time-card-box {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  <title>EcoAI Flow — Industrial Pollution Response Autopilot</title>
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d192c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Core Control-Room Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
 
-    <!-- HEADER ON EVERY TAB -->
-    <header>
-      <div class="header-top">
-        <div class="brand-section">
-          <div class="logo-badge" aria-hidden="true">
+  <div class="app-wrapper">
+
+    <!-- PROTOTYPE DISCLAIMER -->
+    <div class="disclaimer-banner" role="region" aria-label="System status disclosure">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="disclaimer-badge">Prototype</span>
+        <span>Decision-support prototype. Figures use a demo risk model. Plant sensors and water flow are simulated.</span>
+      </div>
+      <div>
+        <span>Lake Yamuna & Okhla Reservoir Drainage Corridor</span>
+      </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="app-header">
+      <div class="header-row-main">
+        
+        <!-- Brand -->
+        <div class="brand-group">
+          <div class="brand-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
             </svg>
           </div>
-          <div>
-            <h1 class="app-name">EcoAI Flow</h1>
-            <p class="app-tagline">Predicts path · Explains risk · Proves mitigation impact</p>
+          <div class="brand-text">
+            <h1>EcoAI Flow</h1>
+            <span>Predicts path · Explains risk · Automated mitigation dispatch</span>
           </div>
         </div>
 
-        <div class="badges-strip">
-          <span class="badge-chip"><span class="live-dot" aria-hidden="true"></span>NASA POWER</span>
-          <span class="badge-chip">Plant Sensors</span>
-          <span class="badge-chip">Water Map</span>
-          <span class="badge-chip">Updated 10:02 AM</span>
+        <!-- Honest Source Badges -->
+        <div class="badges-container" aria-label="Live data source statuses">
+          <div class="source-badge" id="badgeWeather" title="Live weather from Open-Meteo">
+            <span class="status-dot live" id="dotWeather"></span>
+            <span id="textWeather">Open-Meteo: Fetching...</span>
+          </div>
+          <div class="source-badge" id="badgeAqi" title="Live air quality telemetry">
+            <span class="status-dot live" id="dotAqi"></span>
+            <span id="textAqi">AQI: Live</span>
+          </div>
+          <div class="source-badge" id="badgeNasa" title="NASA POWER latest available hourly wind">
+            <span class="status-dot simulated" id="dotNasa"></span>
+            <span id="textNasa">NASA POWER (latest available)</span>
+          </div>
+          <div class="source-badge" id="badgePlant" title="Simulated plant sensor telemetry">
+            <span class="status-dot simulated" id="dotPlant"></span>
+            <span id="textPlant">Simulated plant sensor</span>
+          </div>
         </div>
 
-        <div class="status-pills">
-          <div id="headerRiskPill" class="pill-risk critical" role="status" aria-live="polite">
+        <!-- Header Actions: Risk Pill, Autopilot Switch, Mode Toggle, Settings -->
+        <div class="header-actions">
+          
+          <!-- AI Risk Pill -->
+          <div id="headerRiskPill" class="risk-pill critical" role="status" aria-live="polite">
             <span id="headerRiskLevel">Critical</span>
             <span id="headerRiskScore">97/100</span>
           </div>
-          <div class="pill-confidence">Confidence 87%</div>
+
+          <div class="pill-static">Confidence 87%</div>
+
+          <!-- 3-Way Autopilot Switch -->
+          <div class="segmented-switch" role="group" aria-label="Autopilot operational mode">
+            <button type="button" class="segmented-btn seg-auto" data-mode="manual">Manual</button>
+            <button type="button" class="segmented-btn seg-auto active" data-mode="assisted">Assisted</button>
+            <button type="button" class="segmented-btn seg-auto" data-mode="auto">Auto</button>
+          </div>
+
+          <!-- Live vs Demo Button -->
+          <button id="btnToggleMode" class="btn btn-ghost" type="button" title="Switch between Live data and 60-second Demo scenario">
+            Live mode
+          </button>
+
+          <!-- Trigger Leak Button -->
+          <button id="btnTriggerLeak" class="btn btn-leak" type="button" title="Push emissions to 150% to simulate a chemical breach">
+            Trigger leak
+          </button>
+
+          <!-- Settings Button -->
+          <button id="btnOpenSettings" class="btn btn-ghost" type="button" aria-label="Open settings drawer">
+            ⚙️ Settings
+          </button>
+
+          <!-- Light / Dark Mode -->
+          <button id="btnToggleTheme" class="btn btn-ghost" type="button" aria-label="Toggle theme">
+            ☀️ Light
+          </button>
+
+          <!-- PWA Install Button (shown when available) -->
+          <button id="btnInstallPwa" class="btn btn-teal" type="button" style="display: none;">
+            ⬇️ Install app
+          </button>
+
         </div>
       </div>
 
-      <!-- INCIDENT FLOW STRIP -->
-      <nav aria-label="Incident progression pipeline">
-        <div class="flow-strip" role="list">
-          <span class="flow-step active" role="listitem">Factory</span>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <span class="flow-step active danger" role="listitem">Pollution detected</span>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <span class="flow-step active danger" role="listitem">Wind carries pollution</span>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <span id="flowStepWater" class="flow-step active danger" role="listitem">Water body at risk</span>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <span class="flow-step active" role="listitem">AI predicts impact</span>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <span class="flow-step active" role="listitem">AI recommends action</span>
-          <span class="flow-arrow" aria-hidden="true">→</span>
-          <span id="flowStepMitigated" class="flow-step" role="listitem">Risk decreases</span>
+      <!-- Incident Flow Pipeline Strip -->
+      <nav aria-label="Hazard pipeline sequence">
+        <div class="flow-pipeline-bar" role="list">
+          <span class="pipeline-node active-neutral" role="listitem">Factory</span>
+          <span class="pipeline-arrow" aria-hidden="true">&rarr;</span>
+          <span id="stepPollution" class="pipeline-node active-hazard" role="listitem">Pollution detected</span>
+          <span class="pipeline-arrow" aria-hidden="true">&rarr;</span>
+          <span id="stepWind" class="pipeline-node active-hazard" role="listitem">Wind carries pollution</span>
+          <span class="pipeline-arrow" aria-hidden="true">&rarr;</span>
+          <span id="stepWater" class="pipeline-node active-hazard" role="listitem">Water body at risk</span>
+          <span class="pipeline-arrow" aria-hidden="true">&rarr;</span>
+          <span id="stepPredict" class="pipeline-node active-neutral" role="listitem">AI predicts impact</span>
+          <span class="pipeline-arrow" aria-hidden="true">&rarr;</span>
+          <span id="stepRecommend" class="pipeline-node active-neutral" role="listitem">AI recommends action</span>
+          <span class="pipeline-arrow" aria-hidden="true">&rarr;</span>
+          <span id="stepMitigated" class="pipeline-node" role="listitem">Risk decreases</span>
         </div>
       </nav>
     </header>
 
-    <!-- 7 KEYBOARD-ACCESSIBLE TABS -->
-    <nav aria-label="Dashboard sections">
-      <div class="tabs-nav" role="tablist" aria-label="EcoAI Flow tabs">
-        <button id="tab-1" class="tab-item" role="tab" aria-selected="true" aria-controls="panel-1" tabindex="0">1. Dashboard</button>
-        <button id="tab-2" class="tab-item" role="tab" aria-selected="false" aria-controls="panel-2" tabindex="-1">2. Map & replay</button>
-        <button id="tab-3" class="tab-item" role="tab" aria-selected="false" aria-controls="panel-3" tabindex="-1">3. Why this risk?</button>
-        <button id="tab-4" class="tab-item" role="tab" aria-selected="false" aria-controls="panel-4" tabindex="-1">4. AI action</button>
-        <button id="tab-5" class="tab-item" role="tab" aria-selected="false" aria-controls="panel-5" tabindex="-1">5. What-if simulator</button>
-        <button id="tab-6" class="tab-item" role="tab" aria-selected="false" aria-controls="panel-6" tabindex="-1">6. Pollution journey</button>
-        <button id="tab-7" class="tab-item" role="tab" aria-selected="false" aria-controls="panel-7" tabindex="-1">7. Before vs after</button>
+    <!-- AUTOPILOT NOTIFICATION COUNTDOWN BANNER (Auto mode) -->
+    <div id="autopilotBanner" class="autopilot-banner" role="alert">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.2rem;">⚡</span>
+        <div>
+          <strong style="color: var(--caution-amber);">Autopilot Alert:</strong>
+          <span>Critical hazard detected. AI will automatically execute recommended mitigation actions in <strong id="apCountdownText">10s</strong>.</span>
+        </div>
       </div>
-    </nav>
+      <button id="btnCancelAutopilot" class="btn btn-leak" type="button">Cancel sequence</button>
+      <div class="autopilot-countdown-bar">
+        <div id="apCountdownFill" class="autopilot-countdown-fill"></div>
+      </div>
+    </div>
 
-    <!-- MAIN VIEW PANELS -->
-    <main>
+    <!-- DEMO SCENARIO PROGRESS BANNER -->
+    <div id="demoBanner" class="demo-banner">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 700;">
+        <span id="demoProgressText">Demo scenario running: 0s / 60s (Stage: 1. Baseline)</span>
+        <button onclick="stopDemoScenario()" class="btn btn-ghost" style="padding: 2px 8px; font-size: 0.75rem;" type="button">Exit demo</button>
+      </div>
+      <div class="demo-progress-track">
+        <div id="demoProgressFill" class="demo-progress-fill"></div>
+      </div>
+    </div>
 
-      <!-- TAB 1: DASHBOARD -->
-      <section id="panel-1" class="tab-panel active" role="tabpanel" aria-labelledby="tab-1" tabindex="0">
-        <div class="panel-card">
-          
-          <!-- Hero sentence -->
-          <div class="hero-banner" id="heroBanner">
-            <div class="hero-text" id="heroSentence">
-              The lake can be hit in about 10 min. Risk is Critical. Act now to bring it down.
-            </div>
-            <div class="hero-actions">
-              <button id="btnApplyAllActions" class="btn btn-primary" type="button">
-                Apply recommended actions
-              </button>
-              <button id="btnOpenMap" class="btn btn-secondary" type="button">
-                Open the map
-              </button>
-            </div>
+    <!-- MAIN CONTROL ROOM LAYOUT: SIDE PANEL + 7 TABS -->
+    <div class="main-layout">
+      
+      <!-- LEFT SIDE PANEL -->
+      <aside class="side-panel" aria-label="Site and environmental telemetry">
+        
+        <!-- Monitored Site Info -->
+        <div class="side-panel-section">
+          <div class="section-label">
+            <span>Selected Site</span>
+            <span style="color: var(--water-teal);">Active</span>
           </div>
+          <div class="site-title" id="sideSiteTitle">Apex Petrochemical Corp</div>
+          <div class="site-coords" id="sideSiteCoords">28.5400° N, 77.3000° E</div>
+        </div>
 
-          <!-- Four number cards -->
-          <div class="metric-grid">
-            <div class="metric-card warning">
-              <div class="metric-val" id="cardTimeToLake" style="color: var(--amber-caution);">10 min</div>
-              <div class="metric-label">Time to lake</div>
-              <div class="metric-sub">Hydraulic travel & fallout window</div>
+        <!-- Factory Specs & Real-Time Plant State -->
+        <div class="side-panel-section">
+          <div class="section-label">Factory Telemetry (Simulated)</div>
+          <div class="spec-list">
+            <div class="spec-item">
+              <span>Emission Output</span>
+              <span id="sideEmissionVal">100%</span>
             </div>
-
-            <div class="metric-card danger">
-              <div class="metric-val" id="cardResidents" style="color: var(--red-danger);">38,000</div>
-              <div class="metric-label">Residents at risk</div>
-              <div class="metric-sub">Across downwind sector communities</div>
+            <div class="spec-item">
+              <span>Furnace Output</span>
+              <span id="sideFurnaceVal">100%</span>
             </div>
-
-            <div class="metric-card danger">
-              <div class="metric-val" id="cardPlumeReach" style="color: var(--teal-water);">4.0 km</div>
-              <div class="metric-label">Plume reach</div>
-              <div class="metric-sub">Downwind chemical dispersion boundary</div>
+            <div class="spec-item">
+              <span>Effluent Gate</span>
+              <span id="sideGateVal" style="color: var(--danger-red);">Open</span>
             </div>
-
-            <div class="metric-card safe">
-              <div class="metric-val" style="color: var(--green-safe);">87%</div>
-              <div class="metric-label">Confidence</div>
-              <div class="metric-sub">Based on 3 live data feeds</div>
+            <div class="spec-item">
+              <span>Nearest Water</span>
+              <span>Lake 2.4 km</span>
             </div>
-          </div>
-
-          <!-- Risk ladder -->
-          <div class="ladder-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: 700; font-size: 0.95rem;">Predicted risk ladder</span>
-              <span id="ladderDeltaText" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);">Compare without action vs after action</span>
-            </div>
-            <div class="ladder-bar" id="ladderBar">
-              <!-- Without action pin -->
-              <div class="ladder-pin" id="pinWithoutAction" style="left: 97%;">
-                <div class="ladder-pin-tag" id="tagWithoutAction">Without action: 97</div>
-                <div class="ladder-pin-stem"></div>
-              </div>
-              <!-- After action pin -->
-              <div class="ladder-pin after-action" id="pinAfterAction" style="left: 97%;">
-                <div class="ladder-pin-stem"></div>
-                <div class="ladder-pin-tag" id="tagAfterAction">After action: 97</div>
-              </div>
-            </div>
-            <div class="ladder-labels">
-              <span style="color: var(--green-safe);">Low (0–34)</span>
-              <span style="color: var(--amber-caution);">Moderate (35–69)</span>
-              <span style="color: var(--red-danger);">Critical (70–100)</span>
-            </div>
-          </div>
-
-          <!-- Three question cards -->
-          <div class="question-grid">
-            <div class="question-card">
-              <div>
-                <div class="question-title">What is happening?</div>
-                <div class="question-desc" style="margin-top: 6px;">
-                  Understand why high emissions and 138° SE winds create acute downstream peril.
-                </div>
-              </div>
-              <button class="btn btn-secondary" onclick="switchTab('tab-3')" type="button">Why this risk? →</button>
-            </div>
-
-            <div class="question-card">
-              <div>
-                <div class="question-title">Where will it go?</div>
-                <div class="question-desc" style="margin-top: 6px;">
-                  Inspect the SVG spatial model, community exposure zones, and 6-hour replay.
-                </div>
-              </div>
-              <button class="btn btn-secondary" onclick="switchTab('tab-2')" type="button">Open map & replay →</button>
-            </div>
-
-            <div class="question-card">
-              <div>
-                <div class="question-title">What should we do?</div>
-                <div class="question-desc" style="margin-top: 6px;">
-                  Deploy the 3 recommended actions and view the immediate risk reduction.
-                </div>
-              </div>
-              <button class="btn btn-secondary" onclick="switchTab('tab-4')" type="button">View AI actions →</button>
-            </div>
-          </div>
-
-          <!-- How EcoAI Flow works -->
-          <div class="how-it-works">
-            <div style="font-weight: 700; font-size: 0.95rem;">How EcoAI Flow works</div>
-            <div class="how-steps-grid">
-              <div class="how-step-card">
-                <span class="how-step-num">1 Predict</span>
-                <span class="how-step-text">Calculates where emissions travel in real time based on live wind and plant sensors.</span>
-              </div>
-              <div class="how-step-card">
-                <span class="how-step-num">2 Explain</span>
-                <span class="how-step-text">Breaks down why the threat is high without confusing technical jargon.</span>
-              </div>
-              <div class="how-step-card">
-                <span class="how-step-num">3 Act</span>
-                <span class="how-step-text">Recommends high-impact operational steps and proves the risk drop instantly.</span>
-              </div>
-            </div>
-          </div>
-
-          <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">
-            This is a demo model. Numbers are illustrative until connected to live data.
           </div>
         </div>
-      </section>
 
-      <!-- TAB 2: MAP AND REPLAY -->
-      <section id="panel-2" class="tab-panel" role="tabpanel" aria-labelledby="tab-2" tabindex="0">
-        <div class="panel-card">
-          
-          <!-- Replay Header & Slider -->
-          <div class="map-controls-bar">
-            <div class="replay-control-group">
-              <button id="btnPlayReplay" class="btn btn-primary" type="button" aria-label="Play timeline animation">
-                <svg id="replayPlayIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                <span id="replayPlayText">Play timeline</span>
-              </button>
-              <input type="range" id="replaySlider" class="range-slider" min="0" max="6" step="1" value="0" aria-label="Timeline step slider">
-              <span id="replayStepText" class="replay-step-label">NOW</span>
+        <!-- Live Atmospheric Vector -->
+        <div class="side-panel-section">
+          <div class="section-label">Atmospheric Vector (Live)</div>
+          <div class="spec-list">
+            <div class="spec-item" style="grid-column: span 2;">
+              <span>Wind Speed & Bearing</span>
+              <span id="sideWindVal">19.4 km/h @ 138° (SE)</span>
             </div>
-
-            <!-- Legend -->
-            <div style="display: flex; gap: 14px; font-size: 0.82rem; font-weight: 600;">
-              <span style="display: inline-flex; align-items: center; gap: 5px;">
-                <span style="width: 10px; height: 10px; background: var(--red-danger); border-radius: 50%;"></span>
-                Red: High risk
-              </span>
-              <span style="display: inline-flex; align-items: center; gap: 5px;">
-                <span style="width: 10px; height: 10px; background: var(--amber-caution); border-radius: 50%;"></span>
-                Yellow: Caution
-              </span>
-              <span style="display: inline-flex; align-items: center; gap: 5px;">
-                <span style="width: 10px; height: 10px; background: var(--green-safe); border-radius: 50%;"></span>
-                Green: Safer area
-              </span>
+            <div class="spec-item">
+              <span>Ambient Temp</span>
+              <span id="sideTempVal">28.5°C</span>
+            </div>
+            <div class="spec-item">
+              <span>Relative Humidity</span>
+              <span id="sideHumVal">58%</span>
             </div>
           </div>
-
-          <!-- Big SVG Map -->
-          <div class="svg-container">
-            <svg id="mainMapSvg" class="map-svg" viewBox="0 0 880 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EcoAI Flow dispersion map">
-              <defs>
-                <linearGradient id="mapSafeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#071b1d" stop-opacity="0.9"/>
-                  <stop offset="100%" stop-color="#041214" stop-opacity="0.95"/>
-                </linearGradient>
-
-                <linearGradient id="lakeWaterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#0f766e" stop-opacity="0.9"/>
-                  <stop offset="100%" stop-color="#093d38" stop-opacity="0.95"/>
-                </linearGradient>
-
-                <!-- Grid pattern -->
-                <pattern id="mapGrid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(20, 184, 166, 0.05)" stroke-width="1"/>
-                </pattern>
-              </defs>
-
-              <!-- Safe Area Background Tint -->
-              <rect width="880" height="520" fill="url(#mapSafeGrad)"/>
-              <rect width="880" height="520" fill="url(#mapGrid)"/>
-
-              <!-- River path leading out of Lake to Wetland -->
-              <path id="svgRiver" d="M 540 370 Q 580 430 650 470 T 730 500" fill="none" stroke="#0f766e" stroke-width="32" stroke-linecap="round"/>
-              <path id="svgRiverCenter" d="M 540 370 Q 580 430 650 470 T 730 500" fill="none" stroke="#14b8a6" stroke-width="6" stroke-dasharray="6,6"/>
-              <text x="610" y="440" fill="#5eead4" font-size="11" font-weight="700">Yamuna outflow river</text>
-
-              <!-- Wetland Downstream Area -->
-              <g id="svgWetlandGroup">
-                <ellipse id="svgWetland" cx="720" cy="480" rx="90" ry="35" fill="rgba(15, 118, 110, 0.6)" stroke="#14b8a6" stroke-width="2"/>
-                <text x="720" y="485" fill="#f8fafc" font-size="12" font-weight="700" text-anchor="middle">Downstream Wetland</text>
-              </g>
-
-              <!-- Lake Yamuna Shape -->
-              <g id="svgLakeGroup">
-                <path id="svgLake" d="M 430 280 C 490 250, 580 260, 660 290 C 720 315, 730 370, 710 410 C 680 450, 580 460, 500 440 C 440 420, 410 380, 400 340 C 395 305, 410 290, 430 280 Z" fill="url(#lakeWaterGrad)" stroke="#14b8a6" stroke-width="2.5"/>
-                <text x="550" y="350" fill="#ffffff" font-size="14" font-weight="800" text-anchor="middle">Lake Yamuna & Okhla Basin</text>
-                <text x="550" y="370" fill="#a7f3d0" font-size="11" text-anchor="middle">Municipal water intake reservoir</text>
-
-                <!-- Breach Rings (toggled dynamically) -->
-                <g id="breachRingsGroup" style="display: none;">
-                  <circle cx="480" cy="330" r="22" class="breach-ring"/>
-                  <circle cx="480" cy="330" r="14" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
-                  <text x="500" y="325" fill="#f87171" font-size="12" font-weight="800">Critical Breach</text>
-                </g>
-              </g>
-
-              <!-- Dynamic Plume Group (Nested ellipses rotated around source 110, 100) -->
-              <g id="dynamicPlumeContainer">
-                <!-- Zone Yellow (2.5 - 4.0 km) -->
-                <ellipse id="plumeYellow" cx="300" cy="100" rx="190" ry="60" fill="rgba(245, 158, 11, 0.25)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,4"/>
-                <!-- Zone Orange (1.0 - 2.5 km) -->
-                <ellipse id="plumeOrange" cx="220" cy="100" rx="120" ry="42" fill="rgba(249, 115, 22, 0.45)" stroke="#ea580c" stroke-width="2"/>
-                <!-- Zone Red (0 - 1.0 km) -->
-                <ellipse id="plumeRed" cx="160" cy="100" rx="60" ry="26" fill="rgba(239, 68, 68, 0.65)" stroke="#dc2626" stroke-width="2.5"/>
-              </g>
-
-              <!-- Four Communities (A, B, C, D) -->
-              <g id="communitiesGroup">
-                <!-- Community A: near factory -->
-                <g id="commA" transform="translate(190, 180)">
-                  <circle id="commACircle" cx="0" cy="0" r="8" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
-                  <text id="commAText" x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community A</text>
-                </g>
-
-                <!-- Community B: mid-corridor -->
-                <g id="commB" transform="translate(285, 275)">
-                  <circle id="commBCircle" cx="0" cy="0" r="8" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
-                  <text id="commBText" x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community B</text>
-                </g>
-
-                <!-- Community C: reservoir boundary -->
-                <g id="commC" transform="translate(420, 370)">
-                  <circle id="commCCircle" cx="0" cy="0" r="8" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
-                  <text id="commCText" x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community C</text>
-                </g>
-
-                <!-- Community D: lateral safe region -->
-                <g id="commD" transform="translate(300, 110)">
-                  <circle id="commDCircle" cx="0" cy="0" r="8" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
-                  <text id="commDText" x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community D</text>
-                </g>
-              </g>
-
-              <!-- Factory Marker at Top-Left (110, 100) -->
-              <g transform="translate(110, 100)">
-                <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#ef4444" stroke-width="3"/>
-                <path d="M -5 4 L -5 -4 L 5 -4 L 5 4 Z M -2 -7 L 2 -7" stroke="#ef4444" stroke-width="1.8" fill="none"/>
-                <rect x="-85" y="-34" width="170" height="22" rx="4" fill="rgba(15, 23, 42, 0.9)" stroke="#ef4444" stroke-width="1"/>
-                <text x="0" y="-19" fill="#f8fafc" font-size="10.5" font-weight="800" text-anchor="middle">Apex Petrochemical Corp</text>
-              </g>
-
-              <!-- Compass Vector Indicator -->
-              <g transform="translate(810, 60)">
-                <circle cx="0" cy="0" r="30" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
-                <text x="0" y="-16" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">N</text>
-                <text x="18" y="3" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">E</text>
-                <text x="0" y="22" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">S</text>
-                <text x="-18" y="3" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">W</text>
-                <g id="compassNeedle" transform="rotate(138)">
-                  <line x1="0" y1="0" x2="0" y2="20" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
-                  <polygon points="0,24 -4,16 4,16" fill="#14b8a6"/>
-                </g>
-                <text id="compassLabel" x="0" y="38" fill="#14b8a6" font-size="9.5" font-weight="700" text-anchor="middle">138° SE</text>
-              </g>
-            </svg>
-          </div>
-
-          <!-- Status Chips Bar -->
-          <div class="map-chips-bar" id="mapChipsBar">
-            <span class="chip-item" id="chipCommA"><span class="chip-dot" style="background: var(--red-danger);"></span>Community A: Red zone</span>
-            <span class="chip-item" id="chipCommB"><span class="chip-dot" style="background: var(--amber-caution);"></span>Community B: Caution</span>
-            <span class="chip-item" id="chipCommC"><span class="chip-dot" style="background: var(--green-safe);"></span>Community C: Safe</span>
-            <span class="chip-item" id="chipCommD"><span class="chip-dot" style="background: var(--green-safe);"></span>Community D: Safe</span>
-            <span class="chip-item" id="chipLake"><span class="chip-dot" style="background: var(--teal-water);"></span>Lake: Safe</span>
-            <span class="chip-item" id="chipRiver"><span class="chip-dot" style="background: var(--teal-water);"></span>River: Safe</span>
-            <span class="chip-item" id="chipWetland"><span class="chip-dot" style="background: var(--teal-water);"></span>Wetland: Safe</span>
-          </div>
-
-          <!-- Step Time Card -->
-          <div class="time-card-box">
-            <div class="time-card-item">
-              <div class="time-card-title">Affected water bodies</div>
-              <div class="time-card-val" id="timeCardWater">None yet (Clean)</div>
-            </div>
-
-            <div class="time-card-item">
-              <div class="time-card-title">Est. PM2.5 near plant</div>
-              <div class="time-card-val" id="timeCardPm">285 µg/m³ (Hazardous)</div>
-            </div>
-
-            <div class="time-card-item">
-              <div class="time-card-title">Residents in plume</div>
-              <div class="time-card-val" id="timeCardResidents">38,000 people</div>
-            </div>
-
-            <div class="time-card-item">
-              <div class="time-card-title">Action to do now</div>
-              <div class="time-card-val" id="timeCardDoNow" style="color: var(--amber-caution);">Halt venting and lock effluent weir gates</div>
-            </div>
-          </div>
-
         </div>
-      </section>
 
-      <!-- TAB 3: WHY THIS RISK? -->
-      <section id="panel-3" class="tab-panel" role="tabpanel" aria-labelledby="tab-3" tabindex="0">
-        <div class="panel-card">
-          
-          <h2 id="whyTitle" style="font-size: 1.45rem; font-weight: 800;">Why is it Critical?</h2>
-
-          <!-- Equation row -->
-          <div class="equation-row" id="equationRow">
-            <span>Wind SE (<span id="eqWindDir">138°</span>) pointing at the lake</span>
-            <span>+</span>
-            <span class="equation-pill" id="eqEmission">SO2 emission: 100%</span>
-            <span>+</span>
-            <span>Lake 2.4 km downwind</span>
-            <span>=</span>
-            <span id="eqResult" style="color: var(--red-danger); font-weight: 800;">Lake risk: Critical</span>
+        <!-- Vulnerability Assessment & 6-Hour Forecast -->
+        <div class="side-panel-section">
+          <div class="section-label">Vulnerability Assessment</div>
+          <div class="vuln-badge critical" id="sideVulnBadge">[ CRITICAL RISK : 97/100 ]</div>
+          <div style="font-size: 0.72rem; color: var(--text-faint); margin-top: 6px;">Next 6-hour forecast risk:</div>
+          <div class="forecast-hourly-grid" id="sideForecastGrid">
+            <!-- Populated via JS -->
+            <div class="forecast-chip"><span class="f-hour">+1h</span><span class="f-level" style="color: var(--danger-red);">Cri</span></div>
+            <div class="forecast-chip"><span class="f-hour">+2h</span><span class="f-level" style="color: var(--danger-red);">Cri</span></div>
+            <div class="forecast-chip"><span class="f-hour">+3h</span><span class="f-level" style="color: var(--caution-amber);">Mod</span></div>
+            <div class="forecast-chip"><span class="f-hour">+4h</span><span class="f-level" style="color: var(--caution-amber);">Mod</span></div>
+            <div class="forecast-chip"><span class="f-hour">+5h</span><span class="f-level" style="color: var(--safe-green);">Low</span></div>
+            <div class="forecast-chip"><span class="f-hour">+6h</span><span class="f-level" style="color: var(--safe-green);">Low</span></div>
           </div>
-
-          <!-- Plain reasoning sentence -->
-          <div class="plain-reasoning-box" id="plainReasoningText">
-            The wind is blowing directly toward Lake Yamuna at 19.4 km/h with high industrial emissions, leaving municipal intakes directly in the path of the plume.
-          </div>
-
-          <!-- Contribution bars -->
-          <div class="contribution-bars">
-            <div class="contrib-item">
-              <div class="contrib-header">
-                <span>Wind pointing at the lake (Vector alignment)</span>
-                <span id="contribWindVal">100%</span>
-              </div>
-              <div class="contrib-track">
-                <div id="contribWindFill" class="contrib-fill" style="width: 100%;"></div>
-              </div>
-            </div>
-
-            <div class="contrib-item">
-              <div class="contrib-header">
-                <span>Emission strength (Boiler & stack output)</span>
-                <span id="contribEmissionVal">100%</span>
-              </div>
-              <div class="contrib-track">
-                <div id="contribEmissionFill" class="contrib-fill" style="width: 100%;"></div>
-              </div>
-            </div>
-
-            <div class="contrib-item">
-              <div class="contrib-header">
-                <span>Lake closeness (Fixed proximity hazard: 2.4 km)</span>
-                <span>95%</span>
-              </div>
-              <div class="contrib-track">
-                <div class="contrib-fill" style="width: 95%;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- What would lower the risk? -->
-          <div>
-            <div style="font-weight: 700; font-size: 1rem; margin-bottom: 12px;">What would lower the risk?</div>
-            <div class="mitigation-options-grid">
-              <div class="mitigation-option-card">
-                <div class="mitigation-option-score" id="scoreWindShift">0</div>
-                <div style="font-weight: 700; font-size: 0.9rem;">Wind turned 40° away</div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Plume misses the lake corridor</div>
-              </div>
-
-              <div class="mitigation-option-card">
-                <div class="mitigation-option-score" id="scoreCut40">51</div>
-                <div style="font-weight: 700; font-size: 0.9rem;">Emissions cut 40%</div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Reduces mass flux at source</div>
-              </div>
-
-              <div class="mitigation-option-card">
-                <div class="mitigation-option-score" id="scoreCloseGate">82</div>
-                <div style="font-weight: 700; font-size: 0.9rem;">Effluent gate closed</div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Blocks hydraulic surface runoff</div>
-              </div>
-
-              <div class="mitigation-option-card">
-                <div class="mitigation-option-score" id="scoreHalfWind">78</div>
-                <div style="font-weight: 700; font-size: 0.9rem;">Wind speed halved</div>
-                <div style="font-size: 0.78rem; color: var(--text-muted);">Delays arrival time to lake</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Confidence Breakdown -->
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border-subtle); font-size: 0.85rem;">
-            <span style="font-weight: 700; color: var(--teal-water);">Confidence 87%</span>
-            <div style="display: flex; gap: 12px; color: var(--text-secondary);">
-              <span>Wind data: <strong>Live (NASA POWER)</strong></span>
-              <span>Emission data: <strong>Sensor</strong></span>
-              <span>Water-flow data: <strong>Simulated</strong></span>
-            </div>
-          </div>
-
         </div>
-      </section>
 
-      <!-- TAB 4: AI ACTION -->
-      <section id="panel-4" class="tab-panel" role="tabpanel" aria-labelledby="tab-4" tabindex="0">
-        <div class="panel-card">
-          
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <h2 style="font-size: 1.45rem; font-weight: 800;">AI Recommended Mitigation Actions</h2>
-              <p style="font-size: 0.88rem; color: var(--text-muted);">Apply actions to prove risk reduction before operational dispatch</p>
+        <!-- Safety Protocol Checklist -->
+        <div class="side-panel-section">
+          <div class="section-label">Safety Protocol Status</div>
+          <div class="protocol-steps">
+            <div class="proto-step" id="protoStep1">
+              <span class="proto-check">✓</span>
+              <span>1. Immediate (0–30m): 40% emission cut</span>
             </div>
-            <div style="text-align: right;">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">Current predicted risk:</span>
-              <div id="aiActionCurrentRisk" style="font-size: 2rem; font-weight: 800; color: var(--red-danger); line-height: 1;">97/100 (Critical)</div>
+            <div class="proto-step" id="protoStep2">
+              <span class="proto-check">✓</span>
+              <span>2. Secondary (30–90m): Lock effluent gate</span>
+            </div>
+            <div class="proto-step" id="protoStep3">
+              <span class="proto-check">✓</span>
+              <span>3. Notice: Alert downstream communities</span>
             </div>
           </div>
+        </div>
 
-          <!-- 3 Recommended Action Cards -->
-          <div class="actions-grid">
+      </aside>
+
+      <!-- RIGHT CONTENT AREA -->
+      <section class="content-area">
+        
+        <!-- 7 Keyboard-Accessible Tabs -->
+        <nav class="tabs-bar" role="tablist" aria-label="Incident response operations">
+          <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-1" data-tab="tab-1" tabindex="0">1. Dashboard</button>
+          <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-2" data-tab="tab-2" tabindex="-1">2. Map & replay</button>
+          <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-3" data-tab="tab-3" tabindex="-1">3. Why this risk?</button>
+          <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-4" data-tab="tab-4" tabindex="-1">4. AI action</button>
+          <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-5" data-tab="tab-5" tabindex="-1">5. What-if simulator</button>
+          <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-6" data-tab="tab-6" tabindex="-1">6. Pollution journey</button>
+          <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-7" data-tab="tab-7" tabindex="-1">7. Before vs after</button>
+        </nav>
+
+        <!-- TAB 1: DASHBOARD -->
+        <div class="tab-panel active" id="tab-1" role="tabpanel" aria-labelledby="tab-1" tabindex="0">
+          <div class="panel-container">
             
-            <!-- Action 1 -->
-            <div class="action-dispatch-card" id="cardAct1">
-              <div>
-                <div class="action-dispatch-title">1. Reduce factory emissions by 40%</div>
-                <div class="action-dispatch-effect" style="margin-top: 6px;">
-                  De-rates furnace burners. Plume shrinks and advection intensity drops.
-                </div>
+            <!-- Hero sentence banner -->
+            <div class="hero-box">
+              <div class="hero-sentence" id="dashHeroSentence">
+                The lake can be hit in about 10 min. Risk is Critical. Autopilot is waiting for approval.
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                <span class="action-score-chip" id="chipAct1Score">Score if applied: 51</span>
-                <button id="btnAct1" class="btn btn-secondary" type="button">Apply action</button>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="btnApplyAllDash" class="btn btn-teal" type="button">Apply recommended actions</button>
+                <button class="btn btn-ghost" onclick="switchTab('tab-2')" type="button">Open the map</button>
               </div>
             </div>
 
-            <!-- Action 2 -->
-            <div class="action-dispatch-card" id="cardAct2">
-              <div>
-                <div class="action-dispatch-title">2. Close the effluent gate</div>
-                <div class="action-dispatch-effect" style="margin-top: 6px;">
-                  Locks secondary weir. Water contamination risk falls by about 15%.
-                </div>
+            <!-- Incident Status & Timer -->
+            <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 12px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border-dim); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="status-dot live"></span>
+                <span id="dashIncId" style="font-weight: 700;">No active critical breach</span>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                <span class="action-score-chip" id="chipAct2Score">Score if applied: 82</span>
-                <button id="btnAct2" class="btn btn-secondary" type="button">Apply action</button>
+              <div id="dashIncTimer" style="font-size: 0.85rem; color: var(--text-muted);">State: Normal monitoring</div>
+              <div id="dashIncState" style="font-size: 0.95rem; font-weight: 800;">Monitoring</div>
+            </div>
+
+            <!-- Four Number Cards -->
+            <div class="stats-grid-4">
+              <div class="stat-box warning">
+                <div class="stat-num" id="dashTimeToLake" style="color: var(--caution-amber);">10 min</div>
+                <div class="stat-title">Time to lake</div>
+                <div class="stat-note">Hydraulic arrival window</div>
+              </div>
+
+              <div class="stat-box critical">
+                <div class="stat-num" id="dashResidents" style="color: var(--danger-red);">38,000</div>
+                <div class="stat-title">Residents at risk</div>
+                <div class="stat-note">In downwind plume arc</div>
+              </div>
+
+              <div class="stat-box critical">
+                <div class="stat-num" id="dashPlumeReach" style="color: var(--water-teal);">4.0 km</div>
+                <div class="stat-title">Plume reach</div>
+                <div class="stat-note">Physical dispersion limit</div>
+              </div>
+
+              <div class="stat-box safe">
+                <div class="stat-num" style="color: var(--safe-green);">87%</div>
+                <div class="stat-title">Confidence</div>
+                <div class="stat-note">Based on live telemetry</div>
               </div>
             </div>
 
-            <!-- Action 3 -->
-            <div class="action-dispatch-card" id="cardAct3">
-              <div>
-                <div class="action-dispatch-title">3. Alert downstream communities</div>
-                <div class="action-dispatch-effect" style="margin-top: 6px;">
-                  Triggers SMS sirens in Community A & B. People get critical time to shelter.
+            <!-- Risk Ladder -->
+            <div class="ladder-box">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 800; font-size: 0.92rem;">Predicted Risk Ladder</span>
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Compare without action vs after action</span>
+              </div>
+              <div class="ladder-track">
+                <div class="ladder-marker" id="dashPinWithout" style="left: 97%;">
+                  <div class="ladder-tag" id="dashTagWithout">Without action: 97</div>
+                  <div class="ladder-stem"></div>
+                </div>
+                <div class="ladder-marker after" id="dashPinAfter" style="left: 97%;">
+                  <div class="ladder-stem"></div>
+                  <div class="ladder-tag" id="dashTagAfter">After action: 97</div>
                 </div>
               </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-                <span class="action-score-chip" id="chipAct3Score">Protects 38,000 residents</span>
-                <button id="btnAct3" class="btn btn-secondary" type="button">Apply action</button>
+              <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700;">
+                <span style="color: var(--safe-green);">Low (0–34)</span>
+                <span style="color: var(--caution-amber);">Moderate (35–69)</span>
+                <span style="color: var(--danger-red);">Critical (70–100)</span>
+              </div>
+            </div>
+
+            <!-- Three Question Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+              <div class="stat-box">
+                <div style="font-weight: 800; font-size: 1rem;">What is happening?</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 10px 0;">
+                  Explain why wind vectors and stack outputs are triggering Critical threat levels.
+                </div>
+                <button class="btn btn-ghost" onclick="switchTab('tab-3')" type="button">Why this risk? &rarr;</button>
+              </div>
+
+              <div class="stat-box">
+                <div style="font-weight: 800; font-size: 1rem;">Where will it go?</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 10px 0;">
+                  Inspect the SVG spatial model, community exposure, and 6-hour replay.
+                </div>
+                <button class="btn btn-ghost" onclick="switchTab('tab-2')" type="button">Open map & replay &rarr;</button>
+              </div>
+
+              <div class="stat-box">
+                <div style="font-weight: 800; font-size: 1rem;">What should we do?</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin: 6px 0 10px 0;">
+                  Deploy the 3 recommended mitigation actions and verify risk drop instantly.
+                </div>
+                <button class="btn btn-ghost" onclick="switchTab('tab-4')" type="button">View AI actions &rarr;</button>
+              </div>
+            </div>
+
+            <!-- How EcoAI Flow Works -->
+            <div style="background: var(--bg-surface); padding: 18px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 10px;">
+              <span style="font-weight: 800; font-size: 0.95rem;">How EcoAI Flow Works</span>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; font-size: 0.82rem;">
+                <div><strong style="color: var(--water-teal);">1. Predict:</strong> Forecasts plume path and water intake arrival time from live telemetry.</div>
+                <div><strong style="color: var(--water-teal);">2. Explain:</strong> Deconstructs hazard physics in plain words for rapid executive briefing.</div>
+                <div><strong style="color: var(--water-teal);">3. Act:</strong> Recommends or autonomously dispatches actions to prove risk reduction.</div>
               </div>
             </div>
 
           </div>
-
-          <!-- Action Playbook -->
-          <div class="playbook-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: 700; font-size: 1rem;">Action playbook timeline</span>
-              <span id="playbookTimeToLake" style="font-size: 0.88rem; font-weight: 700; color: var(--amber-caution);">Time until lake is reached: 10 min</span>
-            </div>
-
-            <div class="playbook-row">
-              <span class="playbook-time">0–30 min</span>
-              <span>Throttle furnaces, switch scrubbers to max, and lock effluent sluice gates.</span>
-              <span id="pbStatus1" class="playbook-status" style="color: var(--amber-caution);">Pending</span>
-            </div>
-
-            <div class="playbook-row">
-              <span class="playbook-time">30–90 min</span>
-              <span>Deploy surface oil-containment booms and alert municipal water intake engineers.</span>
-              <span id="pbStatus2" class="playbook-status" style="color: var(--text-muted);">Standby</span>
-            </div>
-
-            <div class="playbook-row">
-              <span class="playbook-time">2 hr and after</span>
-              <span>Inspect downstream wetland bio-filtration capacity and monitor pH baseline recovery.</span>
-              <span id="pbStatus3" class="playbook-status" style="color: var(--text-muted);">Scheduled</span>
-            </div>
-          </div>
-
         </div>
-      </section>
 
-      <!-- TAB 5: WHAT-IF SIMULATOR -->
-      <section id="panel-5" class="tab-panel" role="tabpanel" aria-labelledby="tab-5" tabindex="0">
-        <div class="panel-card">
-          
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <h2 style="font-size: 1.45rem; font-weight: 800;">What-if Scenario Simulator</h2>
-              <p style="font-size: 0.88rem; color: var(--text-muted);">Adjust parameters or choose stress-test presets to see real-time ripple effects</p>
-            </div>
+        <!-- TAB 2: MAP AND REPLAY -->
+        <div class="tab-panel" id="tab-2" role="tabpanel" aria-labelledby="tab-2" tabindex="0">
+          <div class="panel-container">
             
-            <!-- Preset Buttons -->
-            <div class="presets-row">
-              <button id="presetCalm" class="btn btn-secondary" type="button">Calm day</button>
-              <button id="presetStrong" class="btn btn-secondary" type="button">Strong wind</button>
-              <button id="presetWorst" class="btn btn-danger" type="button">Worst case</button>
-              <button id="presetReset" class="btn btn-secondary" type="button">Reset</button>
-            </div>
-          </div>
-
-          <!-- Simulator Grid: Sliders on left, Mini Map on right -->
-          <div class="simulator-grid">
-            <div class="sliders-column">
-              <!-- Wind Speed -->
-              <div class="slider-block">
-                <div class="slider-label-row">
-                  <label for="simWindSpeed">Wind speed (4–35 km/h)</label>
-                  <span id="simWindSpeedVal" style="color: var(--teal-water);">19.4 km/h</span>
-                </div>
-                <input type="range" id="simWindSpeed" class="range-slider" min="4" max="35" step="0.5" value="19.4">
+            <!-- Controls bar with 7-step Replay -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; background: var(--bg-input); padding: 12px 16px; border-radius: var(--radius-md); border: 1px solid var(--border-dim);">
+              <div style="display: flex; align-items: center; gap: 12px; flex-grow: 1; max-width: 600px;">
+                <button id="btnPlayReplay" class="btn btn-teal" type="button">Play replay</button>
+                <input type="range" id="replaySlider" class="range-slider" min="0" max="6" step="1" value="0" style="width: 100%;" aria-label="Replay timeline slider">
+                <span id="replayStepDisplay" style="font-weight: 800; color: var(--water-teal); min-width: 65px; text-align: right;">NOW</span>
               </div>
-
-              <!-- Wind Direction -->
-              <div class="slider-block">
-                <div class="slider-label-row">
-                  <label for="simWindDir">Wind direction (60–220°)</label>
-                  <span id="simWindDirVal" style="color: var(--teal-water);">138° SE</span>
-                </div>
-                <input type="range" id="simWindDir" class="range-slider" min="60" max="220" step="1" value="138">
-              </div>
-
-              <!-- Emission Level -->
-              <div class="slider-block">
-                <div class="slider-label-row">
-                  <label for="simEmission">Emission level (20–150%)</label>
-                  <span id="simEmissionVal" style="color: var(--teal-water);">100%</span>
-                </div>
-                <input type="range" id="simEmission" class="range-slider" min="20" max="150" step="1" value="100">
+              <div style="display: flex; gap: 12px; font-size: 0.8rem; font-weight: 700;">
+                <span style="color: var(--danger-red);">● Red: High risk</span>
+                <span style="color: var(--caution-amber);">● Yellow: Caution</span>
+                <span style="color: var(--safe-green);">● Green: Safer</span>
               </div>
             </div>
 
-            <!-- Mini Map -->
-            <div class="svg-container" style="max-height: 280px;">
-              <svg id="simMapSvg" viewBox="0 0 880 520" style="width: 100%; height: 100%; max-height: 280px; display: block;">
-                <!-- Reuses same vector layout -->
-                <rect width="880" height="520" fill="url(#mapSafeGrad)"/>
-                <path d="M 540 370 Q 580 430 650 470 T 730 500" fill="none" stroke="#0f766e" stroke-width="32" stroke-linecap="round"/>
-                <ellipse cx="720" cy="480" rx="90" ry="35" fill="rgba(15, 118, 110, 0.6)" stroke="#14b8a6" stroke-width="2"/>
-                <path d="M 430 280 C 490 250, 580 260, 660 290 C 720 315, 730 370, 710 410 C 680 450, 580 460, 500 440 C 440 420, 410 380, 400 340 C 395 305, 410 290, 430 280 Z" fill="url(#lakeWaterGrad)" stroke="#14b8a6" stroke-width="2"/>
-                <text x="550" y="360" fill="#ffffff" font-size="16" font-weight="800" text-anchor="middle">Lake Yamuna</text>
+            <!-- Big SVG Spatial Map -->
+            <div class="svg-map-frame">
+              <svg id="svgMainMap" class="map-svg" viewBox="0 0 880 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Industrial plume dispersion map">
+                <defs>
+                  <linearGradient id="mapSafeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#051419" stop-opacity="0.95"/>
+                    <stop offset="100%" stop-color="#020d11" stop-opacity="0.98"/>
+                  </linearGradient>
 
-                <!-- Dynamic Plume on Mini Map -->
-                <g id="simPlumeGroup">
-                  <ellipse id="simPlumeYellow" cx="300" cy="100" rx="190" ry="60" fill="rgba(245, 158, 11, 0.25)" stroke="#f59e0b" stroke-width="1.5"/>
-                  <ellipse id="simPlumeOrange" cx="220" cy="100" rx="120" ry="42" fill="rgba(249, 115, 22, 0.45)" stroke="#ea580c" stroke-width="2"/>
-                  <ellipse id="simPlumeRed" cx="160" cy="100" rx="60" ry="26" fill="rgba(239, 68, 68, 0.65)" stroke="#dc2626" stroke-width="2"/>
+                  <linearGradient id="lakeWaterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#0f766e" stop-opacity="0.9"/>
+                    <stop offset="100%" stop-color="#073a36" stop-opacity="0.95"/>
+                  </linearGradient>
+
+                  <pattern id="mapGridPatt" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(20, 184, 166, 0.04)" stroke-width="1"/>
+                  </pattern>
+                </defs>
+
+                <!-- Safe area base tint -->
+                <rect width="880" height="500" fill="url(#mapSafeGrad)"/>
+                <rect width="880" height="500" fill="url(#mapGridPatt)"/>
+
+                <!-- Outflow River -->
+                <path id="svgRiverPath" d="M 530 360 Q 580 410 650 450 T 730 480" fill="none" stroke="#0f766e" stroke-width="30" stroke-linecap="round"/>
+                <text x="610" y="420" fill="#5eead4" font-size="11" font-weight="700">Outflow canal</text>
+
+                <!-- Wetland Downstream Area -->
+                <ellipse id="svgWetlandShape" cx="720" cy="460" rx="85" ry="32" fill="rgba(15, 118, 110, 0.6)" stroke="#14b8a6" stroke-width="2"/>
+                <text x="720" y="465" fill="#f8fafc" font-size="11.5" font-weight="700" text-anchor="middle">Downstream Wetland</text>
+
+                <!-- Lake Yamuna Shape -->
+                <g id="svgLakeContainer">
+                  <path id="svgLakeShape" d="M 420 270 C 480 240, 570 250, 650 280 C 710 305, 720 360, 700 400 C 670 440, 570 450, 490 430 C 430 410, 400 370, 390 330 C 385 295, 400 280, 420 270 Z" fill="url(#lakeWaterGrad)" stroke="#14b8a6" stroke-width="2.5"/>
+                  <text x="540" y="340" fill="#ffffff" font-size="13.5" font-weight="800" text-anchor="middle">Lake Yamuna & Okhla Basin</text>
+                  <text x="540" y="360" fill="#99f6e4" font-size="10.5" text-anchor="middle">Municipal Intake Reservoir</text>
+
+                  <!-- Dynamic Breach Warning Rings -->
+                  <g id="breachGroup" style="display: none;">
+                    <circle cx="470" cy="320" r="20" class="breach-ring"/>
+                    <circle cx="470" cy="320" r="12" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+                    <text x="490" y="315" fill="#f87171" font-size="11.5" font-weight="800">Critical Intake Breach</text>
+                  </g>
                 </g>
 
-                <!-- Factory Marker -->
-                <circle cx="110" cy="100" r="10" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
-                <text x="110" y="80" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">Apex Petrochemical</text>
+                <!-- Nested Plume Rotator around Factory (110, 100) -->
+                <g id="plumeRotator">
+                  <!-- Zone Yellow (2.5 - 4.0 km) -->
+                  <ellipse id="svgPlumeYellow" cx="300" cy="100" rx="190" ry="60" fill="rgba(245, 158, 11, 0.25)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,4"/>
+                  <!-- Zone Orange (1.0 - 2.5 km) -->
+                  <ellipse id="svgPlumeOrange" cx="220" cy="100" rx="120" ry="42" fill="rgba(249, 115, 22, 0.45)" stroke="#ea580c" stroke-width="2"/>
+                  <!-- Zone Red (0 - 1.0 km) -->
+                  <ellipse id="svgPlumeRed" cx="160" cy="100" rx="60" ry="26" fill="rgba(239, 68, 68, 0.65)" stroke="#dc2626" stroke-width="2.5"/>
+                </g>
+
+                <!-- Generic Communities A–D -->
+                <g id="communitiesLayer">
+                  <g transform="translate(190, 180)">
+                    <circle id="commCircleA" cx="0" cy="0" r="8" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+                    <text x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community A</text>
+                  </g>
+
+                  <g transform="translate(285, 275)">
+                    <circle id="commCircleB" cx="0" cy="0" r="8" fill="#f59e0b" stroke="#ffffff" stroke-width="2"/>
+                    <text x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community B</text>
+                  </g>
+
+                  <g transform="translate(420, 370)">
+                    <circle id="commCircleC" cx="0" cy="0" r="8" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
+                    <text x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community C</text>
+                  </g>
+
+                  <g transform="translate(300, 110)">
+                    <circle id="commCircleD" cx="0" cy="0" r="8" fill="#10b981" stroke="#ffffff" stroke-width="2"/>
+                    <text x="14" y="4" fill="#f8fafc" font-size="11" font-weight="700">Community D</text>
+                  </g>
+                </g>
+
+                <!-- Factory Source Marker at (110, 100) -->
+                <g transform="translate(110, 100)">
+                  <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#ef4444" stroke-width="3"/>
+                  <path d="M -5 4 L -5 -4 L 5 -4 L 5 4 Z M -2 -7 L 2 -7" stroke="#ef4444" stroke-width="1.8" fill="none"/>
+                  <rect x="-85" y="-34" width="170" height="22" rx="4" fill="rgba(15, 23, 42, 0.9)" stroke="#ef4444" stroke-width="1"/>
+                  <text x="0" y="-19" fill="#f8fafc" font-size="10" font-weight="800" text-anchor="middle">Apex Petrochemical Corp</text>
+                </g>
+
+                <!-- Vector Compass -->
+                <g transform="translate(820, 55)">
+                  <circle cx="0" cy="0" r="28" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+                  <text x="0" y="-14" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">N</text>
+                  <text x="16" y="3" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">E</text>
+                  <text x="0" y="20" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">S</text>
+                  <text x="-16" y="3" fill="#94a3b8" font-size="9" font-weight="700" text-anchor="middle">W</text>
+                  <g id="compassNeedle" transform="rotate(138)">
+                    <line x1="0" y1="0" x2="0" y2="18" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+                    <polygon points="0,22 -3,14 3,14" fill="#14b8a6"/>
+                  </g>
+                  <text id="compassText" x="0" y="36" fill="#14b8a6" font-size="9" font-weight="700" text-anchor="middle">138° SE</text>
+                </g>
               </svg>
             </div>
-          </div>
 
-          <!-- Live Result Line -->
-          <div class="live-result-line" id="simLiveLine">
-            <span>Plume reach: <strong id="simPlumeReachText">4.0 km</strong></span>
-            <span>·</span>
-            <span>Lake risk: <strong id="simLakeRiskText">97/100 (Critical)</strong></span>
-            <span>·</span>
-            <span>Time to lake: <strong id="simTimeLakeText">10 min</strong></span>
-            <span>·</span>
-            <span>Residents in plume: <strong id="simResidentsText">38,000</strong></span>
-          </div>
+            <!-- Chips Bar -->
+            <div class="chips-bar">
+              <span class="chip" id="chipCommA"><span class="chip-circle" style="background:var(--danger-red);"></span>Community A</span>
+              <span class="chip" id="chipCommB"><span class="chip-circle" style="background:var(--caution-amber);"></span>Community B</span>
+              <span class="chip" id="chipCommC"><span class="chip-circle" style="background:var(--safe-green);"></span>Community C</span>
+              <span class="chip" id="chipCommD"><span class="chip-circle" style="background:var(--safe-green);"></span>Community D</span>
+              <span class="chip" id="chipLake"><span class="chip-circle" style="background:var(--water-teal);"></span>Lake</span>
+              <span class="chip" id="chipRiver"><span class="chip-circle" style="background:var(--water-teal);"></span>River</span>
+              <span class="chip" id="chipWetland"><span class="chip-circle" style="background:var(--water-teal);"></span>Wetland</span>
+            </div>
 
+            <!-- Step Time Card -->
+            <div class="step-time-card">
+              <div class="time-card-cell">
+                <span class="label">Affected water bodies</span>
+                <span class="val" id="tcWater">None (Clean)</span>
+              </div>
+              <div class="time-card-cell">
+                <span class="label">Est. PM2.5 near plant</span>
+                <span class="val" id="tcPm">285 µg/m³</span>
+              </div>
+              <div class="time-card-cell">
+                <span class="label">Residents in plume</span>
+                <span class="val" id="tcResidents">38,000 people</span>
+              </div>
+              <div class="time-card-cell">
+                <span class="label">Action to do now</span>
+                <span class="val" id="tcDoNow" style="color: var(--caution-amber);">Halt venting and lock effluent weir gates</span>
+              </div>
+            </div>
+
+          </div>
         </div>
-      </section>
 
-      <!-- TAB 6: POLLUTION JOURNEY -->
-      <section id="panel-6" class="tab-panel" role="tabpanel" aria-labelledby="tab-6" tabindex="0">
-        <div class="panel-card">
-          
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <!-- TAB 3: WHY THIS RISK? -->
+        <div class="tab-panel" id="tab-3" role="tabpanel" aria-labelledby="tab-3" tabindex="0">
+          <div class="panel-container">
+            
+            <h2 id="whyRiskTitle" style="font-size: 1.45rem; font-weight: 800;">Why is it Critical?</h2>
+
+            <!-- Equation Row -->
+            <div class="equation-card">
+              <span id="eqWind">Wind @ 138° SE</span>
+              <span>+</span>
+              <span class="equation-token" id="eqEmission">SO2 Emission: 100%</span>
+              <span>+</span>
+              <span>Lake 2.4 km Downwind</span>
+              <span>=</span>
+              <span id="eqResult" style="color: var(--danger-red); font-weight: 800;">Lake risk: Critical (97/100)</span>
+            </div>
+
+            <!-- Plain reasoning sentence -->
+            <div style="background: var(--bg-surface); border-left: 4px solid var(--caution-amber); padding: 14px 18px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 1rem; font-weight: 600;" id="whyReasonSentence">
+              Live winds blow directly toward Lake Yamuna at 19.4 km/h with high industrial emissions, placing drinking intake gates directly in the line of toxic fallout.
+            </div>
+
+            <!-- Contribution Bars -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
+                  <span>Wind alignment toward lake (138° axis)</span>
+                  <span id="txtContribWind">100%</span>
+                </div>
+                <div style="height: 10px; background: var(--bg-input); border-radius: 5px; overflow: hidden;">
+                  <div id="fillContribWind" style="height: 100%; width: 100%; background: linear-gradient(90deg, var(--water-teal), var(--caution-amber));"></div>
+                </div>
+              </div>
+
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
+                  <span>Emission strength (Boiler output)</span>
+                  <span id="txtContribEmission">100%</span>
+                </div>
+                <div style="height: 10px; background: var(--bg-input); border-radius: 5px; overflow: hidden;">
+                  <div id="fillContribEmission" style="height: 100%; width: 66%; background: linear-gradient(90deg, var(--water-teal), var(--danger-red));"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- What would lower the risk? -->
             <div>
-              <h2 style="font-size: 1.45rem; font-weight: 800;">Pollution Journey Along the Corridor</h2>
-              <p style="font-size: 0.88rem; color: var(--text-muted);">Sequential tracking checkpoints from source to downstream wetlands</p>
-            </div>
-            <!-- Action window line -->
-            <div id="actionWindowLine" style="background: var(--bg-panel-elevated); border: 1px solid var(--amber-caution); color: var(--amber-caution); padding: 8px 16px; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.95rem;">
-              Action window: 10 minutes until pollution reaches Lake Yamuna
-            </div>
-          </div>
-
-          <!-- Six Stops -->
-          <div class="journey-timeline" id="journeyStopsContainer">
-            
-            <!-- Stop 1 -->
-            <div class="journey-stop-card at-risk" id="jStop1">
-              <div class="journey-stop-left">
-                <span class="journey-stop-badge">1</span>
-                <div>
-                  <div style="font-weight: 700; font-size: 1rem;">Factory (Epicenter)</div>
-                  <div class="journey-stop-action">Lock scrubber drains, shut blowers, and inspect stack filtration</div>
+              <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 10px;">What would lower the risk?</div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                <div class="stat-box">
+                  <div class="stat-num" id="scoreWind40" style="color: var(--water-teal);">0</div>
+                  <div class="stat-title">Wind turned 40° away</div>
+                  <div class="stat-note">Misses lake corridor</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-num" id="scoreEm40" style="color: var(--water-teal);">51</div>
+                  <div class="stat-title">Emissions cut 40%</div>
+                  <div class="stat-note">De-rates burner flux</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-num" id="scoreGate" style="color: var(--water-teal);">82</div>
+                  <div class="stat-title">Effluent gate closed</div>
+                  <div class="stat-note">Cuts hydraulic runoff</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-num" id="scoreHalfWind" style="color: var(--water-teal);">78</div>
+                  <div class="stat-title">Wind speed halved</div>
+                  <div class="stat-note">Doubles travel time</div>
                 </div>
               </div>
-              <div class="journey-stop-time" style="color: var(--red-danger);">Now</div>
-            </div>
-
-            <!-- Stop 2 -->
-            <div class="journey-stop-card at-risk" id="jStop2">
-              <div class="journey-stop-left">
-                <span class="journey-stop-badge">2</span>
-                <div>
-                  <div style="font-weight: 700; font-size: 1rem;">Lake Yamuna Boundary</div>
-                  <div class="journey-stop-action">Trigger emergency lake perimeter aerators and deploy surface skimmers</div>
-                </div>
-              </div>
-              <div class="journey-stop-time" id="jTime2" style="color: var(--red-danger);">+10 min</div>
-            </div>
-
-            <!-- Stop 3 -->
-            <div class="journey-stop-card at-risk" id="jStop3">
-              <div class="journey-stop-left">
-                <span class="journey-stop-badge">3</span>
-                <div>
-                  <div style="font-weight: 700; font-size: 1rem;">Intake Gates (Drinking Supply)</div>
-                  <div class="journey-stop-action">Seal municipal raw-water sluices and switch to reserve storage reservoirs</div>
-                </div>
-              </div>
-              <div class="journey-stop-time" id="jTime3" style="color: var(--red-danger);">+20 min</div>
-            </div>
-
-            <!-- Stop 4 -->
-            <div class="journey-stop-card at-risk" id="jStop4">
-              <div class="journey-stop-left">
-                <span class="journey-stop-badge">4</span>
-                <div>
-                  <div style="font-weight: 700; font-size: 1rem;">Outflow River Channel</div>
-                  <div class="journey-stop-action">Notify irrigation canal authorities and halt agricultural diversion pumps</div>
-                </div>
-              </div>
-              <div class="journey-stop-time" id="jTime4" style="color: var(--amber-caution);">+30 min</div>
-            </div>
-
-            <!-- Stop 5 -->
-            <div class="journey-stop-card at-risk" id="jStop5">
-              <div class="journey-stop-left">
-                <span class="journey-stop-badge">5</span>
-                <div>
-                  <div style="font-weight: 700; font-size: 1rem;">Downstream Villages</div>
-                  <div class="journey-stop-action">Issue broadcast boil-water alerts and advise livestock indoor shelter</div>
-                </div>
-              </div>
-              <div class="journey-stop-time" id="jTime5" style="color: var(--amber-caution);">+1 hr</div>
-            </div>
-
-            <!-- Stop 6 -->
-            <div class="journey-stop-card at-risk" id="jStop6">
-              <div class="journey-stop-left">
-                <span class="journey-stop-badge">6</span>
-                <div>
-                  <div style="font-weight: 700; font-size: 1rem;">Downstream Wetland Reserve</div>
-                  <div class="journey-stop-action">Sample dissolved oxygen, deploy neutralization barriers, protect waterfowl sanctuary</div>
-                </div>
-              </div>
-              <div class="journey-stop-time" id="jTime6" style="color: var(--green-safe);">+2 hr</div>
             </div>
 
           </div>
-
         </div>
-      </section>
 
-      <!-- TAB 7: BEFORE VS AFTER -->
-      <section id="panel-7" class="tab-panel" role="tabpanel" aria-labelledby="tab-7" tabindex="0">
-        <div class="panel-card">
-          
-          <div class="delta-sentence-box" id="deltaSentence">
-            Acting now cuts predicted risk by 46 points, from Critical to Moderate.
-          </div>
-
-          <!-- Two Cards Side by Side -->
-          <div class="comparison-grid">
+        <!-- TAB 4: AI ACTION -->
+        <div class="tab-panel" id="tab-4" role="tabpanel" aria-labelledby="tab-4" tabindex="0">
+          <div class="panel-container">
             
-            <!-- Without Action -->
-            <div class="comparison-card">
-              <div class="comparison-title" style="color: var(--red-danger);">Without action</div>
-              <div class="comparison-score-row">
-                <span class="comparison-big-score" id="cmpBaseScore" style="color: var(--red-danger);">97</span>
-                <span style="font-size: 1.2rem; color: var(--text-muted);">/100</span>
-                <span style="font-size: 1.1rem; font-weight: 700; color: var(--red-danger); margin-left: 8px;" id="cmpBaseLevel">Critical</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h2 style="font-size: 1.4rem; font-weight: 800;">Recommended Containment Actions</h2>
+                <p style="font-size: 0.82rem; color: var(--text-muted);">Simulated operational actions to de-escalate incident risk</p>
               </div>
+              <div style="text-align: right;">
+                <span style="font-size: 0.78rem; color: var(--text-muted);">Current Risk Readout:</span>
+                <div id="aiTabCurrentRisk" style="font-size: 1.8rem; font-weight: 800; color: var(--danger-red);">97/100 (Critical)</div>
+              </div>
+            </div>
+
+            <!-- Action Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
               
-              <div style="height: 10px; background: var(--bg-panel-elevated); border-radius: 5px; overflow: hidden;">
-                <div id="cmpBaseBar" style="height: 100%; width: 97%; background: var(--red-danger); border-radius: 5px;"></div>
+              <!-- Action 1 -->
+              <div class="stat-box" id="cardAct1">
+                <div style="font-weight: 800; font-size: 0.95rem;">1. Reduce factory emissions by 40%</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
+                  De-rates furnace burners. Plume shrinks and advection intensity drops.
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                  <span id="scoreAct1" style="font-size: 0.76rem; font-weight: 700; color: var(--water-teal);">New risk: 51/100</span>
+                  <button id="btnAct1" class="btn btn-ghost" type="button">Approve action</button>
+                </div>
               </div>
 
-              <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">
-                <span>Plume reach:</span>
-                <strong id="cmpBaseReach" style="color: var(--text-primary);">4.0 km</strong>
+              <!-- Action 2 -->
+              <div class="stat-box" id="cardAct2">
+                <div style="font-weight: 800; font-size: 0.95rem;">2. Close the effluent gate</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
+                  Locks secondary weir. Surface runoff contamination risk drops by ~15%.
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                  <span id="scoreAct2" style="font-size: 0.76rem; font-weight: 700; color: var(--water-teal);">New risk: 82/100</span>
+                  <button id="btnAct2" class="btn btn-ghost" type="button">Approve action</button>
+                </div>
               </div>
 
-              <div style="font-size: 0.82rem; color: var(--text-muted);">
-                Unabated emissions and open effluent gates allow toxic plume to directly inundate the reservoir.
+              <!-- Action 3 -->
+              <div class="stat-box" id="cardAct3">
+                <div style="font-weight: 800; font-size: 0.95rem;">3. Alert downstream communities</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
+                  Broadcasts shelter-in-place directives across Community A & B corridors.
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                  <span id="scoreAct3" style="font-size: 0.76rem; font-weight: 700; color: var(--water-teal);">Lead time protection</span>
+                  <button id="btnAct3" class="btn btn-ghost" type="button">Approve action</button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Action Playbook -->
+            <div style="background: var(--bg-surface); padding: 16px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 8px;">
+              <span style="font-weight: 800; font-size: 0.9rem;">Operational Response Playbook</span>
+              <div class="playbook-row">
+                <span style="font-weight: 800; color: var(--caution-amber);">0–30 min</span>
+                <span>Throttle boilers, engage scrubbers, and close canal outfall sluice gates.</span>
+                <span style="font-weight: 700; text-align: right;">Priority 1</span>
+              </div>
+              <div class="playbook-row">
+                <span style="font-weight: 800; color: var(--caution-amber);">30–90 min</span>
+                <span>Deploy floating oil booms at lake intake weir and alert water utility engineers.</span>
+                <span style="font-weight: 700; text-align: right;">Priority 2</span>
+              </div>
+              <div class="playbook-row">
+                <span style="font-weight: 800; color: var(--caution-amber);">2 hr and after</span>
+                <span>Sample wetland bio-buffer pH levels and verify sediment clearance.</span>
+                <span style="font-weight: 700; text-align: right;">Priority 3</span>
               </div>
             </div>
 
-            <!-- After Action -->
-            <div class="comparison-card after">
-              <div class="comparison-title" style="color: var(--green-safe);" id="cmpAfterTitle">After reducing emissions by 40%</div>
-              <div class="comparison-score-row">
-                <span class="comparison-big-score" id="cmpAfterScore" style="color: var(--green-safe);">51</span>
-                <span style="font-size: 1.2rem; color: var(--text-muted);">/100</span>
-                <span style="font-size: 1.1rem; font-weight: 700; color: var(--green-safe); margin-left: 8px;" id="cmpAfterLevel">Moderate</span>
+            <!-- Action Utilities: Export & Advisory -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div style="display: flex; gap: 8px;">
+                <button id="btnOpenAlertModal" class="btn btn-ghost" type="button">📢 View advisory text</button>
+                <button id="btnExportReport" class="btn btn-ghost" type="button">📄 Export incident report</button>
               </div>
+              <span style="font-size: 0.78rem; color: var(--text-muted);">All actions logged to local audit database</span>
+            </div>
 
-              <div style="height: 10px; background: var(--bg-panel-elevated); border-radius: 5px; overflow: hidden;">
-                <div id="cmpAfterBar" style="height: 100%; width: 51%; background: var(--green-safe); border-radius: 5px;"></div>
-              </div>
-
-              <div style="display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--text-secondary); margin-top: 4px;">
-                <span>Plume reach:</span>
-                <strong id="cmpAfterReach" style="color: var(--text-primary);">2.8 km</strong>
-              </div>
-
-              <div style="font-size: 0.82rem; color: var(--text-muted);">
-                Targeted actions shrink the physical plume footprint and safeguard municipal water intake gates.
+            <!-- Incident Log Table -->
+            <div>
+              <span style="font-weight: 800; font-size: 0.85rem; text-transform: uppercase; color: var(--text-faint);">Incident Event Log</span>
+              <div class="log-box" id="incidentLogContainer">
+                <!-- Log entries inserted via JS -->
               </div>
             </div>
 
           </div>
-
-          <!-- Risk over time dual bars -->
-          <div class="timeline-bars-chart">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: 700; font-size: 0.95rem;">Risk trajectory over time</span>
-              <div style="display: flex; gap: 12px; font-size: 0.8rem; font-weight: 600;">
-                <span style="display: inline-flex; align-items: center; gap: 4px;">
-                  <span style="width: 10px; height: 10px; background: var(--red-danger); border-radius: 2px;"></span>
-                  Without action
-                </span>
-                <span style="display: inline-flex; align-items: center; gap: 4px;">
-                  <span style="width: 10px; height: 10px; background: var(--green-safe); border-radius: 2px;"></span>
-                  After action
-                </span>
-              </div>
-            </div>
-
-            <!-- 7 Steps Chart Columns -->
-            <div class="chart-columns" id="chartColumnsContainer">
-              <!-- Rendered via JS -->
-            </div>
-          </div>
-
         </div>
+
+        <!-- TAB 5: WHAT-IF SIMULATOR -->
+        <div class="tab-panel" id="tab-5" role="tabpanel" aria-labelledby="tab-5" tabindex="0">
+          <div class="panel-container">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h2 style="font-size: 1.4rem; font-weight: 800;">What-if Scenario Simulator</h2>
+                <p style="font-size: 0.82rem; color: var(--text-muted);">Temporarily override live data to model worst-case scenarios</p>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                <button id="simPresetCalm" class="btn btn-ghost" type="button">Calm day</button>
+                <button id="simPresetStrong" class="btn btn-ghost" type="button">Strong wind</button>
+                <button id="simPresetWorst" class="btn btn-leak" type="button">Worst case</button>
+                <button id="btnResetToLive" class="btn btn-teal" type="button">Back to live</button>
+              </div>
+            </div>
+
+            <!-- Simulation Banner -->
+            <div id="simActiveBanner" style="display: none; background: var(--caution-bg); border: 1px solid var(--caution-border); color: var(--caution-amber); padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 700;">
+              ⚠️ Simulation Mode Active: Sliders are overriding live Open-Meteo and plant sensor feeds. Click "Back to live" to resync.
+            </div>
+
+            <!-- Sliders & Mini Map -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+              
+              <!-- Sliders -->
+              <div style="background: var(--bg-input); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 14px;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700;">
+                    <span>Wind speed (4–35 km/h)</span>
+                    <span id="simValSpeed" style="color: var(--water-teal);">19.4 km/h</span>
+                  </div>
+                  <input type="range" id="simRangeSpeed" class="range-slider" min="4" max="35" step="0.5" value="19.4">
+                </div>
+
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700;">
+                    <span>Wind direction (60–220°)</span>
+                    <span id="simValDir" style="color: var(--water-teal);">138° SE</span>
+                  </div>
+                  <input type="range" id="simRangeDir" class="range-slider" min="60" max="220" step="1" value="138">
+                </div>
+
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700;">
+                    <span>Emission output (20–150%)</span>
+                    <span id="simValEmission" style="color: var(--water-teal);">100%</span>
+                  </div>
+                  <input type="range" id="simRangeEmission" class="range-slider" min="20" max="150" step="1" value="100">
+                </div>
+              </div>
+
+              <!-- Live Simulator Readout -->
+              <div style="background: var(--bg-surface); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-bright); display: flex; flex-direction: column; justify-content: space-around; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+                  <span>Plume reach:</span>
+                  <strong id="simResReach" style="color: var(--water-teal);">4.0 km</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+                  <span>Lake risk score:</span>
+                  <strong id="simResRisk" style="color: var(--danger-red);">97/100 (Critical)</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+                  <span>Time to lake:</span>
+                  <strong id="simResTime" style="color: var(--caution-amber);">10 min</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+                  <span>Residents in plume:</span>
+                  <strong id="simResPop">38,000</strong>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 6: POLLUTION JOURNEY -->
+        <div class="tab-panel" id="tab-6" role="tabpanel" aria-labelledby="tab-6" tabindex="0">
+          <div class="panel-container">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <h2 style="font-size: 1.4rem; font-weight: 800;">Pollution Journey Along the Corridor</h2>
+              <div id="journeyActionWindow" style="background: var(--bg-surface); border: 1px solid var(--caution-amber); color: var(--caution-amber); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700;">
+                Action window: 10 minutes until pollution reaches Lake Yamuna
+              </div>
+            </div>
+
+            <!-- Six Sequential Stops -->
+            <div class="journey-timeline-stack">
+              <div class="journey-stop danger" id="jStop1">
+                <div>
+                  <strong style="font-size: 0.95rem;">1. Factory (Epicenter)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Shut down blowers, deploy scrubber lime slurries, seal drains</div>
+                </div>
+                <span class="journey-time" style="font-weight: 800;">now</span>
+              </div>
+
+              <div class="journey-stop danger" id="jStop2">
+                <div>
+                  <strong style="font-size: 0.95rem;">2. Lake Yamuna Perimeter (+10 min)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Activate perimeter aeration to prevent dissolved oxygen collapse</div>
+                </div>
+                <span class="journey-time" style="font-weight: 800;">+10m</span>
+              </div>
+
+              <div class="journey-stop danger" id="jStop3">
+                <div>
+                  <strong style="font-size: 0.95rem;">3. Intake Gates (+20 min)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Seal municipal raw-water sluices and switch to reserve basins</div>
+                </div>
+                <span class="journey-time" style="font-weight: 800;">+20m</span>
+              </div>
+
+              <div class="journey-stop danger" id="jStop4">
+                <div>
+                  <strong style="font-size: 0.95rem;">4. Outflow River (+30 min)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Halt downstream agricultural diversion gates and irrigation pumps</div>
+                </div>
+                <span class="journey-time" style="font-weight: 800;">+30m</span>
+              </div>
+
+              <div class="journey-stop danger" id="jStop5">
+                <div>
+                  <strong style="font-size: 0.95rem;">5. Downstream Villages (+1 hr)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Issue broadcast civil sirens and boil-water health advisories</div>
+                </div>
+                <span class="journey-time" style="font-weight: 800;">+1h</span>
+              </div>
+
+              <div class="journey-stop danger" id="jStop6">
+                <div>
+                  <strong style="font-size: 0.95rem;">6. Wetland Reserve (+2 hr)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Sample bio-buffer thresholds and protect migratory waterfowl habitat</div>
+                </div>
+                <span class="journey-time" style="font-weight: 800;">+2h</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 7: BEFORE VS AFTER -->
+        <div class="tab-panel" id="tab-7" role="tabpanel" aria-labelledby="tab-7" tabindex="0">
+          <div class="panel-container">
+            
+            <div style="background: var(--bg-surface); border: 1px solid var(--safe-green); color: var(--safe-green); padding: 14px 18px; border-radius: var(--radius-sm); font-size: 1.05rem; font-weight: 700; text-align: center;" id="baDeltaSentence">
+              Acting now cuts predicted risk by 46 points, from Critical to Moderate.
+            </div>
+
+            <!-- Two Comparison Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+              
+              <div class="stat-box" style="border-color: var(--danger-red);">
+                <span style="color: var(--danger-red); font-size: 1.1rem; font-weight: 800;">Without action</span>
+                <div style="display: flex; align-items: baseline; gap: 8px; margin: 8px 0;">
+                  <span id="baBaseScore" style="font-size: 2.8rem; font-weight: 800; color: var(--danger-red); line-height: 1;">97</span>
+                  <span style="font-size: 1.1rem; color: var(--text-muted);">/100</span>
+                  <span id="baBaseLevel" style="font-size: 1.1rem; font-weight: 800; color: var(--danger-red); margin-left: 8px;">Critical</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                  Plume reach: <strong id="baBaseReach" style="color: var(--text-main);">4.0 km</strong>
+                </div>
+              </div>
+
+              <div class="stat-box" style="border-color: var(--safe-green); background: var(--safe-bg);">
+                <span id="baAfterTitle" style="color: var(--safe-green); font-size: 1.1rem; font-weight: 800;">After reducing emissions by 40%</span>
+                <div style="display: flex; align-items: baseline; gap: 8px; margin: 8px 0;">
+                  <span id="baAfterScore" style="font-size: 2.8rem; font-weight: 800; color: var(--safe-green); line-height: 1;">51</span>
+                  <span style="font-size: 1.1rem; color: var(--text-muted);">/100</span>
+                  <span id="baAfterLevel" style="font-size: 1.1rem; font-weight: 800; color: var(--safe-green); margin-left: 8px;">Moderate</span>
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                  Plume reach: <strong id="baAfterReach" style="color: var(--text-main);">2.8 km</strong>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Risk Over Time Chart -->
+            <div style="background: var(--bg-input); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 800; font-size: 0.9rem;">Risk over time (7 steps)</span>
+                <div style="display: flex; gap: 12px; font-size: 0.76rem; font-weight: 700;">
+                  <span style="color: var(--danger-red);">■ Without action</span>
+                  <span style="color: var(--safe-green);">■ After action</span>
+                </div>
+              </div>
+              <div id="baChartBars" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 160px; align-items: flex-end; padding-top: 10px; border-bottom: 1px solid var(--border-dim);">
+                <!-- Bars rendered via JS -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </section>
 
-    </main>
+    </div>
+
+    <!-- SETTINGS DRAWER OVERLAY -->
+    <div id="settingsDrawer" class="settings-drawer" role="dialog" aria-labelledby="settingsTitle">
+      <div class="drawer-header">
+        <h3 id="settingsTitle" style="font-size: 1.15rem; font-weight: 800;">Control-Room Settings</h3>
+        <button id="btnCloseSettings" class="btn btn-ghost" type="button" style="padding: 4px 10px;">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="form-group">
+          <label for="setSiteName">Monitored Site Name</label>
+          <input type="text" id="setSiteName" class="form-input">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label for="setLat">Latitude</label>
+            <input type="number" id="setLat" step="0.001" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="setLon">Longitude</label>
+            <input type="number" id="setLon" step="0.001" class="form-input">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="setLakeBearing">Lake Bearing (° SE from plant)</label>
+          <input type="number" id="setLakeBearing" min="0" max="360" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="setPop">Configured Downwind Population</label>
+          <input type="number" id="setPop" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="setApCountdown">Autopilot Countdown (seconds)</label>
+          <input type="number" id="setApCountdown" min="3" max="60" class="form-input">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+            <input type="checkbox" id="setEnableSound"> Enable Synthesized Audio Beeps
+          </label>
+          <button id="btnTestSound" class="btn btn-ghost" type="button" style="align-self: flex-start; font-size: 0.75rem;">🔊 Test Tone</button>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">
+            <input type="checkbox" id="setEnableNotif"> Enable Browser Notifications
+          </label>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+          <button id="btnResetSettings" class="btn btn-ghost" type="button">Reset defaults</button>
+          <button id="btnSaveSettings" class="btn btn-teal" type="button">Save settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERT MESSAGE MODAL (Civil Advisory) -->
+    <div id="alertModalOverlay" class="modal-overlay" role="dialog" aria-labelledby="modalTitle">
+      <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 id="modalTitle" style="font-size: 1.15rem; font-weight: 800;">Generated Community Advisory</h3>
+          <button id="btnCloseAlertModal" class="btn btn-ghost" type="button" style="padding: 4px 10px;">✕</button>
+        </div>
+        <textarea id="alertMessageText" rows="9" class="form-input" style="font-family: monospace; font-size: 0.82rem; resize: vertical;" readonly></textarea>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button id="btnCopyAlertMsg" class="btn btn-ghost" type="button">📋 Copy text</button>
+          <button id="btnShareAlertMsg" class="btn btn-teal" type="button">📤 Share advisory</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
     <!-- FOOTER -->
-    <footer>
-      <div>Figures are modelled estimates for demonstration.</div>
-      <div style="color: var(--teal-water); font-weight: 600;">Wind: 19.4 km/h, 138° SE (NASA POWER API)</div>
+    <footer class="app-footer">
+      <div>
+        Decision-support prototype. Figures use a demo risk model. Plant sensors and water flow are simulated.
+      </div>
+      <div style="color: var(--water-teal); font-weight: 700;">
+        Open-Meteo & NASA POWER Integration · Lake Yamuna & Okhla Basin
+      </div>
     </footer>
 
   </div>
 
-  <!-- SINGLE-FILE STANDALONE LOGIC -->
-  <script>
-    (function() {
-      'use strict';
-
-      /* =======================================================
-         SHARED STATE (All tabs read and write this state)
-         ======================================================= */
-      const state = {
-        activeTab: 'tab-1',
-        windSpeed: 19.4,        // 4–35 km/h (default 19.4)
-        windDirection: 138,     // 60–220° (default 138 SE)
-        emission: 100,          // 20–150% (default 100)
-        replayStep: 0,          // 0–6
-        isPlayingReplay: false,
-        replayInterval: null,
-
-        // 3 Action Flags
-        reduceEmissions40: false,
-        closeEffluentGate: false,
-        alertDownstream: false
-      };
-
-      const replayStepsData = [
-        { label: 'NOW',   mult: 0.50, pm: 285, doNow: 'Halt venting and lock effluent weir gates' },
-        { label: '+10m',  mult: 0.75, pm: 240, doNow: 'Issue immediate shelter-in-place for Community A' },
-        { label: '+30m',  mult: 0.95, pm: 195, doNow: 'Alert intake gates and the river authority' },
-        { label: '+1h',   mult: 1.10, pm: 160, doNow: 'Deploy mobile air filtration and warn agricultural users' },
-        { label: '+2h',   mult: 1.20, pm: 130, doNow: 'Notify the wetland authority and start water sampling' },
-        { label: '+3h',   mult: 1.30, pm: 105, doNow: 'Inspect secondary containment barriers and test water pH' },
-        { label: '+6h',   mult: 1.40, pm: 75,  doNow: 'Verify safe intake reactivation thresholds' }
-      ];
-
-      /* =======================================================
-         RISK MODEL FORMULA (as specified)
-         ======================================================= */
-      function angleDiff(a, b) {
-        let diff = Math.abs(a - b) % 360;
-        return diff > 180 ? 360 - diff : diff;
-      }
-
-      function computeRiskForParams(speed, dir, em, red40, closeGate) {
-        const alignment = Math.max(0, 1 - angleDiff(dir, 138) / 45);
-        let E = (em / 100);
-        if (red40) E *= 0.6;
-        const windFactor = Math.min(1.15, 0.6 + speed / 48.5);
-        let raw = Math.min(100, 97 * alignment * Math.pow(E, 1.25) * windFactor);
-        if (closeGate) raw *= 0.85;
-        const score = Math.round(Math.min(100, Math.max(0, raw)));
-
-        let level = 'Low';
-        let colorClass = 'low';
-        let hexColor = '#10b981';
-        if (score >= 70) {
-          level = 'Critical';
-          colorClass = 'critical';
-          hexColor = '#ef4444';
-        } else if (score >= 35) {
-          level = 'Moderate';
-          colorClass = 'moderate';
-          hexColor = '#f59e0b';
-        }
-        return { score, level, colorClass, hexColor, alignment, E, windFactor };
-      }
-
-      function getCurrentRisk() {
-        return computeRiskForParams(
-          state.windSpeed,
-          state.windDirection,
-          state.emission,
-          state.reduceEmissions40,
-          state.closeEffluentGate
-        );
-      }
-
-      function getBaseRisk() {
-        return computeRiskForParams(
-          state.windSpeed,
-          state.windDirection,
-          state.emission,
-          false,
-          false
-        );
-      }
-
-      function getTimeToLake() {
-        return Math.max(1, Math.round(10 * (19.4 / state.windSpeed)));
-      }
-
-      function getPlumeReachKm() {
-        const baseReach = 4.0;
-        const speedScale = Math.pow(state.windSpeed / 19.4, 0.35);
-        const emScale = Math.pow(state.emission / 100, 0.25);
-        const actionDampen = state.reduceEmissions40 ? 0.75 : 1.0;
-        return (baseReach * speedScale * emScale * actionDampen).toFixed(1);
-      }
-
-      /* =======================================================
-         POINT-IN-ELLIPSE MATHEMATICAL TEST
-         ======================================================= */
-      function isPointInRotatedEllipse(px, py, cx, cy, rx, ry, angleDeg) {
-        const rad = angleDeg * (Math.PI / 180);
-        const cos = Math.cos(rad);
-        const sin = Math.sin(rad);
-
-        const dx = px - cx;
-        const dy = py - cy;
-
-        // Rotate point into ellipse coordinate frame
-        const localX = dx * cos + dy * sin;
-        const localY = -dx * sin + dy * cos;
-
-        return (Math.pow(localX / rx, 2) + Math.pow(localY / ry, 2)) <= 1.0;
-      }
-
-      /* =======================================================
-         DOM REFERENCES
-         ======================================================= */
-      const dom = {
-        tabs: Array.from(document.querySelectorAll('.tab-item')),
-        panels: Array.from(document.querySelectorAll('.tab-panel')),
-
-        headerRiskPill: document.getElementById('headerRiskPill'),
-        headerRiskLevel: document.getElementById('headerRiskLevel'),
-        headerRiskScore: document.getElementById('headerRiskScore'),
-        flowStepWater: document.getElementById('flowStepWater'),
-        flowStepMitigated: document.getElementById('flowStepMitigated'),
-
-        // Tab 1
-        heroBanner: document.getElementById('heroBanner'),
-        heroSentence: document.getElementById('heroSentence'),
-        btnApplyAllActions: document.getElementById('btnApplyAllActions'),
-        btnOpenMap: document.getElementById('btnOpenMap'),
-        cardTimeToLake: document.getElementById('cardTimeToLake'),
-        cardResidents: document.getElementById('cardResidents'),
-        cardPlumeReach: document.getElementById('cardPlumeReach'),
-        pinWithoutAction: document.getElementById('pinWithoutAction'),
-        pinAfterAction: document.getElementById('pinAfterAction'),
-        tagWithoutAction: document.getElementById('tagWithoutAction'),
-        tagAfterAction: document.getElementById('tagAfterAction'),
-        ladderDeltaText: document.getElementById('ladderDeltaText'),
-
-        // Tab 2
-        btnPlayReplay: document.getElementById('btnPlayReplay'),
-        replayPlayIcon: document.getElementById('replayPlayIcon'),
-        replayPlayText: document.getElementById('replayPlayText'),
-        replaySlider: document.getElementById('replaySlider'),
-        replayStepText: document.getElementById('replayStepText'),
-        compassNeedle: document.getElementById('compassNeedle'),
-        compassLabel: document.getElementById('compassLabel'),
-        dynamicPlumeContainer: document.getElementById('dynamicPlumeContainer'),
-        plumeRed: document.getElementById('plumeRed'),
-        plumeOrange: document.getElementById('plumeOrange'),
-        plumeYellow: document.getElementById('plumeYellow'),
-        svgLake: document.getElementById('svgLake'),
-        svgRiver: document.getElementById('svgRiver'),
-        svgWetland: document.getElementById('svgWetland'),
-        breachRingsGroup: document.getElementById('breachRingsGroup'),
-        commACircle: document.getElementById('commACircle'),
-        commBCircle: document.getElementById('commBCircle'),
-        commCCircle: document.getElementById('commCCircle'),
-        commDCircle: document.getElementById('commDCircle'),
-        chipCommA: document.getElementById('chipCommA'),
-        chipCommB: document.getElementById('chipCommB'),
-        chipCommC: document.getElementById('chipCommC'),
-        chipCommD: document.getElementById('chipCommD'),
-        chipLake: document.getElementById('chipLake'),
-        chipRiver: document.getElementById('chipRiver'),
-        chipWetland: document.getElementById('chipWetland'),
-        timeCardWater: document.getElementById('timeCardWater'),
-        timeCardPm: document.getElementById('timeCardPm'),
-        timeCardResidents: document.getElementById('timeCardResidents'),
-        timeCardDoNow: document.getElementById('timeCardDoNow'),
-
-        // Tab 3
-        whyTitle: document.getElementById('whyTitle'),
-        eqWindDir: document.getElementById('eqWindDir'),
-        eqEmission: document.getElementById('eqEmission'),
-        eqResult: document.getElementById('eqResult'),
-        plainReasoningText: document.getElementById('plainReasoningText'),
-        contribWindVal: document.getElementById('contribWindVal'),
-        contribWindFill: document.getElementById('contribWindFill'),
-        contribEmissionVal: document.getElementById('contribEmissionVal'),
-        contribEmissionFill: document.getElementById('contribEmissionFill'),
-        scoreWindShift: document.getElementById('scoreWindShift'),
-        scoreCut40: document.getElementById('scoreCut40'),
-        scoreCloseGate: document.getElementById('scoreCloseGate'),
-        scoreHalfWind: document.getElementById('scoreHalfWind'),
-
-        // Tab 4
-        aiActionCurrentRisk: document.getElementById('aiActionCurrentRisk'),
-        cardAct1: document.getElementById('cardAct1'),
-        cardAct2: document.getElementById('cardAct2'),
-        cardAct3: document.getElementById('cardAct3'),
-        btnAct1: document.getElementById('btnAct1'),
-        btnAct2: document.getElementById('btnAct2'),
-        btnAct3: document.getElementById('btnAct3'),
-        chipAct1Score: document.getElementById('chipAct1Score'),
-        chipAct2Score: document.getElementById('chipAct2Score'),
-        chipAct3Score: document.getElementById('chipAct3Score'),
-        playbookTimeToLake: document.getElementById('playbookTimeToLake'),
-        pbStatus1: document.getElementById('pbStatus1'),
-        pbStatus2: document.getElementById('pbStatus2'),
-        pbStatus3: document.getElementById('pbStatus3'),
-
-        // Tab 5
-        presetCalm: document.getElementById('presetCalm'),
-        presetStrong: document.getElementById('presetStrong'),
-        presetWorst: document.getElementById('presetWorst'),
-        presetReset: document.getElementById('presetReset'),
-        simWindSpeed: document.getElementById('simWindSpeed'),
-        simWindSpeedVal: document.getElementById('simWindSpeedVal'),
-        simWindDir: document.getElementById('simWindDir'),
-        simWindDirVal: document.getElementById('simWindDirVal'),
-        simEmission: document.getElementById('simEmission'),
-        simEmissionVal: document.getElementById('simEmissionVal'),
-        simPlumeGroup: document.getElementById('simPlumeGroup'),
-        simPlumeRed: document.getElementById('simPlumeRed'),
-        simPlumeOrange: document.getElementById('simPlumeOrange'),
-        simPlumeYellow: document.getElementById('simPlumeYellow'),
-        simPlumeReachText: document.getElementById('simPlumeReachText'),
-        simLakeRiskText: document.getElementById('simLakeRiskText'),
-        simTimeLakeText: document.getElementById('simTimeLakeText'),
-        simResidentsText: document.getElementById('simResidentsText'),
-
-        // Tab 6
-        actionWindowLine: document.getElementById('actionWindowLine'),
-        jStop1: document.getElementById('jStop1'),
-        jStop2: document.getElementById('jStop2'),
-        jStop3: document.getElementById('jStop3'),
-        jStop4: document.getElementById('jStop4'),
-        jStop5: document.getElementById('jStop5'),
-        jStop6: document.getElementById('jStop6'),
-        jTime2: document.getElementById('jTime2'),
-        jTime3: document.getElementById('jTime3'),
-        jTime4: document.getElementById('jTime4'),
-        jTime5: document.getElementById('jTime5'),
-        jTime6: document.getElementById('jTime6'),
-
-        // Tab 7
-        deltaSentence: document.getElementById('deltaSentence'),
-        cmpBaseScore: document.getElementById('cmpBaseScore'),
-        cmpBaseLevel: document.getElementById('cmpBaseLevel'),
-        cmpBaseBar: document.getElementById('cmpBaseBar'),
-        cmpBaseReach: document.getElementById('cmpBaseReach'),
-        cmpAfterTitle: document.getElementById('cmpAfterTitle'),
-        cmpAfterScore: document.getElementById('cmpAfterScore'),
-        cmpAfterLevel: document.getElementById('cmpAfterLevel'),
-        cmpAfterBar: document.getElementById('cmpAfterBar'),
-        cmpAfterReach: document.getElementById('cmpAfterReach'),
-        chartColumnsContainer: document.getElementById('chartColumnsContainer')
-      };
-
-      /* =======================================================
-         TAB NAVIGATION & ARIA KEYBOARD SUPPORT
-         ======================================================= */
-      window.switchTab = function(targetTabId) {
-        state.activeTab = targetTabId;
-        dom.tabs.forEach((tab) => {
-          const isSelected = tab.id === targetTabId;
-          tab.setAttribute('aria-selected', isSelected ? 'true' : 'false');
-          tab.setAttribute('tabindex', isSelected ? '0' : '-1');
-        });
-
-        dom.panels.forEach((panel) => {
-          if (panel.getAttribute('aria-labelledby') === targetTabId) {
-            panel.classList.add('active');
-          } else {
-            panel.classList.remove('active');
-          }
-        });
-        updateAll();
-      };
-
-      dom.tabs.forEach((tab, index) => {
-        tab.addEventListener('click', () => switchTab(tab.id));
-        tab.addEventListener('keydown', (e) => {
-          let newIndex = index;
-          if (e.key === 'ArrowRight') newIndex = (index + 1) % dom.tabs.length;
-          else if (e.key === 'ArrowLeft') newIndex = (index - 1 + dom.tabs.length) % dom.tabs.length;
-          else if (e.key === 'Home') newIndex = 0;
-          else if (e.key === 'End') newIndex = dom.tabs.length - 1;
-          else return;
-
-          e.preventDefault();
-          dom.tabs[newIndex].focus();
-          switchTab(dom.tabs[newIndex].id);
-        });
-      });
-
-      /* =======================================================
-         CENTRAL UPDATE FUNCTION (Re-computes & updates all tabs)
-         ======================================================= */
-      function updateAll() {
-        const curRisk = getCurrentRisk();
-        const baseRisk = getBaseRisk();
-        const timeToLake = getTimeToLake();
-        const plumeReach = getPlumeReachKm();
-        const residentsAtRisk = Math.round(38000 * (curRisk.score / 97));
-        const anyActionOn = state.reduceEmissions40 || state.closeEffluentGate || state.alertDownstream;
-
-        // 1. Header Updates
-        dom.headerRiskPill.className = `pill-risk ${curRisk.colorClass}`;
-        dom.headerRiskLevel.textContent = curRisk.level;
-        dom.headerRiskScore.textContent = `${curRisk.score}/100`;
-
-        if (curRisk.score < 35) {
-          dom.flowStepWater.className = 'flow-step active safe';
-        } else {
-          dom.flowStepWater.className = 'flow-step active danger';
-        }
-
-        if (anyActionOn) {
-          dom.flowStepMitigated.className = 'flow-step active safe';
-        } else {
-          dom.flowStepMitigated.className = 'flow-step';
-        }
-
-        // 2. Tab 1 Updates (Dashboard)
-        if (curRisk.score >= 70) {
-          dom.heroSentence.textContent = `The lake can be hit in about ${timeToLake} min. Risk is Critical. Act now to bring it down.`;
-          dom.heroBanner.style.borderLeftColor = 'var(--red-danger)';
-        } else if (curRisk.score >= 35) {
-          dom.heroSentence.textContent = `Risk reduced to Moderate (${curRisk.score}/100). Lake impact mitigated, but downwind vigilance required.`;
-          dom.heroBanner.style.borderLeftColor = 'var(--amber-caution)';
-        } else {
-          dom.heroSentence.textContent = `Risk is Low (${curRisk.score}/100). Containment verified; water body safety thresholds maintained.`;
-          dom.heroBanner.style.borderLeftColor = 'var(--green-safe)';
-        }
-
-        dom.cardTimeToLake.textContent = `${timeToLake} min`;
-        dom.cardResidents.textContent = residentsAtRisk.toLocaleString();
-        dom.cardPlumeReach.textContent = `${plumeReach} km`;
-
-        // Risk ladder
-        dom.pinWithoutAction.style.left = `${baseRisk.score}%`;
-        dom.tagWithoutAction.textContent = `Without action: ${baseRisk.score}`;
-        dom.pinAfterAction.style.left = `${curRisk.score}%`;
-        dom.tagAfterAction.textContent = `After action: ${curRisk.score}`;
-        const ptsDrop = baseRisk.score - curRisk.score;
-        dom.ladderDeltaText.textContent = ptsDrop > 0 
-          ? `Actions applied: -${ptsDrop} points risk reduction` 
-          : 'Showing baseline risk (no mitigation applied)';
-
-        dom.btnApplyAllActions.textContent = (state.reduceEmissions40 && state.closeEffluentGate && state.alertDownstream)
-          ? 'Reset actions'
-          : 'Apply recommended actions';
-
-        // 3. Tab 2 Updates (Map and Replay)
-        const curStep = replayStepsData[state.replayStep];
-        dom.replayStepText.textContent = curStep.label;
-        dom.replaySlider.value = state.replayStep;
-
-        // Rotate Compass & Plume around Source (110, 100)
-        dom.compassNeedle.setAttribute('transform', `rotate(${state.windDirection})`);
-        dom.compassLabel.textContent = `${state.windDirection}° ${getCompassSector(state.windDirection)}`;
-
-        // Plume geometry parameters
-        const stepMult = curStep.mult;
-        const emissionScale = (state.emission / 100) * (state.reduceEmissions40 ? 0.75 : 1.0);
-        const speedScale = Math.pow(state.windSpeed / 19.4, 0.4);
-
-        // Source is at (110, 100). Plume extends along windDirection angle.
-        // We set SVG transform="translate(110, 100) rotate(angle - 90)" or rotate around (110, 100)
-        // Standard angle where 90 is East: rotation angle from positive X axis is (windDirection - 90).
-        const rotAngle = state.windDirection - 90;
-        dom.dynamicPlumeContainer.setAttribute('transform', `rotate(${rotAngle}, 110, 100)`);
-        dom.simPlumeGroup.setAttribute('transform', `rotate(${rotAngle}, 110, 100)`);
-
-        // Zone Ellipses lengths and widths
-        const lenA = 70 * stepMult * emissionScale * speedScale;
-        const widA = 28 * stepMult * emissionScale / Math.pow(speedScale, 0.3);
-
-        const lenB = 150 * stepMult * emissionScale * speedScale;
-        const widB = 45 * stepMult * emissionScale / Math.pow(speedScale, 0.3);
-
-        const lenC = 250 * stepMult * emissionScale * speedScale;
-        const widC = 68 * stepMult * emissionScale / Math.pow(speedScale, 0.3);
-
-        // Update main map plume
-        dom.plumeRed.setAttribute('cx', 110 + lenA * 0.55);
-        dom.plumeRed.setAttribute('rx', Math.max(15, lenA * 0.55));
-        dom.plumeRed.setAttribute('ry', Math.max(8, widA));
-
-        dom.plumeOrange.setAttribute('cx', 110 + lenB * 0.55);
-        dom.plumeOrange.setAttribute('rx', Math.max(25, lenB * 0.55));
-        dom.plumeOrange.setAttribute('ry', Math.max(12, widB));
-
-        dom.plumeYellow.setAttribute('cx', 110 + lenC * 0.55);
-        dom.plumeYellow.setAttribute('rx', Math.max(35, lenC * 0.55));
-        dom.plumeYellow.setAttribute('ry', Math.max(16, widC));
-
-        // Update sim map plume
-        dom.simPlumeRed.setAttribute('cx', 110 + lenA * 0.55);
-        dom.simPlumeRed.setAttribute('rx', Math.max(15, lenA * 0.55));
-        dom.simPlumeRed.setAttribute('ry', Math.max(8, widA));
-
-        dom.simPlumeOrange.setAttribute('cx', 110 + lenB * 0.55);
-        dom.simPlumeOrange.setAttribute('rx', Math.max(25, lenB * 0.55));
-        dom.simPlumeOrange.setAttribute('ry', Math.max(12, widB));
-
-        dom.simPlumeYellow.setAttribute('cx', 110 + lenC * 0.55);
-        dom.simPlumeYellow.setAttribute('rx', Math.max(35, lenC * 0.55));
-        dom.simPlumeYellow.setAttribute('ry', Math.max(16, widC));
-
-        // Real Point-in-Ellipse check for Communities A-D
-        const commPoints = [
-          { id: 'A', x: 190, y: 180, circle: dom.commACircle, chip: dom.chipCommA },
-          { id: 'B', x: 285, y: 275, circle: dom.commBCircle, chip: dom.chipCommB },
-          { id: 'C', x: 420, y: 370, circle: dom.commCCircle, chip: dom.chipCommC },
-          { id: 'D', x: 300, y: 110, circle: dom.commDCircle, chip: dom.chipCommD }
-        ];
-
-        // Center of outer yellow ellipse in world coordinates
-        const radAngle = (state.windDirection - 90) * (Math.PI / 180);
-        const centerRedX = 110 + Math.cos(radAngle) * (lenA * 0.55);
-        const centerRedY = 100 + Math.sin(radAngle) * (lenA * 0.55);
-
-        const centerOrangeX = 110 + Math.cos(radAngle) * (lenB * 0.55);
-        const centerOrangeY = 100 + Math.sin(radAngle) * (lenB * 0.55);
-
-        const centerYellowX = 110 + Math.cos(radAngle) * (lenC * 0.55);
-        const centerYellowY = 100 + Math.sin(radAngle) * (lenC * 0.55);
-
-        commPoints.forEach(pt => {
-          let zoneColor = 'var(--green-safe)';
-          let zoneName = 'Safe';
-
-          const inRed = isPointInRotatedEllipse(pt.x, pt.y, centerRedX, centerRedY, Math.max(15, lenA * 0.55), Math.max(8, widA), rotAngle);
-          const inOrange = isPointInRotatedEllipse(pt.x, pt.y, centerOrangeX, centerOrangeY, Math.max(25, lenB * 0.55), Math.max(12, widB), rotAngle);
-          const inYellow = isPointInRotatedEllipse(pt.x, pt.y, centerYellowX, centerYellowY, Math.max(35, lenC * 0.55), Math.max(16, widC), rotAngle);
-
-          if (inRed) {
-            zoneColor = 'var(--red-danger)';
-            zoneName = 'Red zone';
-          } else if (inOrange || inYellow) {
-            zoneColor = 'var(--amber-caution)';
-            zoneName = 'Caution zone';
-          }
-
-          pt.circle.setAttribute('fill', zoneColor);
-          pt.chip.innerHTML = `<span class="chip-dot" style="background: ${zoneColor};"></span>Community ${pt.id}: ${zoneName}`;
-        });
-
-        // Water Bodies Affected Rule
-        // Lake: from +10m (step >= 1) if risk >= 15
-        const isLakeAffected = (state.replayStep >= 1) && (curRisk.score >= 15);
-        // River: from +30m (step >= 2) if risk >= 35
-        const isRiverAffected = (state.replayStep >= 2) && (curRisk.score >= 35);
-        // Wetland: from +2h (step >= 4) if risk >= 55
-        const isWetlandAffected = (state.replayStep >= 4) && (curRisk.score >= 55);
-
-        if (isLakeAffected) {
-          dom.svgLake.setAttribute('fill', '#991b1b');
-          dom.breachRingsGroup.style.display = 'block';
-          dom.chipLake.innerHTML = `<span class="chip-dot" style="background: var(--red-danger);"></span>Lake: Critical breach`;
-        } else {
-          dom.svgLake.setAttribute('fill', 'url(#lakeWaterGrad)');
-          dom.breachRingsGroup.style.display = 'none';
-          dom.chipLake.innerHTML = `<span class="chip-dot" style="background: var(--teal-water);"></span>Lake: Safe`;
-        }
-
-        if (isRiverAffected) {
-          dom.svgRiver.setAttribute('stroke', '#dc2626');
-          dom.chipRiver.innerHTML = `<span class="chip-dot" style="background: var(--red-danger);"></span>River: Affected`;
-        } else {
-          dom.svgRiver.setAttribute('stroke', '#0f766e');
-          dom.chipRiver.innerHTML = `<span class="chip-dot" style="background: var(--teal-water);"></span>River: Safe`;
-        }
-
-        if (isWetlandAffected) {
-          dom.svgWetland.setAttribute('fill', 'rgba(220, 38, 38, 0.7)');
-          dom.svgWetland.setAttribute('stroke', '#ef4444');
-          dom.chipWetland.innerHTML = `<span class="chip-dot" style="background: var(--red-danger);"></span>Wetland: Affected`;
-        } else {
-          dom.svgWetland.setAttribute('fill', 'rgba(15, 118, 110, 0.6)');
-          dom.svgWetland.setAttribute('stroke', '#14b8a6');
-          dom.chipWetland.innerHTML = `<span class="chip-dot" style="background: var(--teal-water);"></span>Wetland: Safe`;
-        }
-
-        // Time card for selected step
-        const affectedList = [];
-        if (isLakeAffected) affectedList.push('Lake Yamuna');
-        if (isRiverAffected) affectedList.push('Outflow river');
-        if (isWetlandAffected) affectedList.push('Downstream wetland');
-        dom.timeCardWater.textContent = affectedList.length > 0 ? affectedList.join(', ') : 'None affected (Safe)';
-        dom.timeCardWater.style.color = affectedList.length > 0 ? 'var(--red-danger)' : 'var(--green-safe)';
-
-        const stepPm = Math.round(curStep.pm * (state.emission / 100) * (state.reduceEmissions40 ? 0.6 : 1.0));
-        dom.timeCardPm.textContent = `${stepPm} µg/m³`;
-        dom.timeCardResidents.textContent = `${residentsAtRisk.toLocaleString()} people`;
-        dom.timeCardDoNow.textContent = curStep.doNow;
-
-        // 4. Tab 3 Updates (Why this risk?)
-        dom.whyTitle.textContent = `Why is it ${curRisk.level}?`;
-        dom.whyTitle.style.color = curRisk.hexColor;
-
-        dom.eqWindDir.textContent = `${state.windDirection}° (${getCompassSector(state.windDirection)})`;
-        dom.eqEmission.textContent = `SO2 emission: ${state.emission}%`;
-        dom.eqResult.textContent = `Lake risk: ${curRisk.level} (${curRisk.score}/100)`;
-        dom.eqResult.style.color = curRisk.hexColor;
-
-        // Plain reasoning sentence
-        if (curRisk.alignment > 0.8) {
-          dom.plainReasoningText.textContent = `The wind is blowing directly toward Lake Yamuna at ${state.windSpeed} km/h with high industrial emissions, leaving municipal intakes directly in the line of toxic fallout.`;
-        } else if (curRisk.alignment > 0.3) {
-          dom.plainReasoningText.textContent = `The wind carries emissions at a grazing angle towards the reservoir corridor; lateral plume dispersion threatens intake buffers.`;
-        } else {
-          dom.plainReasoningText.textContent = `The wind has shifted away from the lake corridor (${state.windDirection}°), allowing the plume to bypass the primary municipal water basin.`;
-        }
-
-        const windContrib = Math.round(curRisk.alignment * 100);
-        dom.contribWindVal.textContent = `${windContrib}%`;
-        dom.contribWindFill.style.width = `${windContrib}%`;
-
-        dom.contribEmissionVal.textContent = `${state.emission}%`;
-        dom.contribEmissionFill.style.width = `${Math.min(100, (state.emission / 150) * 100)}%`;
-
-        // "What would lower the risk?" computed scores
-        dom.scoreWindShift.textContent = computeRiskForParams(state.windSpeed, state.windDirection + 40, state.emission, state.reduceEmissions40, state.closeEffluentGate).score;
-        dom.scoreCut40.textContent = computeRiskForParams(state.windSpeed, state.windDirection, state.emission, true, state.closeEffluentGate).score;
-        dom.scoreCloseGate.textContent = computeRiskForParams(state.windSpeed, state.windDirection, state.emission, state.reduceEmissions40, true).score;
-        dom.scoreHalfWind.textContent = computeRiskForParams(state.windSpeed / 2, state.windDirection, state.emission, state.reduceEmissions40, state.closeEffluentGate).score;
-
-        // 5. Tab 4 Updates (AI Action)
-        dom.aiActionCurrentRisk.textContent = `${curRisk.score}/100 (${curRisk.level})`;
-        dom.aiActionCurrentRisk.style.color = curRisk.hexColor;
-
-        dom.cardAct1.classList.toggle('applied', state.reduceEmissions40);
-        dom.btnAct1.textContent = state.reduceEmissions40 ? 'Action active ✓' : 'Apply action';
-        dom.btnAct1.className = state.reduceEmissions40 ? 'btn btn-success' : 'btn btn-secondary';
-        dom.chipAct1Score.textContent = `Score if applied: ${computeRiskForParams(state.windSpeed, state.windDirection, state.emission, true, state.closeEffluentGate).score}`;
-
-        dom.cardAct2.classList.toggle('applied', state.closeEffluentGate);
-        dom.btnAct2.textContent = state.closeEffluentGate ? 'Action active ✓' : 'Apply action';
-        dom.btnAct2.className = state.closeEffluentGate ? 'btn btn-success' : 'btn btn-secondary';
-        dom.chipAct2Score.textContent = `Score if applied: ${computeRiskForParams(state.windSpeed, state.windDirection, state.emission, state.reduceEmissions40, true).score}`;
-
-        dom.cardAct3.classList.toggle('applied', state.alertDownstream);
-        dom.btnAct3.textContent = state.alertDownstream ? 'Sirens active ✓' : 'Apply action';
-        dom.btnAct3.className = state.alertDownstream ? 'btn btn-success' : 'btn btn-secondary';
-
-        dom.playbookTimeToLake.textContent = `Time until lake is reached: ${timeToLake} min`;
-        dom.pbStatus1.textContent = state.reduceEmissions40 && state.closeEffluentGate ? 'Active ✓' : 'Pending';
-        dom.pbStatus1.style.color = state.reduceEmissions40 && state.closeEffluentGate ? 'var(--green-safe)' : 'var(--amber-caution)';
-        dom.pbStatus2.textContent = state.alertDownstream ? 'Active ✓' : 'Standby';
-        dom.pbStatus2.style.color = state.alertDownstream ? 'var(--green-safe)' : 'var(--text-muted)';
-        dom.pbStatus3.textContent = (curRisk.score < 35) ? 'Controlled ✓' : 'Scheduled';
-        dom.pbStatus3.style.color = (curRisk.score < 35) ? 'var(--green-safe)' : 'var(--text-muted)';
-
-        // 6. Tab 5 Updates (Simulator)
-        dom.simWindSpeedVal.textContent = `${state.windSpeed.toFixed(1)} km/h`;
-        dom.simWindDirVal.textContent = `${state.windDirection}° ${getCompassSector(state.windDirection)}`;
-        dom.simEmissionVal.textContent = `${state.emission}%`;
-
-        dom.simWindSpeed.value = state.windSpeed;
-        dom.simWindDir.value = state.windDirection;
-        dom.simEmission.value = state.emission;
-
-        dom.simPlumeReachText.textContent = `${plumeReach} km`;
-        dom.simLakeRiskText.textContent = `${curRisk.score}/100 (${curRisk.level})`;
-        dom.simLakeRiskText.style.color = curRisk.hexColor;
-        dom.simTimeLakeText.textContent = `${timeToLake} min`;
-        dom.simResidentsText.textContent = residentsAtRisk.toLocaleString();
-
-        // 7. Tab 6 Updates (Pollution Journey)
-        dom.actionWindowLine.textContent = `Action window: ${timeToLake} minutes until pollution reaches Lake Yamuna.`;
-
-        // Stops scaling times with windSpeed:
-        const tLake = timeToLake;
-        const tIntake = Math.round(20 * (19.4 / state.windSpeed));
-        const tRiver = Math.round(30 * (19.4 / state.windSpeed));
-        const tVillage = Math.round(60 * (19.4 / state.windSpeed));
-        const tWetland = Math.round(120 * (19.4 / state.windSpeed));
-
-        dom.jTime2.textContent = `+${tLake} min`;
-        dom.jTime3.textContent = `+${tIntake} min`;
-        dom.jTime4.textContent = `+${tRiver} min`;
-        dom.jTime5.textContent = `+${tVillage} min`;
-        dom.jTime6.textContent = `+${tWetland} min`;
-
-        // Checkpoints at-risk thresholds: 15, 25, 35, 45, 50, 55
-        const stops = [
-          { el: dom.jStop1, thresh: 15 },
-          { el: dom.jStop2, thresh: 25 },
-          { el: dom.jStop3, thresh: 35 },
-          { el: dom.jStop4, thresh: 45 },
-          { el: dom.jStop5, thresh: 50 },
-          { el: dom.jStop6, thresh: 55 }
-        ];
-
-        stops.forEach(s => {
-          const atRisk = curRisk.score >= s.thresh;
-          s.el.classList.toggle('at-risk', atRisk);
-          s.el.classList.toggle('safe', !atRisk);
-        });
-
-        // 8. Tab 7 Updates (Before vs After)
-        dom.cmpBaseScore.textContent = baseRisk.score;
-        dom.cmpBaseLevel.textContent = baseRisk.level;
-        dom.cmpBaseLevel.style.color = baseRisk.hexColor;
-        dom.cmpBaseScore.style.color = baseRisk.hexColor;
-        dom.cmpBaseBar.style.width = `${baseRisk.score}%`;
-        dom.cmpBaseBar.style.background = baseRisk.hexColor;
-        dom.cmpBaseReach.textContent = `${(4.0 * Math.pow(state.windSpeed / 19.4, 0.35) * Math.pow(state.emission / 100, 0.25)).toFixed(1)} km`;
-
-        let actionDesc = 'Without applied actions';
-        if (state.reduceEmissions40 && state.closeEffluentGate) actionDesc = 'After cutting emissions 40% & closing effluent gate';
-        else if (state.reduceEmissions40) actionDesc = 'After reducing emissions by 40%';
-        else if (state.closeEffluentGate) actionDesc = 'After closing effluent gate';
-        else if (state.alertDownstream) actionDesc = 'After alerting downstream communities';
-        dom.cmpAfterTitle.textContent = actionDesc;
-
-        dom.cmpAfterScore.textContent = curRisk.score;
-        dom.cmpAfterLevel.textContent = curRisk.level;
-        dom.cmpAfterLevel.style.color = curRisk.hexColor;
-        dom.cmpAfterScore.style.color = curRisk.hexColor;
-        dom.cmpAfterBar.style.width = `${curRisk.score}%`;
-        dom.cmpAfterBar.style.background = curRisk.hexColor;
-        dom.cmpAfterReach.textContent = `${plumeReach} km`;
-
-        const diffPoints = baseRisk.score - curRisk.score;
-        if (diffPoints > 0) {
-          dom.deltaSentence.textContent = `Acting now cuts predicted risk by ${diffPoints} points, from ${baseRisk.level} to ${curRisk.level}.`;
-          dom.deltaSentence.style.color = 'var(--green-safe)';
-        } else {
-          dom.deltaSentence.textContent = `No actions applied yet. Predicted risk remains at ${baseRisk.level} (${baseRisk.score}/100).`;
-          dom.deltaSentence.style.color = 'var(--amber-caution)';
-        }
-
-        // Risk over time dual bars (7 steps: mults = [0.2, 0.6, 0.85, 1, 1, 0.8, 0.5])
-        const timeMults = [0.2, 0.6, 0.85, 1.0, 1.0, 0.8, 0.5];
-        dom.chartColumnsContainer.innerHTML = '';
-        replayStepsData.forEach((s, i) => {
-          const hBase = Math.round(baseRisk.score * timeMults[i] * 1.3);
-          const hAfter = Math.round(curRisk.score * timeMults[i] * 1.3);
-
-          const col = document.createElement('div');
-          col.className = 'chart-col';
-          col.innerHTML = `
-            <div class="dual-bars">
-              <div class="bar-without" style="height: ${hBase}px;" title="Without: ${Math.round(baseRisk.score * timeMults[i])}"></div>
-              <div class="bar-after" style="height: ${hAfter}px;" title="After: ${Math.round(curRisk.score * timeMults[i])}"></div>
-            </div>
-            <div class="chart-col-label">${s.label}</div>
-          `;
-          dom.chartColumnsContainer.appendChild(col);
-        });
-      }
-
-      function getCompassSector(deg) {
-        if (deg >= 70 && deg < 110) return 'E';
-        if (deg >= 110 && deg < 160) return 'SE';
-        if (deg >= 160 && deg < 200) return 'S';
-        if (deg >= 200 && deg < 240) return 'SW';
-        return '';
-      }
-
-      /* =======================================================
-         EVENT LISTENERS & BINDINGS
-         ======================================================= */
-      // Tab 1 Hero Buttons
-      dom.btnApplyAllActions.addEventListener('click', () => {
-        const turnOn = !(state.reduceEmissions40 && state.closeEffluentGate && state.alertDownstream);
-        state.reduceEmissions40 = turnOn;
-        state.closeEffluentGate = turnOn;
-        state.alertDownstream = turnOn;
-        updateAll();
-      });
-
-      dom.btnOpenMap.addEventListener('click', () => {
-        switchTab('tab-2');
-      });
-
-      // Tab 2 Replay Controls
-      dom.replaySlider.addEventListener('input', (e) => {
-        state.replayStep = parseInt(e.target.value, 10);
-        updateAll();
-      });
-
-      function stopReplayAnimation() {
-        if (state.replayInterval) {
-          clearInterval(state.replayInterval);
-          state.replayInterval = null;
-        }
-        state.isPlayingReplay = false;
-        dom.replayPlayText.textContent = 'Play timeline';
-        dom.replayPlayIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
-      }
-
-      function toggleReplayAnimation() {
-        if (state.isPlayingReplay) {
-          stopReplayAnimation();
-        } else {
-          state.isPlayingReplay = true;
-          dom.replayPlayText.textContent = 'Pause';
-          dom.replayPlayIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
-
-          state.replayInterval = setInterval(() => {
-            state.replayStep = (state.replayStep + 1) % replayStepsData.length;
-            updateAll();
-          }, 1100);
-        }
-      }
-
-      dom.btnPlayReplay.addEventListener('click', toggleReplayAnimation);
-
-      // Tab 4 Action Toggles
-      dom.btnAct1.addEventListener('click', () => {
-        state.reduceEmissions40 = !state.reduceEmissions40;
-        updateAll();
-      });
-
-      dom.btnAct2.addEventListener('click', () => {
-        state.closeEffluentGate = !state.closeEffluentGate;
-        updateAll();
-      });
-
-      dom.btnAct3.addEventListener('click', () => {
-        state.alertDownstream = !state.alertDownstream;
-        updateAll();
-      });
-
-      // Tab 5 Simulator Sliders
-      dom.simWindSpeed.addEventListener('input', (e) => {
-        state.windSpeed = parseFloat(e.target.value);
-        updateAll();
-      });
-
-      dom.simWindDir.addEventListener('input', (e) => {
-        state.windDirection = parseInt(e.target.value, 10);
-        updateAll();
-      });
-
-      dom.simEmission.addEventListener('input', (e) => {
-        state.emission = parseInt(e.target.value, 10);
-        updateAll();
-      });
-
-      // Tab 5 Presets
-      dom.presetCalm.addEventListener('click', () => {
-        state.windSpeed = 6.0;
-        state.windDirection = 138;
-        state.emission = 100;
-        updateAll();
-      });
-
-      dom.presetStrong.addEventListener('click', () => {
-        state.windSpeed = 32.0;
-        state.windDirection = 138;
-        state.emission = 100;
-        updateAll();
-      });
-
-      dom.presetWorst.addEventListener('click', () => {
-        state.windSpeed = 28.0;
-        state.windDirection = 138;
-        state.emission = 150;
-        state.reduceEmissions40 = false;
-        state.closeEffluentGate = false;
-        state.alertDownstream = false;
-        updateAll();
-      });
-
-      dom.presetReset.addEventListener('click', () => {
-        state.windSpeed = 19.4;
-        state.windDirection = 138;
-        state.emission = 100;
-        state.reduceEmissions40 = false;
-        state.closeEffluentGate = false;
-        state.alertDownstream = false;
-        state.replayStep = 0;
-        stopReplayAnimation();
-        updateAll();
-      });
-
-      /* =======================================================
-         INITIALIZE ON LOAD
-         ======================================================= */
-      updateAll();
-
-    })();
-  </script>
+  <!-- Main Application Script -->
+  <script src="app.js"></script>
 </body>
 </html>
