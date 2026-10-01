@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoFlow AI — Industrial Pollution Response Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;500;600;700;800&display=swap');
+
+    :root {
+      /* Theme variables: default Dark Mode */
+      --bg-body: #070f1a;
+      --bg-card: #0d1b2a;
+      --bg-card-hover: #13253b;
+      --bg-subtle: #162a42;
+      --bg-input: #102136;
+      --border-color: #1e3552;
+      --border-highlight: #33537b;
+      
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-subtle: #64748b;
+      
+      --teal-primary: #14b8a6;
+      --teal-dark: #0f766e;
+      --teal-glow: rgba(20, 184, 166, 0.2);
+      
+      --navy-deep: #0a1424;
+      --navy-light: #1e3a5f;
+      
+      --amber-alert: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.15);
+      --amber-border: rgba(245, 158, 11, 0.4);
+      
+      --red-danger: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.15);
+      --red-border: rgba(239, 68, 68, 0.45);
+      --red-pulse: rgba(239, 68, 68, 0.6);
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+      --font-family: 'Bricolage Grotesque', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Light Theme override */
+    body.theme-light {
+      --bg-body: #f4f8fa;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f8fafc;
+      --bg-subtle: #e6eef5;
+      --bg-input: #edf3f8;
+      --border-color: #cbd5e1;
+      --border-highlight: #94a3b8;
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-subtle: #64748b;
+      
+      --teal-primary: #0d9488;
+      --teal-dark: #115e59;
+      --teal-glow: rgba(13, 148, 136, 0.15);
+      
+      --navy-deep: #0f172a;
+      --navy-light: #334155;
+      
+      --amber-alert: #d97706;
+      --amber-bg: rgba(217, 119, 6, 0.12);
+      --amber-border: rgba(217, 119, 6, 0.35);
+      
+      --red-danger: #dc2626;
+      --red-bg: rgba(220, 38, 38, 0.12);
+      --red-border: rgba(220, 38, 38, 0.35);
+      --red-pulse: rgba(220, 38, 38, 0.5);
+      
+      --shadow-card: 0 4px 18px -2px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1080px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-incident {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--red-bg);
+      color: var(--red-danger);
+      border: 1px solid var(--red-border);
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--red-danger);
+      box-shadow: 0 0 0 0 var(--red-pulse);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 var(--red-pulse);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+
+    .app-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .app-title .water-icon {
+      color: var(--teal-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .data-pill {
+      font-size: 0.8rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .theme-toggle-btn {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .theme-toggle-btn:hover {
+      background: var(--border-color);
+    }
+
+    .theme-toggle-btn:focus-visible {
+      outline: 2px solid var(--teal-primary);
+      outline-offset: 2px;
+    }
+
+    .header-desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* TABS */
+    .tablist-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 6px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover:not([aria-selected="true"]) {
+      background: var(--bg-subtle);
+      color: var(--text-main);
+    }
+
+    .tab-btn:focus-visible {
+      outline: 2px solid var(--teal-primary);
+      outline-offset: -2px;
+    }
+
+    .tab-btn[aria-selected="true"] {
+      background: var(--bg-subtle);
+      color: var(--teal-primary);
+      border-color: var(--teal-primary);
+      box-shadow: 0 0 12px var(--teal-glow);
+    }
+
+    /* TAB PANELS */
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* STAT CARDS */
+    .stat-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--border-highlight);
+    }
+
+    .stat-card.critical::before {
+      background: var(--red-danger);
+    }
+
+    .stat-card.warning::before {
+      background: var(--amber-alert);
+    }
+
+    .stat-card.info::before {
+      background: var(--teal-primary);
+    }
+
+    .stat-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .stat-value.red-text {
+      color: var(--red-danger);
+    }
+
+    .stat-value.amber-text {
+      color: var(--amber-alert);
+    }
+
+    .stat-value.teal-text {
+      color: var(--teal-primary);
+    }
+
+    .stat-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .stat-sub {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* TAB 1: SPREAD ANIMATION */
+    .spread-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .spread-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .spread-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .spread-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-primary {
+      background: var(--teal-primary);
+      color: #042f2e;
+      border: none;
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 8px var(--teal-glow);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:focus-visible {
+      outline: 2px solid var(--teal-primary);
+      outline-offset: 2px;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .progress-track {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      height: 18px;
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--teal-primary) 0%, var(--amber-alert) 55%, var(--red-danger) 100%);
+      border-radius: 9999px;
+      transition: width 0.08s linear;
+      position: relative;
+    }
+
+    .progress-markers {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-subtle);
+      margin-top: 4px;
+    }
+
+    .spread-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .live-timer {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--amber-alert);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .live-status-text {
+      font-size: 0.88rem;
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    /* FLOW MAP TIMELINE */
+    .drainage-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .drainage-step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .drainage-step-card.reached {
+      border-color: var(--red-danger);
+      background: var(--red-bg);
+    }
+
+    .drainage-step-km {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--teal-primary);
+    }
+
+    .drainage-step-card.reached .drainage-step-km {
+      color: var(--red-danger);
+    }
+
+    /* TAB 2: WIND & PLUME */
+    .slider-container {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .slider-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .slider-readout {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--teal-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .range-input {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 6px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--teal-primary);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--teal-glow);
+      border: 2px solid #ffffff;
+    }
+
+    .range-input::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--teal-primary);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--teal-glow);
+      border: 2px solid #ffffff;
+    }
+
+    .range-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-subtle);
+    }
+
+    .dynamic-plume-text {
+      background: var(--bg-card);
+      border-left: 4px solid var(--amber-alert);
+      padding: 12px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* SVG MAP CONTAINER */
+    .svg-wrapper {
+      background: var(--navy-deep);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      justify-content: center;
+    }
+
+    .plume-svg {
+      width: 100%;
+      height: auto;
+      max-height: 480px;
+      display: block;
+    }
+
+    /* ZONE LEGEND */
+    .zone-legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      margin-top: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-swatch.zone-a {
+      background: var(--red-danger);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .legend-swatch.zone-b {
+      background: var(--amber-alert);
+      box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+    }
+
+    .legend-swatch.zone-c {
+      background: var(--teal-primary);
+      box-shadow: 0 0 8px rgba(20, 184, 166, 0.4);
+    }
+
+    .legend-text {
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+
+    .legend-title {
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    /* TAB 3: HEALTH & ENVIRONMENT */
+    .ph-visualizer-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .ph-gradient-bar {
+      height: 24px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, 
+        #dc2626 0%,   /* pH 5.5 */
+        #ea580c 20%,  /* pH 6.0 */
+        #f59e0b 38%,  /* pH 6.5 */
+        #10b981 60%,  /* pH 7.2 */
+        #0d9488 78%,  /* pH 7.8 */
+        #2563eb 100%  /* pH 8.5 */
+      );
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .ph-pin {
+      position: absolute;
+      top: -8px;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      transition: left 0.15s ease-out;
+    }
+
+    .ph-pin-indicator {
+      width: 14px;
+      height: 38px;
+      background: #ffffff;
+      border: 2px solid #0f172a;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+
+    .ph-pin-label {
+      position: absolute;
+      top: 42px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text-main);
+    }
+
+    .ph-pin.dropped .ph-pin-indicator {
+      background: var(--red-danger);
+      border-color: #ffffff;
+    }
+
+    .ph-pin.dropped .ph-pin-label {
+      top: -26px;
+      border-color: var(--red-danger);
+      color: var(--red-danger);
+    }
+
+    .ph-readout-row {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 14px;
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .ph-num-block {
+      text-align: center;
+    }
+
+    .ph-num-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .ph-num-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ph-impact-statement {
+      background: var(--bg-card);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      border-left: 4px solid var(--red-danger);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* TAB 4: MITIGATION ACTIONS */
+    .actions-summary-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+    }
+
+    .actions-counter-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .actions-counter-badge {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--teal-primary);
+    }
+
+    .actions-progress-mini {
+      width: 140px;
+      height: 8px;
+      background: var(--bg-input);
+      border-radius: 9999px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .actions-progress-mini-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--teal-primary);
+      transition: width 0.25s ease;
+    }
+
+    .actions-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .action-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      position: relative;
+      user-select: none;
+    }
+
+    .action-card:hover {
+      border-color: var(--border-highlight);
+      background: var(--bg-card-hover);
+    }
+
+    .action-card.completed {
+      background: var(--teal-glow);
+      border-color: var(--teal-primary);
+    }
+
+    .custom-checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 2px solid var(--border-highlight);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .action-card:hover .custom-checkbox {
+      border-color: var(--teal-primary);
+    }
+
+    .action-card.completed .custom-checkbox {
+      background: var(--teal-primary);
+      border-color: var(--teal-primary);
+    }
+
+    .checkbox-tick {
+      display: none;
+      color: #042f2e;
+    }
+
+    .action-card.completed .checkbox-tick {
+      display: block;
+    }
+
+    .action-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-grow: 1;
+    }
+
+    .action-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .action-card.completed .action-title {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .action-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--text-subtle);
+    }
+
+    .action-tag {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    /* FOOTER */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      box-shadow: var(--shadow-card);
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-data-badge {
+      color: var(--teal-primary);
+      font-weight: 600;
+    }
+
+    /* RESPONSIVE DESIGN */
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+      }
+
+      .tablist-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .drainage-steps {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .panel-content {
+        padding: 16px;
+      }
+
+      .app-title {
+        font-size: 1.4rem;
+      }
+
+      .stat-value {
+        font-size: 1.8rem;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .tablist-container {
+        grid-template-columns: 1fr;
+      }
+
+      .drainage-steps {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- HEADER -->
+    <header>
+      <div class="header-top">
+        <div class="brand-group">
+          <span class="badge-incident" role="status" aria-live="polite">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            Active incident
+          </span>
+          <h1 class="app-title">
+            <svg class="water-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+            </svg>
+            EcoFlow AI
+          </h1>
+        </div>
+
+        <div class="header-actions">
+          <div class="data-pill" title="Live atmospheric vector feed">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+            </svg>
+            <span>Wind: 19.4 km/h, 138° SE (NASA POWER API)</span>
+          </div>
+
+          <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle light or dark theme" type="button">
+            <svg id="themeIconSun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg id="themeIconMoon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <span id="themeToggleText">Light mode</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="header-desc">
+        Industrial pollution incident containment and dispersion analysis for Lake Yamuna and the Okhla Reservoir Basin.
+      </p>
+    </header>
+
+    <!-- TABS NAVIGATION -->
+    <nav aria-label="Dashboard views">
+      <div class="tablist-container" role="tablist" aria-label="Incident response sections">
+        <button id="tab-water" class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-water" tabindex="0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+          </svg>
+          Affected water bodies
+        </button>
+        <button id="tab-plume" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-plume" tabindex="-1">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+          </svg>
+          Wind and plume
+        </button>
+        <button id="tab-health" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-health" tabindex="-1">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+          </svg>
+          Health and environment
+        </button>
+        <button id="tab-actions" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-actions" tabindex="-1">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M9 11l3 3L22 4"></path>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          Mitigation actions
+        </button>
+      </div>
+    </nav>
+
+    <!-- MAIN PANELS -->
+    <main>
+
+      <!-- TAB 1: Affected water bodies -->
+      <section id="panel-water" class="tab-panel active" role="tabpanel" aria-labelledby="tab-water" tabindex="0">
+        <div class="panel-content">
+          <!-- 3 Stat Cards -->
+          <div class="stat-cards-grid">
+            <div class="stat-card info">
+              <div class="stat-value teal-text">2.4 km</div>
+              <div class="stat-label">Runoff and fallout distance, downstream and downwind</div>
+              <div class="stat-sub">From Okhla industrial outfall to reservoir intake perimeter</div>
+            </div>
+
+            <div class="stat-card warning">
+              <div class="stat-value amber-text">14–18 min</div>
+              <div class="stat-label">Time to contamination at current wind and drainage</div>
+              <div class="stat-sub">Critical hydraulic travel window before reaching intake gates</div>
+            </div>
+
+            <div class="stat-card critical">
+              <div class="stat-value red-text">Critical</div>
+              <div class="stat-label">Immediate threat to municipal intake gates and freshwater life</div>
+              <div class="stat-sub">Emergency sluice closure recommended to protect drinking supply</div>
+            </div>
+          </div>
+
+          <!-- Spread Animation Box -->
+          <div class="spread-box">
+            <div class="spread-header">
+              <div class="spread-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Contamination arrival timeline simulation</span>
+              </div>
+              <div class="spread-controls">
+                <button id="playSpreadBtn" class="btn-primary" type="button" aria-label="Play contamination spread simulation">
+                  <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span id="playBtnText">Play spread</span>
+                </button>
+                <button id="resetSpreadBtn" class="btn-secondary" type="button" aria-label="Reset simulation">
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div>
+              <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="16" aria-valuenow="0" id="spreadProgressBar" aria-label="Contamination advance toward reservoir">
+                <div id="spreadProgressFill" class="progress-fill"></div>
+              </div>
+              <div class="progress-markers">
+                <span>0.0 km (Outfall)</span>
+                <span>0.8 km (Canal)</span>
+                <span>1.6 km (Wetland)</span>
+                <span>2.4 km (Intake Gate)</span>
+              </div>
+            </div>
+
+            <!-- Status and Timer -->
+            <div class="spread-status-bar">
+              <div class="live-timer" id="liveTimerText">0.0 min / 16.0 min</div>
+              <div class="live-status-text" id="liveSpreadStatus">Ready to simulate. Click "Play spread" to track contaminant front.</div>
+            </div>
+
+            <!-- 4 Drainage Milestones -->
+            <div class="drainage-steps">
+              <div class="drainage-step-card" id="step-0">
+                <span class="drainage-step-km">0.0 km — Outfall</span>
+                <span>Acidic effluent enters stormwater discharge conduit</span>
+              </div>
+              <div class="drainage-step-card" id="step-1">
+                <span class="drainage-step-km">0.8 km — Feeder canal</span>
+                <span>Runoff mixes with eastern industrial canal flow</span>
+              </div>
+              <div class="drainage-step-card" id="step-2">
+                <span class="drainage-step-km">1.6 km — Marsh buffer</span>
+                <span>Chemical front breaches Okhla wetland threshold</span>
+              </div>
+              <div class="drainage-step-card" id="step-3">
+                <span class="drainage-step-km">2.4 km — Intake Gate #4</span>
+                <span>Direct impingement at municipal drinking water intake</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: Wind and plume -->
+      <section id="panel-plume" class="tab-panel" role="tabpanel" aria-labelledby="tab-plume" tabindex="0">
+        <div class="panel-content">
+          <!-- Wind Slider & Controls -->
+          <div class="slider-container">
+            <div class="slider-header">
+              <label for="windSlider" class="slider-title">Wind speed slider (4–35 km/h)</label>
+              <div class="slider-readout" id="windReadout">19.4 km/h</div>
+            </div>
+            <input type="range" id="windSlider" class="range-input" min="4" max="35" step="0.5" value="19.4" aria-label="Adjust wind speed in kilometers per hour">
+            <div class="range-ticks">
+              <span>4 km/h (Stagnant)</span>
+              <span>19.4 km/h (NASA POWER API)</span>
+              <span>35 km/h (High advection)</span>
+            </div>
+
+            <!-- Dynamic Text Line -->
+            <div class="dynamic-plume-text" id="dynamicPlumeDesc" role="status" aria-live="polite">
+              Moderate southeasterly dispersion toward the reservoir buffer.
+            </div>
+          </div>
+
+          <!-- SVG Visual Map -->
+          <div class="svg-wrapper">
+            <svg class="plume-svg" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Map showing chemical plume dispersion from source toward Lake Yamuna at 138 degrees south-east">
+              <defs>
+                <!-- Grid pattern -->
+                <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+                </pattern>
+                
+                <!-- Water gradient -->
+                <linearGradient id="lakeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0f766e" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#09393b" stop-opacity="0.95"/>
+                </linearGradient>
+
+                <!-- Zone Gradients -->
+                <radialGradient id="zoneAGrad" cx="130" cy="110" r="140" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#ef4444" stop-opacity="0.85"/>
+                  <stop offset="100%" stop-color="#dc2626" stop-opacity="0.4"/>
+                </radialGradient>
+                <radialGradient id="zoneBGrad" cx="130" cy="110" r="280" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.75"/>
+                  <stop offset="100%" stop-color="#d97706" stop-opacity="0.35"/>
+                </radialGradient>
+                <radialGradient id="zoneCGrad" cx="130" cy="110" r="460" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.6"/>
+                  <stop offset="100%" stop-color="#0f766e" stop-opacity="0.25"/>
+                </radialGradient>
+              </defs>
+
+              <!-- Map Background Grid -->
+              <rect width="800" height="480" fill="#091424"/>
+              <rect width="800" height="480" fill="url(#gridPattern)"/>
+
+              <!-- River Yamuna corridor feeding down -->
+              <path d="M 280 0 Q 320 120 400 200 T 520 310" fill="none" stroke="rgba(20, 184, 166, 0.22)" stroke-width="38" stroke-linecap="round"/>
+              <path d="M 280 0 Q 320 120 400 200 T 520 310" fill="none" stroke="rgba(20, 184, 166, 0.45)" stroke-width="8" stroke-dasharray="6,6"/>
+
+              <!-- Lake Yamuna and Okhla Reservoir Basin (Lower Right) -->
+              <g id="lakeShape">
+                <path d="M 450 300 C 510 270, 620 280, 710 310 C 780 330, 800 390, 790 440 C 770 480, 680 490, 580 470 C 490 450, 440 400, 430 350 C 425 320, 435 305, 450 300 Z" fill="url(#lakeGrad)" stroke="#14b8a6" stroke-width="2"/>
+                
+                <!-- Water texture waves -->
+                <path d="M 480 340 Q 510 335 540 340 T 600 340" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+                <path d="M 520 375 Q 560 370 600 375 T 670 375" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+                <path d="M 580 420 Q 620 415 660 420 T 730 420" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+
+                <!-- Lake Label -->
+                <text x="590" y="375" fill="#f8fafc" font-size="14" font-weight="700" text-anchor="middle" letter-spacing="0.05em">Lake Yamuna & Okhla Reservoir Basin</text>
+                <text x="590" y="395" fill="#5eead4" font-size="11" text-anchor="middle">Freshwater retention area · 2.4 km downstream</text>
+              </g>
+
+              <!-- Municipal Intake Gate #4 Marker -->
+              <g id="intakeMarker" transform="translate(465, 320)">
+                <circle cx="0" cy="0" r="9" fill="#ef4444" stroke="#ffffff" stroke-width="2"/>
+                <circle cx="0" cy="0" r="16" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,3"/>
+                <text x="18" y="4" fill="#f87171" font-size="12" font-weight="800">Intake Gate #4 (Drinking Supply)</text>
+              </g>
+
+              <!-- DYNAMIC PLUME CONE (Drawn dynamically via JS) -->
+              <g id="dynamicPlumeGroup">
+                <!-- Zone C (Outer: 2.5 - 4.0 km) -->
+                <path id="svgZoneC" d="" fill="url(#zoneCGrad)" stroke="#14b8a6" stroke-width="1.5" stroke-dasharray="4,4"/>
+                <!-- Zone B (Middle: 1.0 - 2.5 km) -->
+                <path id="svgZoneB" d="" fill="url(#zoneBGrad)" stroke="#f59e0b" stroke-width="1.5"/>
+                <!-- Zone A (Inner: 0 - 1.0 km) -->
+                <path id="svgZoneA" d="" fill="url(#zoneAGrad)" stroke="#ef4444" stroke-width="2"/>
+              </g>
+
+              <!-- Zone Text Markers -->
+              <g id="zoneLabels">
+                <text id="labelZoneA" x="210" y="180" fill="#fca5a5" font-size="11" font-weight="700">Zone A (0–1.0 km)</text>
+                <text id="labelZoneB" x="310" y="270" fill="#fcd34d" font-size="11" font-weight="700">Zone B (1.0–2.5 km)</text>
+                <text id="labelZoneC" x="420" y="370" fill="#99f6e4" font-size="11" font-weight="700">Zone C (2.5–4.0 km)</text>
+              </g>
+
+              <!-- Industrial Source (Upper Left) -->
+              <g transform="translate(130, 110)">
+                <!-- Warning pulse ring -->
+                <circle cx="0" cy="0" r="22" fill="none" stroke="rgba(239, 68, 68, 0.4)" stroke-width="2">
+                  <animate attributeName="r" values="10;28;10" dur="2.4s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.8;0;0.8" dur="2.4s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Source Pin -->
+                <circle cx="0" cy="0" r="10" fill="#dc2626" stroke="#ffffff" stroke-width="2.5"/>
+                <!-- Chimney Glyph -->
+                <path d="M -4 3 L -4 -4 L 4 -4 L 4 3 Z M -2 -7 L 2 -7" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+                <!-- Label -->
+                <rect x="-95" y="-36" width="190" height="22" rx="4" fill="rgba(15, 23, 42, 0.85)" stroke="var(--red-border)" stroke-width="1"/>
+                <text x="0" y="-21" fill="#f8fafc" font-size="11" font-weight="700" text-anchor="middle">Industrial source (Okhla Ph-II)</text>
+              </g>
+
+              <!-- Compass & Wind Direction Indicator -->
+              <g transform="translate(720, 70)">
+                <circle cx="0" cy="0" r="34" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+                <text x="0" y="-18" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="middle">N</text>
+                <text x="20" y="3" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="middle">E</text>
+                <text x="0" y="24" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="middle">S</text>
+                <text x="-20" y="3" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="middle">W</text>
+                <!-- 138° Vector Arrow (Rotated 138 deg from North = 48 deg from positive X) -->
+                <g transform="rotate(138)">
+                  <line x1="0" y1="0" x2="0" y2="24" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+                  <polygon points="0,28 -5,18 5,18" fill="#14b8a6"/>
+                </g>
+                <text x="0" y="44" fill="#14b8a6" font-size="10" font-weight="700" text-anchor="middle">138° SE</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Zone Legend -->
+          <div class="zone-legend">
+            <div class="legend-item">
+              <div class="legend-swatch zone-a" aria-hidden="true"></div>
+              <div class="legend-text">
+                <div class="legend-title">Zone A (0–1.0 km)</div>
+                Industrial corridor with heavy respiratory threat. Immediate plant perimeter evacuation zone.
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-swatch zone-b" aria-hidden="true"></div>
+              <div class="legend-text">
+                <div class="legend-title">Zone B (1.0–2.5 km)</div>
+                Agricultural fringe and eastern canal feeder. High ground-level acid aerosol accumulation.
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-swatch zone-c" aria-hidden="true"></div>
+              <div class="legend-text">
+                <div class="legend-title">Zone C (2.5–4.0 km)</div>
+                Primary lake boundary and downwind residential perimeter. Drinking intake threat zone.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Health and environment -->
+      <section id="panel-health" class="tab-panel" role="tabpanel" aria-labelledby="tab-health" tabindex="0">
+        <div class="panel-content">
+          <!-- 3 Stat Cards -->
+          <div class="stat-cards-grid">
+            <div class="stat-card warning">
+              <div class="stat-value amber-text">+145 µg/m³</div>
+              <div class="stat-label">PM2.5 increase with an SO2 plume downwind</div>
+              <div class="stat-sub">Acute particulate spike over baseline across 3.4 km²</div>
+            </div>
+
+            <div class="stat-card info">
+              <div class="stat-value teal-text">38,000</div>
+              <div class="stat-label">Residents in the downwind arc</div>
+              <div class="stat-sub">Populations in Jasola, Okhla Vihar, and Kalindi Kunj</div>
+            </div>
+
+            <div class="stat-card critical">
+              <div class="stat-value red-text">ΔpH ≈ −0.8</div>
+              <div class="stat-label">Acidification risk if sulfur and nitrogen gases settle on the reservoir</div>
+              <div class="stat-sub">Atmospheric wet deposition into freshwater holding basin</div>
+            </div>
+          </div>
+
+          <!-- pH Slider & Interactive Visualizer -->
+          <div class="ph-visualizer-card">
+            <div class="slider-header">
+              <label for="phSlider" class="slider-title">Adjust baseline reservoir pH (6.5 – 8.5)</label>
+              <div class="slider-readout" id="startPhReadout">Start pH: 7.6</div>
+            </div>
+            <input type="range" id="phSlider" class="range-input" min="6.5" max="8.5" step="0.1" value="7.6" aria-label="Baseline lake pH slider">
+            <div class="range-ticks">
+              <span>6.5 (Naturally acidic)</span>
+              <span>7.5 (Typical Yamuna buffer)</span>
+              <span>8.5 (Alkaline buffer)</span>
+            </div>
+
+            <!-- Visual Gradient pH Bar with dual pins -->
+            <div style="padding: 30px 10px 35px 10px;">
+              <div class="ph-gradient-bar" id="phBar">
+                <!-- Start pH Pin -->
+                <div class="ph-pin" id="pinStart" style="left: 70%;">
+                  <div class="ph-pin-indicator"></div>
+                  <div class="ph-pin-label" id="pinStartText">Start: 7.6</div>
+                </div>
+                <!-- Dropped pH Pin (-0.8) -->
+                <div class="ph-pin dropped" id="pinDropped" style="left: 43.3%;">
+                  <div class="ph-pin-indicator"></div>
+                  <div class="ph-pin-label" id="pinDroppedText">After drop: 6.8</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Comparison Block -->
+            <div class="ph-readout-row">
+              <div class="ph-num-block">
+                <div class="ph-num-label">Baseline reservoir pH</div>
+                <div class="ph-num-val" id="valBasePh" style="color: var(--teal-primary);">7.60</div>
+              </div>
+              <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-subtle);">→</div>
+              <div class="ph-num-block">
+                <div class="ph-num-label">Acid fallout shift</div>
+                <div class="ph-num-val" style="color: var(--amber-alert);">−0.80</div>
+              </div>
+              <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-subtle);">=</div>
+              <div class="ph-num-block">
+                <div class="ph-num-label">Post-deposition reservoir pH</div>
+                <div class="ph-num-val" id="valFinalPh" style="color: var(--red-danger);">6.80</div>
+              </div>
+            </div>
+
+            <!-- Dynamic Risk Sentence -->
+            <div class="ph-impact-statement" id="phRiskSentence" role="status" aria-live="polite">
+              Moderate risk: Sub-lethal stress to sensitive aquatic species and juvenile fish; bio-productivity drops.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: Mitigation actions -->
+      <section id="panel-actions" class="tab-panel" role="tabpanel" aria-labelledby="tab-actions" tabindex="0">
+        <div class="panel-content">
+          <!-- Summary Bar -->
+          <div class="actions-summary-bar">
+            <div class="actions-counter-group">
+              <div class="actions-counter-badge" id="actionsCountText" role="status" aria-live="polite">0 of 4 actions marked done</div>
+              <div class="actions-progress-mini">
+                <div class="actions-progress-mini-fill" id="actionsProgressFill"></div>
+              </div>
+            </div>
+
+            <div class="actions-btn-group">
+              <button id="markAllActionsBtn" class="btn-secondary" type="button">Mark all done</button>
+              <button id="resetActionsBtn" class="btn-secondary" type="button">Reset</button>
+            </div>
+          </div>
+
+          <!-- 4 Action Cards -->
+          <div class="actions-list" role="group" aria-label="Mitigation action checklist">
+            
+            <!-- Action 1 -->
+            <div class="action-card" id="cardAction1" tabindex="0" role="checkbox" aria-checked="false">
+              <div class="custom-checkbox" aria-hidden="true">
+                <svg class="checkbox-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="action-content">
+                <div class="action-title">1. Neutralize acidic scrubber effluent in lime slurry pits before release.</div>
+                <div class="action-meta">
+                  <span class="action-tag">Water Chemistry</span>
+                  <span>Prevents acid wave reaching Yamuna canal feeder</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action 2 -->
+            <div class="action-card" id="cardAction2" tabindex="0" role="checkbox" aria-checked="false">
+              <div class="custom-checkbox" aria-hidden="true">
+                <svg class="checkbox-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="action-content">
+                <div class="action-title">2. Divert untreated industrial runoff to secondary lined retention basins (zero liquid discharge).</div>
+                <div class="action-meta">
+                  <span class="action-tag">Hydraulic Isolation</span>
+                  <span>Isolates toxic load from municipal water intake gates</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action 3 -->
+            <div class="action-card" id="cardAction3" tabindex="0" role="checkbox" aria-checked="false">
+              <div class="custom-checkbox" aria-hidden="true">
+                <svg class="checkbox-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="action-content">
+                <div class="action-title">3. Ramp alkaline wet scrubbers to maximum before gases exit the chimney.</div>
+                <div class="action-meta">
+                  <span class="action-tag">Air Treatment</span>
+                  <span>Suppresses SO2 and particulate emissions at the stack</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action 4 -->
+            <div class="action-card" id="cardAction4" tabindex="0" role="checkbox" aria-checked="false">
+              <div class="custom-checkbox" aria-hidden="true">
+                <svg class="checkbox-tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="action-content">
+                <div class="action-title">4. Throttle furnace output by 40% until the wind shifts away from sensitive aquatic zones.</div>
+                <div class="action-meta">
+                  <span class="action-tag">Source Curtailment</span>
+                  <span>Reduces total mass emission rate by 40%</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-left">
+        <span>Incident response zone: Okhla Industrial Area & Lake Yamuna basin</span>
+        <span>·</span>
+        <span class="footer-data-badge">Wind: 19.4 km/h, 138° SE, labeled as from the NASA POWER API.</span>
+      </div>
+      <div>
+        <span>Figures are modelled estimates for demonstration.</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- JAVASCRIPT: State, Interactivity, Keyboard Navigation, Plume Math -->
+  <script>
+    (function() {
+      'use strict';
+
+      /* ==========================================
+         APPLICATION STATE (In-Memory JS variables only)
+         ========================================== */
+      const state = {
+        theme: 'dark', // 'dark' | 'light'
+        activeTab: 'tab-water', // 'tab-water' | 'tab-plume' | 'tab-health' | 'tab-actions'
+        
+        // Spread animation state
+        spread: {
+          isPlaying: false,
+          elapsedMinutes: 0.0,
+          totalMinutes: 16.0,
+          timerInterval: null
+        },
+
+        // Wind & Plume state
+        wind: {
+          speedKmH: 19.4,
+          directionDeg: 138 // SE
+        },
+
+        // pH state
+        ph: {
+          start: 7.6,
+          drop: 0.8
+        },
+
+        // Mitigation actions (4 items)
+        actions: [false, false, false, false]
+      };
+
+      /* ==========================================
+         DOM ELEMENTS
+         ========================================== */
+      const dom = {
+        body: document.body,
+        themeToggleBtn: document.getElementById('themeToggleBtn'),
+        themeIconSun: document.getElementById('themeIconSun'),
+        themeIconMoon: document.getElementById('themeIconMoon'),
+        themeToggleText: document.getElementById('themeToggleText'),
+
+        tabs: Array.from(document.querySelectorAll('.tab-btn')),
+        panels: Array.from(document.querySelectorAll('.tab-panel')),
+
+        // Spread Simulator
+        playSpreadBtn: document.getElementById('playSpreadBtn'),
+        playIcon: document.getElementById('playIcon'),
+        playBtnText: document.getElementById('playBtnText'),
+        resetSpreadBtn: document.getElementById('resetSpreadBtn'),
+        spreadProgressBar: document.getElementById('spreadProgressBar'),
+        spreadProgressFill: document.getElementById('spreadProgressFill'),
+        liveTimerText: document.getElementById('liveTimerText'),
+        liveSpreadStatus: document.getElementById('liveSpreadStatus'),
+        milestoneSteps: [
+          document.getElementById('step-0'),
+          document.getElementById('step-1'),
+          document.getElementById('step-2'),
+          document.getElementById('step-3')
+        ],
+
+        // Wind & Plume
+        windSlider: document.getElementById('windSlider'),
+        windReadout: document.getElementById('windReadout'),
+        dynamicPlumeDesc: document.getElementById('dynamicPlumeDesc'),
+        svgZoneA: document.getElementById('svgZoneA'),
+        svgZoneB: document.getElementById('svgZoneB'),
+        svgZoneC: document.getElementById('svgZoneC'),
+        labelZoneA: document.getElementById('labelZoneA'),
+        labelZoneB: document.getElementById('labelZoneB'),
+        labelZoneC: document.getElementById('labelZoneC'),
+
+        // pH Environment
+        phSlider: document.getElementById('phSlider'),
+        startPhReadout: document.getElementById('startPhReadout'),
+        pinStart: document.getElementById('pinStart'),
+        pinStartText: document.getElementById('pinStartText'),
+        pinDropped: document.getElementById('pinDropped'),
+        pinDroppedText: document.getElementById('pinDroppedText'),
+        valBasePh: document.getElementById('valBasePh'),
+        valFinalPh: document.getElementById('valFinalPh'),
+        phRiskSentence: document.getElementById('phRiskSentence'),
+
+        // Mitigation Actions
+        actionsCountText: document.getElementById('actionsCountText'),
+        actionsProgressFill: document.getElementById('actionsProgressFill'),
+        markAllActionsBtn: document.getElementById('markAllActionsBtn'),
+        resetActionsBtn: document.getElementById('resetActionsBtn'),
+        actionCards: [
+          document.getElementById('cardAction1'),
+          document.getElementById('cardAction2'),
+          document.getElementById('cardAction3'),
+          document.getElementById('cardAction4')
+        ]
+      };
+
+      /* ==========================================
+         THEME TOGGLE
+         ========================================== */
+      function updateThemeUI() {
+        if (state.theme === 'light') {
+          dom.body.classList.add('theme-light');
+          dom.themeIconSun.style.display = 'none';
+          dom.themeIconMoon.style.display = 'inline-block';
+          dom.themeToggleText.textContent = 'Dark mode';
+        } else {
+          dom.body.classList.remove('theme-light');
+          dom.themeIconSun.style.display = 'inline-block';
+          dom.themeIconMoon.style.display = 'none';
+          dom.themeToggleText.textContent = 'Light mode';
+        }
+      }
+
+      dom.themeToggleBtn.addEventListener('click', () => {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        updateThemeUI();
+      });
+
+      /* ==========================================
+         KEYBOARD-ACCESSIBLE TABS (WAI-ARIA Pattern)
+         ========================================== */
+      function switchTab(targetTabId) {
+        state.activeTab = targetTabId;
+        dom.tabs.forEach(tab => {
+          const isSelected = tab.id === targetTabId;
+          tab.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+          tab.setAttribute('tabindex', isSelected ? '0' : '-1');
+        });
+
+        dom.panels.forEach(panel => {
+          const associatedTabId = panel.getAttribute('aria-labelledby');
+          if (associatedTabId === targetTabId) {
+            panel.classList.add('active');
+          } else {
+            panel.classList.remove('active');
+          }
+        });
+      }
+
+      dom.tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+          switchTab(tab.id);
+        });
+
+        tab.addEventListener('keydown', (e) => {
+          let targetIndex = index;
+          if (e.key === 'ArrowRight') {
+            targetIndex = (index + 1) % dom.tabs.length;
+            e.preventDefault();
+          } else if (e.key === 'ArrowLeft') {
+            targetIndex = (index - 1 + dom.tabs.length) % dom.tabs.length;
+            e.preventDefault();
+          } else if (e.key === 'Home') {
+            targetIndex = 0;
+            e.preventDefault();
+          } else if (e.key === 'End') {
+            targetIndex = dom.tabs.length - 1;
+            e.preventDefault();
+          }
+
+          if (targetIndex !== index) {
+            const newTab = dom.tabs[targetIndex];
+            newTab.focus();
+            switchTab(newTab.id);
+          }
+        });
+      });
+
+      /* ==========================================
+         TAB 1: SPREAD ANIMATION LOGIC
+         ========================================== */
+      const milestones = [
+        { time: 0.0, text: 'Breach detected: Effluent enters industrial discharge canal at Okhla Phase-II.' },
+        { time: 4.5, text: 'Runoff enters Yamuna secondary feeder channel (0.8 km). Surface sheen visible.' },
+        { time: 9.5, text: 'Chemical front reaches Okhla marshland buffer (1.6 km). Wetland biological capacity overwhelmed.' },
+        { time: 14.2, text: 'CRITICAL ALERT: Contamination front impinges on Municipal Intake Gate #4 (2.4 km)!' }
+      ];
+
+      function updateSpreadUI() {
+        const pct = Math.min(100, (state.spread.elapsedMinutes / state.spread.totalMinutes) * 100);
+        dom.spreadProgressFill.style.width = pct + '%';
+        dom.spreadProgressBar.setAttribute('aria-valuenow', state.spread.elapsedMinutes.toFixed(1));
+        dom.liveTimerText.textContent = `${state.spread.elapsedMinutes.toFixed(1)} min / ${state.spread.totalMinutes.toFixed(1)} min`;
+
+        // Update milestone status text
+        let currentStatus = milestones[0].text;
+        for (let i = milestones.length - 1; i >= 0; i--) {
+          if (state.spread.elapsedMinutes >= milestones[i].time) {
+            currentStatus = milestones[i].text;
+            break;
+          }
+        }
+        dom.liveSpreadStatus.textContent = currentStatus;
+
+        // Update milestone cards highlight
+        dom.milestoneSteps[0].classList.toggle('reached', state.spread.elapsedMinutes >= 0.0);
+        dom.milestoneSteps[1].classList.toggle('reached', state.spread.elapsedMinutes >= 4.5);
+        dom.milestoneSteps[2].classList.toggle('reached', state.spread.elapsedMinutes >= 9.5);
+        dom.milestoneSteps[3].classList.toggle('reached', state.spread.elapsedMinutes >= 14.2);
+
+        // Update button appearance
+        if (state.spread.isPlaying) {
+          dom.playBtnText.textContent = 'Pause';
+          dom.playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+        } else if (state.spread.elapsedMinutes >= state.spread.totalMinutes) {
+          dom.playBtnText.textContent = 'Replay';
+          dom.playIcon.innerHTML = '<polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>';
+        } else {
+          dom.playBtnText.textContent = 'Play spread';
+          dom.playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        }
+      }
+
+      function stopSpreadTimer() {
+        if (state.spread.timerInterval) {
+          clearInterval(state.spread.timerInterval);
+          state.spread.timerInterval = null;
+        }
+        state.spread.isPlaying = false;
+      }
+
+      function togglePlaySpread() {
+        if (state.spread.isPlaying) {
+          stopSpreadTimer();
+          updateSpreadUI();
+        } else {
+          if (state.spread.elapsedMinutes >= state.spread.totalMinutes) {
+            state.spread.elapsedMinutes = 0.0;
+          }
+          state.spread.isPlaying = true;
+          updateSpreadUI();
+
+          state.spread.timerInterval = setInterval(() => {
+            state.spread.elapsedMinutes += 0.2;
+            if (state.spread.elapsedMinutes >= state.spread.totalMinutes) {
+              state.spread.elapsedMinutes = state.spread.totalMinutes;
+              stopSpreadTimer();
+            }
+            updateSpreadUI();
+          }, 80);
+        }
+      }
+
+      function resetSpread() {
+        stopSpreadTimer();
+        state.spread.elapsedMinutes = 0.0;
+        updateSpreadUI();
+      }
+
+      dom.playSpreadBtn.addEventListener('click', togglePlaySpread);
+      dom.resetSpreadBtn.addEventListener('click', resetSpread);
+
+      /* ==========================================
+         TAB 2: WIND & PLUME VISUALIZER (SVG Math)
+         ========================================== */
+      function calculatePlumeCone(sourceX, sourceY, angleDeg, length, halfAngleDeg) {
+        // angleDeg = 138° (SE)
+        // Convert to standard math radians where 0 is along +X (East).
+        // Standard compass: 0° is North (up, -Y), 90° is East (+X), 138° is 48° South of East (+Y).
+        const centerAngleRad = (angleDeg - 90) * (Math.PI / 180);
+        const halfAngleRad = halfAngleDeg * (Math.PI / 180);
+
+        const leftAngle = centerAngleRad - halfAngleRad;
+        const rightAngle = centerAngleRad + halfAngleRad;
+
+        const xLeft = sourceX + Math.cos(leftAngle) * length;
+        const yLeft = sourceY + Math.sin(leftAngle) * length;
+
+        const xCenter = sourceX + Math.cos(centerAngleRad) * length;
+        const yCenter = sourceY + Math.sin(centerAngleRad) * length;
+
+        const xRight = sourceX + Math.cos(rightAngle) * length;
+        const yRight = sourceY + Math.sin(rightAngle) * length;
+
+        // Smooth arc path from source to left, curved through center to right, and back to source
+        return `M ${sourceX} ${sourceY} L ${xLeft.toFixed(1)} ${yLeft.toFixed(1)} Q ${xCenter.toFixed(1)} ${yCenter.toFixed(1)} ${xRight.toFixed(1)} ${yRight.toFixed(1)} Z`;
+      }
+
+      function updatePlumeVisuals() {
+        const speed = state.wind.speedKmH;
+        dom.windReadout.textContent = `${speed.toFixed(1)} km/h`;
+
+        // Physics heuristic:
+        // Faster wind: longer distance, narrower cone (high advection)
+        // Slower wind: shorter distance, wider dispersion angle (stagnation)
+        // Normal baseline at 19.4 km/h: length factor 1.0, halfAngle ~28°
+        const speedRatio = (speed - 4) / (35 - 4); // 0 to 1
+
+        const lenScale = 0.65 + speedRatio * 0.70; // 0.65 to 1.35
+        const halfAngle = 45 - speedRatio * 28;     // 45° down to 17°
+
+        const srcX = 130;
+        const srcY = 110;
+        const angle = 138;
+
+        // Zone A (0 to 1.0 km)
+        const lenA = 120 * lenScale;
+        const dZoneA = calculatePlumeCone(srcX, srcY, angle, lenA, halfAngle * 0.95);
+        dom.svgZoneA.setAttribute('d', dZoneA);
+
+        // Zone B (1.0 to 2.5 km)
+        const lenB = 260 * lenScale;
+        const dZoneB = calculatePlumeCone(srcX, srcY, angle, lenB, halfAngle);
+        dom.svgZoneB.setAttribute('d', dZoneB);
+
+        // Zone C (2.5 to 4.0 km)
+        const lenC = 440 * lenScale;
+        const dZoneC = calculatePlumeCone(srcX, srcY, angle, lenC, halfAngle * 1.05);
+        dom.svgZoneC.setAttribute('d', dZoneC);
+
+        // Update zone label positions slightly along vector
+        const radCenter = (angle - 90) * (Math.PI / 180);
+        const posA = { x: srcX + Math.cos(radCenter) * (lenA * 0.75), y: srcY + Math.sin(radCenter) * (lenA * 0.75) };
+        const posB = { x: srcX + Math.cos(radCenter) * (lenB * 0.72), y: srcY + Math.sin(radCenter) * (lenB * 0.72) };
+        const posC = { x: srcX + Math.cos(radCenter) * (lenC * 0.70), y: srcY + Math.sin(radCenter) * (lenC * 0.70) };
+
+        dom.labelZoneA.setAttribute('x', posA.x - 30);
+        dom.labelZoneA.setAttribute('y', posA.y + 10);
+        dom.labelZoneB.setAttribute('x', posB.x - 30);
+        dom.labelZoneB.setAttribute('y', posB.y + 10);
+        dom.labelZoneC.setAttribute('x', posC.x - 30);
+        dom.labelZoneC.setAttribute('y', posC.y + 10);
+
+        // Dynamic text line based on wind speed:
+        // above 25 km/h "fast dispersion, reaches distant water bodies sooner"
+        // below 10 km/h "plume stagnates locally, particulates build up near neighborhoods"
+        if (speed > 25) {
+          dom.dynamicPlumeDesc.textContent = 'Fast dispersion, reaches distant water bodies sooner';
+          dom.dynamicPlumeDesc.style.borderLeftColor = 'var(--red-danger)';
+        } else if (speed < 10) {
+          dom.dynamicPlumeDesc.textContent = 'Plume stagnates locally, particulates build up near neighborhoods';
+          dom.dynamicPlumeDesc.style.borderLeftColor = 'var(--red-danger)';
+        } else {
+          dom.dynamicPlumeDesc.textContent = 'Moderate southeasterly dispersion toward the reservoir buffer (nominal 19.4 km/h baseline)';
+          dom.dynamicPlumeDesc.style.borderLeftColor = 'var(--amber-alert)';
+        }
+      }
+
+      dom.windSlider.addEventListener('input', (e) => {
+        state.wind.speedKmH = parseFloat(e.target.value);
+        updatePlumeVisuals();
+      });
+
+      /* ==========================================
+         TAB 3: HEALTH & ENVIRONMENT (pH Simulator)
+         ========================================== */
+      function updatePhVisuals() {
+        const start = state.ph.start;
+        const dropped = Math.max(0, start - state.ph.drop);
+
+        dom.startPhReadout.textContent = `Start pH: ${start.toFixed(1)}`;
+        dom.valBasePh.textContent = start.toFixed(2);
+        dom.valFinalPh.textContent = dropped.toFixed(2);
+
+        // Gradient bar spans pH 5.5 to pH 8.5 (total span 3.0 units)
+        const minScale = 5.5;
+        const maxScale = 8.5;
+        const span = maxScale - minScale;
+
+        const startPct = Math.min(100, Math.max(0, ((start - minScale) / span) * 100));
+        const droppedPct = Math.min(100, Math.max(0, ((dropped - minScale) / span) * 100));
+
+        dom.pinStart.style.left = `${startPct.toFixed(1)}%`;
+        dom.pinStartText.textContent = `Start: ${start.toFixed(1)}`;
+
+        dom.pinDropped.style.left = `${droppedPct.toFixed(1)}%`;
+        dom.pinDroppedText.textContent = `After drop: ${dropped.toFixed(1)}`;
+
+        // Evaluate whether freshwater life is at risk
+        let riskSentence = '';
+        if (dropped < 6.0) {
+          riskSentence = 'Critical danger: Extreme acidification kills fish fry, dissolves protective snail shells, and mobilizes heavy sediments.';
+          dom.phRiskSentence.style.borderLeftColor = 'var(--red-danger)';
+        } else if (dropped < 6.5) {
+          riskSentence = 'High risk: Acidic shock threatens fish eggs, invertebrates, and biological filtering in the reservoir.';
+          dom.phRiskSentence.style.borderLeftColor = 'var(--red-danger)';
+        } else if (dropped < 7.0) {
+          riskSentence = 'Moderate risk: Sub-lethal stress to sensitive aquatic species and juvenile fish; bio-productivity drops.';
+          dom.phRiskSentence.style.borderLeftColor = 'var(--amber-alert)';
+        } else {
+          riskSentence = 'Low risk: Natural alkaline carbonate buffer temporarily protects freshwater aquatic life from lethal shock.';
+          dom.phRiskSentence.style.borderLeftColor = 'var(--teal-primary)';
+        }
+        dom.phRiskSentence.textContent = riskSentence;
+      }
+
+      dom.phSlider.addEventListener('input', (e) => {
+        state.ph.start = parseFloat(e.target.value);
+        updatePhVisuals();
+      });
+
+      /* ==========================================
+         TAB 4: MITIGATION ACTIONS (Tickable Cards)
+         ========================================== */
+      function updateActionsUI() {
+        const completedCount = state.actions.filter(Boolean).length;
+        dom.actionsCountText.textContent = `${completedCount} of 4 actions marked done`;
+        dom.actionsProgressFill.style.width = `${(completedCount / 4) * 100}%`;
+
+        state.actions.forEach((isDone, idx) => {
+          const card = dom.actionCards[idx];
+          card.classList.toggle('completed', isDone);
+          card.setAttribute('aria-checked', isDone ? 'true' : 'false');
+        });
+      }
+
+      function toggleAction(index) {
+        state.actions[index] = !state.actions[index];
+        updateActionsUI();
+      }
+
+      dom.actionCards.forEach((card, index) => {
+        card.addEventListener('click', () => {
+          toggleAction(index);
+        });
+
+        card.addEventListener('keydown', (e) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            toggleAction(index);
+          }
+        });
+      });
+
+      dom.markAllActionsBtn.addEventListener('click', () => {
+        state.actions = [true, true, true, true];
+        updateActionsUI();
+      });
+
+      dom.resetActionsBtn.addEventListener('click', () => {
+        state.actions = [false, false, false, false];
+        updateActionsUI();
+      });
+
+      /* ==========================================
+         INITIALIZE ALL COMPONENTS ON LOAD
+         ========================================== */
+      updateThemeUI();
+      updateSpreadUI();
+      updatePlumeVisuals();
+      updatePhVisuals();
+      updateActionsUI();
+
+    })();
+  </script>
+</body>
+</html>
