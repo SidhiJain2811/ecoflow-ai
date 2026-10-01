@@ -1,70 +1,97 @@
-# EcoFlow AI — Industrial Pollution Response Dashboard
+# EcoAI Flow — Incident Prediction, Explanation & Mitigation Dashboard
 
-**EcoFlow AI** is a real-time incident assessment and containment dispatch dashboard built for environmental response teams and hackathon judging. It models atmospheric chemical plume dispersion and hydraulic runoff following an industrial pollution incident near **Lake Yamuna** and the **Okhla Reservoir Basin**.
+**EcoAI Flow** is an agentic environmental response dashboard designed for hackathon judges and operational incident response teams following an industrial chemical pollution incident near **Lake Yamuna** and the **Okhla Reservoir Basin**.
+
+Unlike standard passive pollution monitors, EcoAI Flow:
+1. **PREDICTS** where toxic runoff and atmospheric plumes will travel in real time.
+2. **EXPLAINS** why the risk level is high using plain English and contribution breakdowns.
+3. **RECOMMENDS** high-impact mitigation actions and quantitatively proves how much risk those actions eliminate.
 
 ---
 
 ## 🌊 Incident Context
 
-- **Epicenter**: Okhla Industrial Area Phase-II drainage discharge.
-- **Affected Water Bodies**: Lake Yamuna and the Okhla Reservoir Basin (critical municipal drinking water intake).
-- **Primary Hazards**: Atmospheric $SO_2$ / $NO_x$ plume transport and low-pH acidic effluent wave advancing toward Municipal Intake Gate #4.
+- **Source / Epicenter**: Apex Petrochemical Corp (Okhla Industrial Area Phase-II).
+- **Target Water Body**: Lake Yamuna and Okhla Reservoir Basin (primary municipal drinking water supply).
+- **Atmospheric Vector**: Default 19.4 km/h wind blowing at 138° SE (NASA POWER API) directly along the lake corridor.
 
 ---
 
-## ✨ Features
+## 🎛️ Seven Interactive Tabs
 
-1. **Affected Water Bodies (Tab 1)**
-   - **Key Metrics**: 2.4 km runoff & fallout distance, 14–18 min critical travel time window, Critical threat level.
-   - **Spread Animation**: Real-time simulation of contaminant arrival with live timer counter and 4 milestone checkpoints (Outfall $\to$ Feeder canal $\to$ Marshland buffer $\to$ Intake Gate #4).
+1. **Dashboard (Default)**:
+   - Dynamic hero alert sentence updating in real time.
+   - Quick dispatch buttons: *"Apply recommended actions"* and *"Open the map"*.
+   - Four key metric cards: Time to lake, residents at risk, plume reach, and confidence score.
+   - Visual **Risk Ladder** comparing *"Without action"* vs *"After action"*.
+   - Three guided question cards with jump links: *What is happening?*, *Where will it go?*, *What should we do?*.
+   - *How EcoAI Flow works* 3-step executive summary.
 
-2. **Wind & Plume Dispersion (Tab 2)**
-   - **Mathematical SVG Plume**: Drawn dynamically from the source at **138° SE** toward Lake Yamuna.
-   - **Zoning**:
-     - **Zone A (0–1.0 km)**: Industrial corridor with heavy respiratory threat.
-     - **Zone B (1.0–2.5 km)**: Agricultural fringe and eastern canal feeder.
-     - **Zone C (2.5–4.0 km)**: Primary lake boundary and downwind residential perimeter.
-   - **Wind Speed Slider (4–35 km/h)**: Adjusts Gaussian dispersion cone—faster wind stretches and narrows the plume; slower wind produces stagnant local buildup.
-   - **Dynamic Guidance**: Alerts whether dispersion reaches distant water bodies or stagnates near neighborhoods.
+2. **Map & Replay**:
+   - High-fidelity SVG map showing Apex Petrochemical Corp, Lake Yamuna, the outflow river, and downstream wetlands.
+   - 3-zone nested plume (Red 0–1 km, Orange 1–2.5 km, Yellow 2.5–4 km) dynamically rotated by wind bearing.
+   - **Mathematical point-in-ellipse testing** computing real exposure for **Communities A, B, C, and D** (Red, Yellow, or Safe Green).
+   - Dynamic water body contamination rules (Lake turns red with pulsing breach rings from +10m if risk $\ge 15$, river from +30m if risk $\ge 35$, wetland from +2h if risk $\ge 55$).
+   - 7-step replay slider (`NOW`, `+10m`, `+30m`, `+1h`, `+2h`, `+3h`, `+6h`) with animated Play/Pause and step time card.
 
-3. **Health & Environment (Tab 3)**
-   - **Key Metrics**: $+145\ \mu\text{g/m}^3$ PM2.5 spike, 38,000 residents in downwind arc, $\Delta\text{pH} \approx -0.8$ acidification risk.
-   - **Acid Shock Simulator**: Interactive baseline pH slider (6.5–8.5) with visual dual-pin pH scale and dynamic evaluation of acute risks to freshwater life.
+3. **Why this risk?**:
+   - Dynamic equation row breakdown: `Wind SE (138°) + SO2 Emission + Closeness = Lake Risk`.
+   - Plain-English reasoning sentence rewritten on every parameter change.
+   - Vector alignment and emission strength contribution bars.
+   - Quantitative *"What would lower the risk?"* computed scores (wind shift, emissions cut, gate closure, wind speed halved).
 
-4. **Mitigation Actions (Tab 4)**
-   - **Interactive Checklist**: 4 tickable containment protocols with live counter (`X of 4 actions marked done`) and progress bar.
-   - **Containment Protocols**:
-     1. Neutralize acidic scrubber effluent in lime slurry pits before release.
-     2. Divert untreated industrial runoff to secondary lined retention basins (zero liquid discharge).
-     3. Ramp alkaline wet scrubbers to maximum before gases exit chimney.
-     4. Throttle furnace output by 40% until wind shifts away from sensitive aquatic zones.
+4. **AI Action**:
+   - 3 actionable mitigation switches with real-time risk drop readouts:
+     1. *Reduce factory emissions by 40%* (plume contracts, score drops from 97 to 51).
+     2. *Close the effluent gate* (eliminates hydraulic runoff, cuts risk by ~15%).
+     3. *Alert downstream communities* (sirens & SMS evacuation alerts).
+   - Time-phased action playbook (0–30 min, 30–90 min, 2 hr+) with completion ticks.
 
-5. **Accessibility & Design**
-   - **Theme**: Seamless Light and Dark modes.
-   - **WAI-ARIA Compliant**: Fully keyboard navigable tabs using arrow keys (<kbd>→</kbd>, <kbd>←</kbd>, <kbd>Home</kbd>, <kbd>End</kbd>).
-   - **Self-Contained**: 100% standalone single-file architecture (`index.html`) with zero external JavaScript dependencies or libraries.
+5. **What-If Simulator**:
+   - Fast scenario stress-test presets: **Calm day**, **Strong wind**, **Worst case**, and **Reset**.
+   - Dual-view mini-map and 3 interactive sliders: Wind speed (4–35 km/h), Wind direction (60–220°), and Emission level (20–150%).
+   - Real-time result line displaying plume reach, lake risk score, arrival time, and exposed population.
+
+6. **Pollution Journey**:
+   - Dynamic action window deadline: `Action window: X minutes until pollution reaches Lake Yamuna`.
+   - Six sequential corridor stops scaling arrival times with wind speed:
+     1. Factory (Now)
+     2. Lake Yamuna (+10 min)
+     3. Intake Gates (+20 min)
+     4. Outflow River (+30 min)
+     5. Downstream Villages (+1 hr)
+     6. Downstream Wetland Reserve (+2 hr)
+   - Status indicators dynamically turn red (at risk) or green (safe) based on risk thresholds.
+
+7. **Before vs After**:
+   - Side-by-side comparison cards: *"Without action"* vs *"After action"*.
+   - Net risk reduction summary sentence: *"Acting now cuts predicted risk by X points, from Critical to Moderate."*
+   - Dual-bar timeline trajectory chart showing risk decay over all 7 time horizons.
 
 ---
 
 ## 🚀 Quick Start / Local Preview
 
-Just open `index.html` in any modern web browser:
+Open `index.html` in your web browser:
 
-```bash
-# On Windows PowerShell
+```powershell
 Start-Process index.html
 ```
 
 ---
 
-## 🌐 Deploy to GitHub Pages
+## 📤 Push Changes to GitHub
 
-1. Push this repository to GitHub.
-2. Go to **Repository Settings** $\to$ **Pages**.
-3. Under **Branch**, select `main` and root `/`.
-4. Click **Save**. Your dashboard will be live on the web at:
-   `https://<your-username>.github.io/<repo-name>/`
+All files are structured for direct upload to GitHub. To commit and push:
 
----
+```powershell
+git add .
+git commit -m "Upgrade to EcoAI Flow: 7 interactive tabs, real-time risk model, and spatial replay"
+git push -u origin main
+```
 
-*Data note: Wind baseline 19.4 km/h, 138° SE labeled as from the NASA POWER API. Figures are modelled estimates for demonstration.*
+### Free GitHub Pages Deployment
+1. Go to your repository on GitHub $\to$ **Settings** $\to$ **Pages**.
+2. Select **Deploy from a branch** $\to$ Branch: `main` / `/ (root)`.
+3. Click **Save**. Your app will be live at:
+   `https://SidhiJain2811.github.io/ecoflow-ai/`
