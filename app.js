@@ -1241,6 +1241,110 @@
     }
     if (resTime) resTime.textContent = `${activeRisk.timeToLakeMin} min`;
     if (resPop) resPop.textContent = `${activeRisk.residentsAtRisk.toLocaleString()}`;
+
+    const riskLbl = document.getElementById('simWaterRiskLabel');
+    if (riskLbl) riskLbl.textContent = `${appState.settings.waterBodyName} risk:`;
+
+    // Update Simulator Map Compass
+    const simNeedle = document.getElementById('simCompassNeedle');
+    const simCompassTxt = document.getElementById('simCompassText');
+    if (simNeedle) simNeedle.setAttribute('transform', `rotate(${p.windDirection})`);
+    if (simCompassTxt) simCompassTxt.textContent = `${p.windDirection}° ${getCompassSector(p.windDirection)}`;
+
+    // Rotate and scale plume for simulator
+    const simPlume = document.getElementById('simPlumeRotator');
+    if (simPlume) {
+      const rotAngle = p.windDirection - 90;
+      simPlume.setAttribute('transform', `rotate(${rotAngle}, 110, 100)`);
+    }
+
+    const emScale = Math.sqrt(p.emission / 100);
+    const speedScale = Math.min(1.4, Math.max(0.7, p.windSpeed / 19.4));
+
+    const sLenA = 80 * emScale * speedScale;
+    const sWidA = 28 * emScale / Math.pow(speedScale, 0.3);
+
+    const sLenB = 150 * emScale * speedScale;
+    const sWidB = 45 * emScale / Math.pow(speedScale, 0.3);
+
+    const sLenC = 250 * emScale * speedScale;
+    const sWidC = 68 * emScale / Math.pow(speedScale, 0.3);
+
+    const sRed = document.getElementById('svgSimPlumeRed');
+    const sOrange = document.getElementById('svgSimPlumeOrange');
+    const sYellow = document.getElementById('svgSimPlumeYellow');
+
+    if (sRed) {
+      sRed.setAttribute('cx', 110 + sLenA * 0.55);
+      sRed.setAttribute('rx', Math.max(15, sLenA * 0.55));
+      sRed.setAttribute('ry', Math.max(8, sWidA));
+    }
+    if (sOrange) {
+      sOrange.setAttribute('cx', 110 + sLenB * 0.55);
+      sOrange.setAttribute('rx', Math.max(25, sLenB * 0.55));
+      sOrange.setAttribute('ry', Math.max(12, sWidB));
+    }
+    if (sYellow) {
+      sYellow.setAttribute('cx', 110 + sLenC * 0.55);
+      sYellow.setAttribute('rx', Math.max(35, sLenC * 0.55));
+      sYellow.setAttribute('ry', Math.max(16, sWidC));
+    }
+
+    // Community point-in-ellipse testing under simulated conditions
+    const sRad = (p.windDirection - 90) * (Math.PI / 180);
+    const sRot = p.windDirection - 90;
+
+    const scRedX = 110 + Math.cos(sRad) * (sLenA * 0.55);
+    const scRedY = 100 + Math.sin(sRad) * (sLenA * 0.55);
+
+    const scOrangeX = 110 + Math.cos(sRad) * (sLenB * 0.55);
+    const scOrangeY = 100 + Math.sin(sRad) * (sLenB * 0.55);
+
+    const scYellowX = 110 + Math.cos(sRad) * (sLenC * 0.55);
+    const scYellowY = 100 + Math.sin(sRad) * (sLenC * 0.55);
+
+    const simComms = [
+      { id: 'A', x: 190, y: 180, circleId: 'commSimCircleA', chipId: 'chipSimCommA' },
+      { id: 'B', x: 285, y: 275, circleId: 'commSimCircleB', chipId: 'chipSimCommB' },
+      { id: 'C', x: 420, y: 370, circleId: 'commSimCircleC', chipId: 'chipSimCommC' },
+      { id: 'D', x: 300, y: 110, circleId: 'commSimCircleD', chipId: 'chipSimCommD' }
+    ];
+
+    simComms.forEach(c => {
+      const inRed = isPointInRotatedEllipse(c.x, c.y, scRedX, scRedY, Math.max(15, sLenA * 0.55), Math.max(8, sWidA), sRot);
+      const inOrange = isPointInRotatedEllipse(c.x, c.y, scOrangeX, scOrangeY, Math.max(25, sLenB * 0.55), Math.max(12, sWidB), sRot);
+      const inYellow = isPointInRotatedEllipse(c.x, c.y, scYellowX, scYellowY, Math.max(35, sLenC * 0.55), Math.max(16, sWidC), sRot);
+
+      let color = 'var(--safe-green)';
+      let label = 'Safer zone';
+      if (inRed) {
+        color = 'var(--danger-red)';
+        label = 'High risk';
+      } else if (inOrange || inYellow) {
+        color = 'var(--caution-amber)';
+        label = 'Caution zone';
+      }
+
+      const circ = document.getElementById(c.circleId);
+      const ch = document.getElementById(c.chipId);
+      if (circ) circ.setAttribute('fill', color);
+      if (ch) ch.innerHTML = `<span class="chip-circle" style="background:${color};"></span>Community ${c.id}: ${label}`;
+    });
+
+    // Water Body impact in simulator
+    const isSimLakeBreach = activeRisk.score >= 35;
+    const simSvgLake = document.getElementById('svgSimLakeShape');
+    const simBreach = document.getElementById('simBreachGroup');
+    const simChipLake = document.getElementById('chipSimLake');
+    const simSvgLakeLabel = document.getElementById('svgSimWaterBodyLabel');
+    const simSvgFacLabel = document.getElementById('svgSimFactoryLabel');
+
+    if (simSvgLakeLabel) simSvgLakeLabel.textContent = appState.settings.waterBodyName;
+    if (simSvgFacLabel) simSvgFacLabel.textContent = appState.settings.siteName;
+
+    if (simSvgLake) simSvgLake.setAttribute('fill', isSimLakeBreach ? '#991b1b' : 'url(#simLakeWaterGrad)');
+    if (simBreach) simBreach.style.display = isSimLakeBreach ? 'block' : 'none';
+    if (simChipLake) simChipLake.innerHTML = `<span class="chip-circle" style="background:${isSimLakeBreach ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>${escapeHtml(appState.settings.waterBodyName)}: ${isSimLakeBreach ? 'Impinged (' + activeRisk.level + ')' : 'Clean'}`;
   }
 
   function updatePollutionJourneyTab(activeRisk, p) {
