@@ -27,7 +27,7 @@
         <span>Decision-support prototype. Figures use a demo risk model. Plant sensors and water flow are simulated.</span>
       </div>
       <div>
-        <span>Lake Yamuna & Okhla Reservoir Drainage Corridor</span>
+        <span id="topWaterBodySubtitle">Downstream Water Drainage Corridor</span>
       </div>
     </div>
 
@@ -172,7 +172,7 @@
             <span>Selected Site</span>
             <span style="color: var(--water-teal);">Active</span>
           </div>
-          <div class="site-title" id="sideSiteTitle">Apex Petrochemical Corp</div>
+          <div class="site-title" id="sideSiteTitle">Monitored Facility</div>
           <div class="site-coords" id="sideSiteCoords">28.5400° N, 77.3000° E</div>
         </div>
 
@@ -433,10 +433,10 @@
                 <ellipse id="svgWetlandShape" cx="720" cy="460" rx="85" ry="32" fill="rgba(15, 118, 110, 0.6)" stroke="#14b8a6" stroke-width="2"/>
                 <text x="720" y="465" fill="#f8fafc" font-size="11.5" font-weight="700" text-anchor="middle">Downstream Wetland</text>
 
-                <!-- Lake Yamuna Shape -->
+                <!-- Target Water Body Shape -->
                 <g id="svgLakeContainer">
                   <path id="svgLakeShape" d="M 420 270 C 480 240, 570 250, 650 280 C 710 305, 720 360, 700 400 C 670 440, 570 450, 490 430 C 430 410, 400 370, 390 330 C 385 295, 400 280, 420 270 Z" fill="url(#lakeWaterGrad)" stroke="#14b8a6" stroke-width="2.5"/>
-                  <text x="540" y="340" fill="#ffffff" font-size="13.5" font-weight="800" text-anchor="middle">Lake Yamuna & Okhla Basin</text>
+                  <text id="svgWaterBodyLabel" x="540" y="340" fill="#ffffff" font-size="13.5" font-weight="800" text-anchor="middle">Downstream Water Basin</text>
                   <text x="540" y="360" fill="#99f6e4" font-size="10.5" text-anchor="middle">Municipal Intake Reservoir</text>
 
                   <!-- Dynamic Breach Warning Rings -->
@@ -485,7 +485,7 @@
                   <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#ef4444" stroke-width="3"/>
                   <path d="M -5 4 L -5 -4 L 5 -4 L 5 4 Z M -2 -7 L 2 -7" stroke="#ef4444" stroke-width="1.8" fill="none"/>
                   <rect x="-85" y="-34" width="170" height="22" rx="4" fill="rgba(15, 23, 42, 0.9)" stroke="#ef4444" stroke-width="1"/>
-                  <text x="0" y="-19" fill="#f8fafc" font-size="10" font-weight="800" text-anchor="middle">Apex Petrochemical Corp</text>
+                  <text id="svgFactoryLabel" x="0" y="-19" fill="#f8fafc" font-size="10" font-weight="800" text-anchor="middle">Monitored Facility</text>
                 </g>
 
                 <!-- Vector Compass -->
@@ -552,12 +552,12 @@
               <span>+</span>
               <span>Lake 2.4 km Downwind</span>
               <span>=</span>
-              <span id="eqResult" style="color: var(--danger-red); font-weight: 800;">Lake risk: Critical (97/100)</span>
+              <span id="eqResult" style="color: var(--danger-red); font-weight: 800;">Water basin risk: Critical (97/100)</span>
             </div>
 
             <!-- Plain reasoning sentence -->
             <div style="background: var(--bg-surface); border-left: 4px solid var(--caution-amber); padding: 14px 18px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 1rem; font-weight: 600;" id="whyReasonSentence">
-              Live winds blow directly toward Lake Yamuna at 19.4 km/h with high industrial emissions, placing drinking intake gates directly in the line of toxic fallout.
+              Live atmospheric dispersion model calculating plume trajectory toward the downstream water basin.
             </div>
 
             <!-- Contribution Bars -->
@@ -793,7 +793,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
               <h2 style="font-size: 1.4rem; font-weight: 800;">Pollution Journey Along the Corridor</h2>
               <div id="journeyActionWindow" style="background: var(--bg-surface); border: 1px solid var(--caution-amber); color: var(--caution-amber); padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 700;">
-                Action window: 10 minutes until pollution reaches Lake Yamuna
+                Action window: 10 minutes until pollution reaches Downstream Water Basin
               </div>
             </div>
 
@@ -801,7 +801,7 @@
             <div class="journey-timeline-stack">
               <div class="journey-stop danger" id="jStop1">
                 <div>
-                  <strong style="font-size: 0.95rem;">1. Factory (Epicenter)</strong>
+                  <strong style="font-size: 0.95rem;">1. Facility (Epicenter)</strong>
                   <div style="font-size: 0.8rem; color: var(--text-muted);">Shut down blowers, deploy scrubber lime slurries, seal drains</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">now</span>
@@ -809,7 +809,7 @@
 
               <div class="journey-stop danger" id="jStop2">
                 <div>
-                  <strong style="font-size: 0.95rem;">2. Lake Yamuna Perimeter (+10 min)</strong>
+                  <strong id="jStop2Title" style="font-size: 0.95rem;">2. Downstream Water Basin Perimeter (+10 min)</strong>
                   <div style="font-size: 0.8rem; color: var(--text-muted);">Activate perimeter aeration to prevent dissolved oxygen collapse</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">+10m</span>
@@ -917,8 +917,22 @@
       </div>
       <div class="drawer-body">
         <div class="form-group">
-          <label for="setSiteName">Monitored Site Name</label>
-          <input type="text" id="setSiteName" class="form-input">
+          <label for="setSiteName">Monitored Facility / Plant Name</label>
+          <input type="text" id="setSiteName" class="form-input" placeholder="e.g. Industrial Facility">
+        </div>
+        <div class="form-group">
+          <label for="setWaterBodyName">Target Water Body Name</label>
+          <input type="text" id="setWaterBodyName" class="form-input" placeholder="e.g. Downstream Water Basin">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label for="setWaterDistance">Distance to Water (km)</label>
+            <input type="number" id="setWaterDistance" step="0.1" min="0.1" max="50" class="form-input" placeholder="2.4">
+          </div>
+          <div class="form-group">
+            <label for="setLakeBearing">Water Body Bearing (° from plant)</label>
+            <input type="number" id="setLakeBearing" min="0" max="360" class="form-input" placeholder="138">
+          </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div class="form-group">
@@ -929,10 +943,6 @@
             <label for="setLon">Longitude</label>
             <input type="number" id="setLon" step="0.001" class="form-input">
           </div>
-        </div>
-        <div class="form-group">
-          <label for="setLakeBearing">Lake Bearing (° SE from plant)</label>
-          <input type="number" id="setLakeBearing" min="0" max="360" class="form-input">
         </div>
         <div class="form-group">
           <label for="setPop">Configured Downwind Population</label>
@@ -982,7 +992,7 @@
         Decision-support prototype. Figures use a demo risk model. Plant sensors and water flow are simulated.
       </div>
       <div style="color: var(--water-teal); font-weight: 700;">
-        Open-Meteo & NASA POWER Integration · Lake Yamuna & Okhla Basin
+        Open-Meteo & NASA POWER Integration · Dynamic Environmental Response System
       </div>
     </footer>
 

@@ -1,6 +1,6 @@
 # EcoAI Flow — Industrial Pollution Response PWA
 
-**EcoAI Flow** is an installable Progressive Web App (PWA) built for industrial chemical incident response near **Lake Yamuna and the Okhla Reservoir Basin**.
+**EcoAI Flow** is an installable Progressive Web App (PWA) built for industrial chemical incident response and environmental risk decision-support. It is completely customizable for any industrial plant, factory, or downstream water basin and geography.
 
 It monitors atmospheric and industrial telemetry, **PREDICTS** where toxic chemical plumes will travel, **EXPLAINS** why the risk level is high in plain language, **RECOMMENDS** high-impact actions, and can execute them autonomously via simulated **Autopilot**.
 

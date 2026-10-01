@@ -19,7 +19,9 @@
      1. STATE & STORAGE LAYER
      ========================================================================== */
   const DEFAULT_SETTINGS = {
-    siteName: 'Apex Petrochemical Corp',
+    siteName: 'Monitored Facility',
+    waterBodyName: 'Downstream Water Basin',
+    waterDistanceKm: 2.4,
     latitude: 28.54,
     longitude: 77.30,
     lakeBearing: 138,
@@ -486,7 +488,7 @@
     appState.incident.peakRisk = getActiveRisk().score;
     logIncidentEvent(`Active incident opened [${incId}] at ${appState.incident.startTime}. Initial risk score: ${appState.incident.peakRisk}`, 'critical');
     showToast(`High hazard detected! Incident ${incId} opened.`, 'danger');
-    triggerSystemNotification('EcoAI Flow Alert: Critical Incident Opened', `Incident ${incId} triggered for Lake Yamuna corridor.`);
+    triggerSystemNotification('EcoAI Flow Alert: Critical Incident Opened', `Incident ${incId} triggered for ${appState.settings.waterBodyName} corridor.`);
     playAlertBeep(880, 0.4, 'sawtooth');
   }
 
@@ -851,18 +853,24 @@
     // Site info
     const siteTitle = document.getElementById('sideSiteTitle');
     const siteCoords = document.getElementById('sideSiteCoords');
+    const topWaterSub = document.getElementById('topWaterBodySubtitle');
     if (siteTitle) siteTitle.textContent = appState.settings.siteName;
     if (siteCoords) siteCoords.textContent = `${appState.settings.latitude}° N, ${appState.settings.longitude}° E`;
+    if (topWaterSub) topWaterSub.textContent = `${appState.settings.waterBodyName} Drainage Corridor`;
 
     // Factory Details
     const emissionVal = document.getElementById('sideEmissionVal');
     const furnaceVal = document.getElementById('sideFurnaceVal');
     const gateVal = document.getElementById('sideGateVal');
+    const sideWater = document.getElementById('sideWaterDistance');
     if (emissionVal) emissionVal.textContent = `${appState.plant.emission}%`;
     if (furnaceVal) furnaceVal.textContent = `${appState.plant.furnaceOutput}%`;
     if (gateVal) {
       gateVal.textContent = appState.plant.effluentGate;
       gateVal.style.color = appState.plant.effluentGate === 'Closed' ? 'var(--safe-green)' : 'var(--danger-red)';
+    }
+    if (sideWater) {
+      sideWater.textContent = `${appState.settings.waterBodyName} (${appState.settings.waterDistanceKm} km)`;
     }
 
     // Atmospheric Vector
@@ -903,10 +911,11 @@
   function updateDashboardTab(activeRisk, baseRisk) {
     const hero = document.getElementById('dashHeroSentence');
     if (hero) {
+      const waterName = appState.settings.waterBodyName || 'water basin';
       if (activeRisk.score >= 70) {
-        hero.textContent = `The lake can be hit in about ${activeRisk.timeToLakeMin} min. Risk is Critical. ${appState.autopilotMode === 'auto' ? 'Autopilot armed for auto-mitigation.' : 'Act now to bring it down.'}`;
+        hero.textContent = `The ${waterName} can be hit in about ${activeRisk.timeToLakeMin} min. Risk is Critical. ${appState.autopilotMode === 'auto' ? 'Autopilot armed for auto-mitigation.' : 'Act now to bring it down.'}`;
       } else if (activeRisk.score >= 35) {
-        hero.textContent = `Risk reduced to Moderate (${activeRisk.score}/100). Lake exposure curtailed; downwind buffer monitoring active.`;
+        hero.textContent = `Risk reduced to Moderate (${activeRisk.score}/100). Exposure at ${waterName} curtailed; downwind buffer monitoring active.`;
       } else {
         hero.textContent = `Risk is Low (${activeRisk.score}/100). Aquatic thresholds preserved within legal environmental buffer.`;
       }
@@ -1045,11 +1054,15 @@
     const isWetlandAffected = (appState.replay.step >= 4) && (activeRisk.score >= 55);
 
     const svgLake = document.getElementById('svgLakeShape');
+    const svgLakeLabel = document.getElementById('svgWaterBodyLabel');
+    const svgFacLabel = document.getElementById('svgFactoryLabel');
     const breachGroup = document.getElementById('breachGroup');
     const chipLake = document.getElementById('chipLake');
+    if (svgLakeLabel) svgLakeLabel.textContent = appState.settings.waterBodyName;
+    if (svgFacLabel) svgFacLabel.textContent = appState.settings.siteName;
     if (svgLake) svgLake.setAttribute('fill', isLakeAffected ? '#991b1b' : 'url(#lakeWaterGrad)');
     if (breachGroup) breachGroup.style.display = isLakeAffected ? 'block' : 'none';
-    if (chipLake) chipLake.innerHTML = `<span class="chip-circle" style="background:${isLakeAffected ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>Lake: ${isLakeAffected ? 'Critical breach' : 'Clean'}`;
+    if (chipLake) chipLake.innerHTML = `<span class="chip-circle" style="background:${isLakeAffected ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>${escapeHtml(appState.settings.waterBodyName)}: ${isLakeAffected ? 'Critical breach' : 'Clean'}`;
 
     const svgRiver = document.getElementById('svgRiverPath');
     const chipRiver = document.getElementById('chipRiver');
@@ -1071,7 +1084,7 @@
     const doNowCell = document.getElementById('tcDoNow');
 
     const affected = [];
-    if (isLakeAffected) affected.push('Lake Yamuna');
+    if (isLakeAffected) affected.push(appState.settings.waterBodyName);
     if (isRiverAffected) affected.push('Outflow river');
     if (isWetlandAffected) affected.push('Wetlands');
 
@@ -1100,18 +1113,21 @@
     if (eqWind) eqWind.textContent = `Wind @ ${p.windDirection}° ${getCompassSector(p.windDirection)}`;
     if (eqEmission) eqEmission.textContent = `SO2 Emission: ${p.emission}%`;
     if (eqResult) {
-      eqResult.textContent = `Lake risk: ${activeRisk.level} (${activeRisk.score}/100)`;
+      eqResult.textContent = `${appState.settings.waterBodyName} risk: ${activeRisk.level} (${activeRisk.score}/100)`;
       eqResult.style.color = activeRisk.hexColor;
     }
 
     const reason = document.getElementById('whyReasonSentence');
     if (reason) {
+      const bName = escapeHtml(appState.settings.waterBodyName);
+      const bDeg = appState.settings.lakeBearing;
+      const bCompass = getCompassSector(bDeg);
       if (activeRisk.alignment > 0.8) {
-        reason.textContent = `Live winds at ${p.windSpeed} km/h blow directly along the 138° SE lake axis with high industrial emissions, placing drinking intake gates directly in the plume crosshairs.`;
+        reason.textContent = `Live winds at ${p.windSpeed.toFixed(1)} km/h blow directly along the ${bDeg}° ${bCompass} water basin axis with high industrial emissions, placing drinking intake gates directly in the plume crosshairs.`;
       } else if (activeRisk.alignment > 0.25) {
-        reason.textContent = `Winds blow at a glancing angle toward the reservoir corridor; lateral plume spreading causes elevated caution along the eastern perimeter.`;
+        reason.textContent = `Winds blow at a glancing angle toward the ${bName} corridor; lateral plume spreading causes elevated caution along the perimeter.`;
       } else {
-        reason.textContent = `Current winds blow away from Lake Yamuna (${p.windDirection}°), dispersing emissions over the non-aquatic buffer.`;
+        reason.textContent = `Current winds blow away from ${bName} (${p.windDirection}°), dispersing emissions over the non-aquatic buffer.`;
       }
     }
 
@@ -1230,7 +1246,12 @@
   function updatePollutionJourneyTab(activeRisk, p) {
     const winLine = document.getElementById('journeyActionWindow');
     if (winLine) {
-      winLine.textContent = `Action window: ${activeRisk.timeToLakeMin} minutes until plume impinges on Municipal Intake Gate #4`;
+      winLine.textContent = `Action window: ${activeRisk.timeToLakeMin} minutes until plume impinges on ${appState.settings.waterBodyName}`;
+    }
+
+    const jTitle2 = document.getElementById('jStop2Title');
+    if (jTitle2) {
+      jTitle2.textContent = `2. ${appState.settings.waterBodyName} Perimeter (+${activeRisk.timeToLakeMin} min)`;
     }
 
     const tLake = activeRisk.timeToLakeMin;
@@ -1349,17 +1370,18 @@
 
     const risk = getActiveRisk();
     const timeToLake = risk.timeToLakeMin;
-    const areas = ['Community A', 'Community B', 'Okhla Canal Buffer'].join(', ');
+    const areas = ['Community A', 'Community B', `${appState.settings.waterBodyName} Buffer`].join(', ');
 
     const message = `[CIVIL ADVISORY - ECOAI FLOW]
 INCIDENT: Industrial Chemical Outfall & Plume Dispersion
 EPICENTER: ${appState.settings.siteName}
 SEVERITY: ${risk.level.toUpperCase()} (Risk Score: ${risk.score}/100)
+TARGET BASIN: ${appState.settings.waterBodyName} (${appState.settings.waterDistanceKm} km downwind)
 AFFECTED ZONES: ${areas}
 ACTION WINDOW: Estimated ${timeToLake} minutes until plume impinges on water intake.
 DIRECTIVE:
 1. Stay indoors and close all windows/air intakes immediately.
-2. Avoid using raw water drawn from the eastern feeder canal.
+2. Avoid using raw water drawn from the affected water corridor.
 3. Prepare for localized municipal drinking water gate closures.
 Generated automatically by EcoAI Flow Incident Autopilot.`;
 
@@ -1398,7 +1420,7 @@ Generated automatically by EcoAI Flow Incident Autopilot.`;
   <h1>EcoAI Flow Incident Response Report</h1>
   <p><strong>Incident ID:</strong> ${appState.incident.activeId || 'DEMO-EVAL'}</p>
   <p><strong>Generated At:</strong> ${now}</p>
-  <p><strong>Target Water Body:</strong> Lake Yamuna & Okhla Reservoir Basin</p>
+  <p><strong>Target Water Body:</strong> ${appState.settings.waterBodyName} (${appState.settings.waterDistanceKm} km downwind, bearing ${appState.settings.lakeBearing}°)</p>
   <p><strong>Monitored Facility:</strong> ${appState.settings.siteName} (${appState.settings.latitude}° N, ${appState.settings.longitude}° E)</p>
 
   <h2>Risk Mitigation Summary</h2>
@@ -1710,6 +1732,8 @@ Generated automatically by EcoAI Flow Incident Autopilot.`;
   function populateSettingsForm() {
     const s = appState.settings;
     setFormVal('setSiteName', s.siteName);
+    setFormVal('setWaterBodyName', s.waterBodyName);
+    setFormVal('setWaterDistance', s.waterDistanceKm);
     setFormVal('setLat', s.latitude);
     setFormVal('setLon', s.longitude);
     setFormVal('setLakeBearing', s.lakeBearing);
@@ -1722,6 +1746,8 @@ Generated automatically by EcoAI Flow Incident Autopilot.`;
   function saveSettingsFromForm() {
     const s = appState.settings;
     s.siteName = getFormVal('setSiteName') || s.siteName;
+    s.waterBodyName = getFormVal('setWaterBodyName') || s.waterBodyName;
+    s.waterDistanceKm = parseFloat(getFormVal('setWaterDistance')) || s.waterDistanceKm;
     s.latitude = parseFloat(getFormVal('setLat')) || s.latitude;
     s.longitude = parseFloat(getFormVal('setLon')) || s.longitude;
     s.lakeBearing = parseInt(getFormVal('setLakeBearing'), 10) || s.lakeBearing;
