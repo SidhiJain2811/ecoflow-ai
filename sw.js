@@ -3,7 +3,7 @@
    Provides offline app shell caching and API response caching
    ========================================================= */
 
-const CACHE_NAME = 'ecoflow-ai-v3.1.0';
+const CACHE_NAME = 'ecoflow-ai-v3.2.0';
 const APP_SHELL = [
   './',
   './index.html',

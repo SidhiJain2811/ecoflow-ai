@@ -346,15 +346,73 @@ body {
 
 .portal-grid {
   display: grid;
-  grid-template-columns: 310px 1fr;
-  gap: 14px;
+  grid-template-columns: 330px 1fr;
+  gap: 16px;
   width: 100%;
+  align-items: start;
 }
 
 .portal-sidebar {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.portal-sidebar.persistent-sidebar {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+}
+
+.address-info-block {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.address-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.address-street {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.address-coords {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.side-directive-box {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid var(--danger-red);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: #fca5a5;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.side-directive-box.safe {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: var(--safe-green);
+  color: #a7f3d0;
 }
 
 .portal-main {
