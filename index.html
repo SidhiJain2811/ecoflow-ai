@@ -321,6 +321,116 @@
               </div>
             </div>
 
+            <!-- WATER BODIES AT RISK DEDICATED PANEL -->
+            <div class="water-bodies-panel" style="background: var(--bg-surface); padding: 18px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-bright); display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 1.25rem;">🌊</span>
+                  <div>
+                    <span style="font-weight: 800; font-size: 1.05rem; color: var(--text-bright);">Downstream Water Bodies at Risk</span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted); margin-left: 8px;">Spatial Vector & Intake Exposure</span>
+                  </div>
+                </div>
+                <div style="font-size: 0.76rem; font-weight: 700; color: var(--water-teal); background: rgba(20, 184, 166, 0.12); padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid rgba(20, 184, 166, 0.3);">
+                  Live Hydraulic Transport Model
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                
+                <!-- Primary Target: Municipal Basin -->
+                <div style="background: var(--bg-input); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <div id="dashWaterPrimaryName" style="font-weight: 800; font-size: 1rem; color: var(--text-bright);">Downstream Water Basin</div>
+                      <div style="font-size: 0.78rem; color: var(--text-muted);">Municipal Intake Reservoir (Gate #4)</div>
+                    </div>
+                    <span id="dashWaterPrimaryThreatBadge" class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--danger-red); border: 1px solid var(--danger-red); font-size: 0.74rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">CRITICAL RISK</span>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0; font-size: 0.82rem;">
+                    <div>
+                      <span style="color: var(--text-muted);">Distance from stack:</span>
+                      <div id="dashWaterDist" style="font-weight: 800; color: var(--water-teal);">2.4 km</div>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-muted);">Dynamic arrival:</span>
+                      <div id="dashWaterArrival" style="font-weight: 800; color: var(--caution-amber);">10 min (at 19.4 km/h)</div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px;">
+                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">🚰 Municipal Drinking Supply</span>
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">⚡ Raw Water Intake Sluice</span>
+                  </div>
+                  <div id="dashWaterIntakeStatus" style="font-size: 0.76rem; color: var(--danger-red); font-weight: 700; margin-top: 4px;">
+                    ⚠️ Direct plume centerline alignment detected — Intake sluice gate closure protocol armed.
+                  </div>
+                </div>
+
+                <!-- Secondary Aquatic Asset: Outflow Canal & Irrigation -->
+                <div style="background: var(--bg-input); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <div style="font-weight: 800; font-size: 1rem; color: var(--text-bright);">Outflow Drainage Canal</div>
+                      <div style="font-size: 0.78rem; color: var(--text-muted);">Downstream Agricultural Diversion</div>
+                    </div>
+                    <span id="dashWaterSecondaryThreatBadge" class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--caution-amber); border: 1px solid var(--caution-amber); font-size: 0.74rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">MODERATE RISK</span>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0; font-size: 0.82rem;">
+                    <div>
+                      <span style="color: var(--text-muted);">Distance from stack:</span>
+                      <div style="font-weight: 800; color: var(--water-teal);">3.8 km</div>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-muted);">Dynamic arrival:</span>
+                      <div id="dashCanalArrival" style="font-weight: 800; color: var(--caution-amber);">+20 min</div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px;">
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">🌾 Feeder Irrigation Network</span>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">🚜 Agricultural Buffer</span>
+                  </div>
+                  <div id="dashCanalStatus" style="font-size: 0.76rem; color: var(--caution-amber); font-weight: 700; margin-top: 4px;">
+                    Secondary canal runoff; diversion headworks isolation advised within 30 min.
+                  </div>
+                </div>
+
+                <!-- Protected Wetland Reserve -->
+                <div style="background: var(--bg-input); padding: 14px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <div style="font-weight: 800; font-size: 1rem; color: var(--text-bright);">Downstream Wetland Sanctuary</div>
+                      <div style="font-size: 0.78rem; color: var(--text-muted);">Ecological Bio-Filter & Flora Habitat</div>
+                    </div>
+                    <span id="dashWetlandThreatBadge" class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--safe-green); border: 1px solid var(--safe-green); font-size: 0.74rem; font-weight: 800; padding: 2px 8px; border-radius: 4px;">PROTECTED</span>
+                  </div>
+
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0; font-size: 0.82rem;">
+                    <div>
+                      <span style="color: var(--text-muted);">Distance from stack:</span>
+                      <div style="font-weight: 800; color: var(--water-teal);">5.2 km</div>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-muted);">Dynamic arrival:</span>
+                      <div id="dashWetlandArrival" style="font-weight: 800; color: var(--safe-green);">+45 min</div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px;">
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">🦆 Protected Wetland Reserve</span>
+                    <span class="badge" style="background: rgba(20, 184, 166, 0.15); color: #5eead4; border: 1px solid rgba(20, 184, 166, 0.4); font-size: 0.72rem; padding: 2px 6px; border-radius: 4px;">🧪 Natural Bio-Buffer</span>
+                  </div>
+                  <div id="dashWetlandStatus" style="font-size: 0.76rem; color: var(--safe-green); font-weight: 700; margin-top: 4px;">
+                    Downstream bio-sanctuary buffered against direct initial fallout.
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
             <!-- Risk Ladder -->
             <div class="ladder-box">
               <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -425,6 +535,18 @@
                 <rect width="880" height="500" fill="url(#mapSafeGrad)"/>
                 <rect width="880" height="500" fill="url(#mapGridPatt)"/>
 
+                <!-- Concentric Distance Range Rings (1.0 km, 2.0 km, 3.0 km) -->
+                <g id="distanceRingsLayer" stroke="rgba(20, 184, 166, 0.25)" stroke-width="1.2" stroke-dasharray="5,5" fill="none">
+                  <circle cx="110" cy="100" r="140"/>
+                  <text x="252" y="96" fill="#14b8a6" font-size="9" font-weight="700" stroke="none">1.0 km</text>
+
+                  <circle cx="110" cy="100" r="280"/>
+                  <text x="392" y="96" fill="#14b8a6" font-size="9" font-weight="700" stroke="none">2.0 km</text>
+
+                  <circle cx="110" cy="100" r="420"/>
+                  <text x="532" y="96" fill="#14b8a6" font-size="9" font-weight="700" stroke="none">3.0 km</text>
+                </g>
+
                 <!-- Outflow River -->
                 <path id="svgRiverPath" d="M 530 360 Q 580 410 650 450 T 730 480" fill="none" stroke="#0f766e" stroke-width="30" stroke-linecap="round"/>
                 <text x="610" y="420" fill="#5eead4" font-size="11" font-weight="700">Outflow canal</text>
@@ -449,6 +571,12 @@
 
                 <!-- Nested Plume Rotator around Factory (110, 100) -->
                 <g id="plumeRotator">
+                  <!-- Active Downwind Axis Line with distance ticks -->
+                  <line x1="110" y1="100" x2="560" y2="100" stroke="rgba(244, 63, 94, 0.5)" stroke-width="1.5" stroke-dasharray="6,4"/>
+                  <circle cx="250" cy="100" r="3" fill="#14b8a6"/>
+                  <circle cx="390" cy="100" r="3" fill="#14b8a6"/>
+                  <circle cx="530" cy="100" r="3" fill="#14b8a6"/>
+
                   <!-- Zone Yellow (2.5 - 4.0 km) -->
                   <ellipse id="svgPlumeYellow" cx="300" cy="100" rx="190" ry="60" fill="rgba(245, 158, 11, 0.25)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,4"/>
                   <!-- Zone Orange (1.0 - 2.5 km) -->
@@ -544,15 +672,46 @@
             
             <h2 id="whyRiskTitle" style="font-size: 1.45rem; font-weight: 800;">Why is it Critical?</h2>
 
-            <!-- Equation Row -->
+            <!-- Dynamic Atmospheric Vector Equation -->
             <div class="equation-card">
               <span id="eqWind">Wind @ 138° SE</span>
               <span>+</span>
               <span class="equation-token" id="eqEmission">SO2 Emission: 100%</span>
               <span>+</span>
-              <span>Lake 2.4 km Downwind</span>
+              <span id="eqWaterToken">Basin 2.4 km Downwind</span>
               <span>=</span>
               <span id="eqResult" style="color: var(--danger-red); font-weight: 800;">Water basin risk: Critical (97/100)</span>
+            </div>
+
+            <!-- Two Diagnostic Explainability Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+              
+              <!-- 1. Vector Alignment Metric Card -->
+              <div style="background: var(--bg-surface); padding: 16px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-bright); display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--water-teal);">Vector Alignment Metric</span>
+                  <span id="whyAlignBadge" class="badge" style="background: rgba(239, 68, 68, 0.2); color: var(--danger-red); border: 1px solid var(--danger-red); font-size: 0.72rem;">DIRECT HIT</span>
+                </div>
+                <div id="whyAlignMetric" style="font-size: 1.85rem; font-weight: 800; color: var(--danger-red); line-height: 1.1;">100% Vector Alignment</div>
+                <div id="whyAlignSub" style="font-size: 0.82rem; font-weight: 700; color: var(--text-bright);">Wind 138° SE aligns with 138° basin corridor (0° offset)</div>
+                <div id="whyAlignExpl" style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                  Direct downwind alignment focuses peak toxic plume centerline straight toward municipal intake sluices.
+                </div>
+              </div>
+
+              <!-- 2. Wind Speed & Dynamics Effect Indicator Card -->
+              <div style="background: var(--bg-surface); padding: 16px 18px; border-radius: var(--radius-md); border: 1px solid var(--border-bright); display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--water-teal);">Speed Effect & Aerodynamics</span>
+                  <span id="whySpeedBadge" class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--caution-amber); border: 1px solid var(--caution-amber); font-size: 0.72rem;">ADVECTION</span>
+                </div>
+                <div id="whySpeedMetric" style="font-size: 1.85rem; font-weight: 800; color: var(--caution-amber); line-height: 1.1;">19.4 km/h (Moderate Advection)</div>
+                <div id="whySpeedSub" style="font-size: 0.82rem; font-weight: 700; color: var(--text-bright);">Hydraulic arrival window: ~10 minutes</div>
+                <div id="whySpeedExpl" style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45;">
+                  High speeds (&gt;20 km/h) accelerate downwind plume travel toward intake points; low calm winds (&lt;8 km/h) trap dense stagnant chemical accumulation near communities.
+                </div>
+              </div>
+
             </div>
 
             <!-- Plain reasoning sentence -->
@@ -561,52 +720,74 @@
             </div>
 
             <!-- Contribution Bars -->
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 12px; background: var(--bg-input); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-dim);">
+              <span style="font-weight: 800; font-size: 0.86rem; text-transform: uppercase; color: var(--text-faint);">Hazard Decomposition Factors</span>
+              
               <div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
-                  <span>Wind alignment toward lake (138° axis)</span>
+                  <span>Wind directional alignment toward water corridor</span>
                   <span id="txtContribWind">100%</span>
                 </div>
-                <div style="height: 10px; background: var(--bg-input); border-radius: 5px; overflow: hidden;">
-                  <div id="fillContribWind" style="height: 100%; width: 100%; background: linear-gradient(90deg, var(--water-teal), var(--caution-amber));"></div>
+                <div style="height: 10px; background: var(--bg-surface); border-radius: 5px; overflow: hidden;">
+                  <div id="fillContribWind" style="height: 100%; width: 100%; background: linear-gradient(90deg, var(--water-teal), var(--danger-red));"></div>
                 </div>
               </div>
 
               <div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 4px;">
-                  <span>Emission strength (Boiler output)</span>
+                  <span>Emission source strength (Furnace / Burner flux)</span>
                   <span id="txtContribEmission">100%</span>
                 </div>
-                <div style="height: 10px; background: var(--bg-input); border-radius: 5px; overflow: hidden;">
+                <div style="height: 10px; background: var(--bg-surface); border-radius: 5px; overflow: hidden;">
                   <div id="fillContribEmission" style="height: 100%; width: 66%; background: linear-gradient(90deg, var(--water-teal), var(--danger-red));"></div>
                 </div>
               </div>
             </div>
 
-            <!-- What would lower the risk? -->
+            <!-- Dynamic "What would lower the risk?" Action Chips -->
             <div>
-              <div style="font-weight: 800; font-size: 0.95rem; margin-bottom: 10px;">What would lower the risk?</div>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-                <div class="stat-box">
-                  <div class="stat-num" id="scoreWind40" style="color: var(--water-teal);">0</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-weight: 800; font-size: 0.95rem;">What would lower the risk? (Sensitivity Analysis)</span>
+                <span style="font-size: 0.76rem; color: var(--text-muted);">Dynamic scores evaluated on active physics model</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                
+                <div class="stat-box" style="cursor: pointer;" onclick="switchTab('tab-5'); setSimPreset('shift40');" title="Simulate wind shift in simulator">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <div class="stat-num" id="scoreWind40" style="color: var(--safe-green);">0</div>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--safe-green); font-size: 0.7rem;">-97 pts</span>
+                  </div>
                   <div class="stat-title">Wind turned 40° away</div>
-                  <div class="stat-note">Misses lake corridor</div>
+                  <div class="stat-note">Misses lake corridor entirely</div>
                 </div>
-                <div class="stat-box">
-                  <div class="stat-num" id="scoreEm40" style="color: var(--water-teal);">51</div>
-                  <div class="stat-title">Emissions cut 40%</div>
-                  <div class="stat-note">De-rates burner flux</div>
+
+                <div class="stat-box" style="cursor: pointer;" onclick="switchTab('tab-4');" title="View scrubber action in Tab 4">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <div class="stat-num" id="scoreEm40" style="color: var(--caution-amber);">51</div>
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--caution-amber); font-size: 0.7rem;">-46 pts</span>
+                  </div>
+                  <div class="stat-title">De-rate boiler / scrubbers (40%)</div>
+                  <div class="stat-note">Neutralizes acid gas before stack</div>
                 </div>
-                <div class="stat-box">
-                  <div class="stat-num" id="scoreGate" style="color: var(--water-teal);">82</div>
-                  <div class="stat-title">Effluent gate closed</div>
-                  <div class="stat-note">Cuts hydraulic runoff</div>
+
+                <div class="stat-box" style="cursor: pointer;" onclick="switchTab('tab-4');" title="View gate action in Tab 4">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <div class="stat-num" id="scoreGate" style="color: var(--caution-amber);">82</div>
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--caution-amber); font-size: 0.7rem;">-15 pts</span>
+                  </div>
+                  <div class="stat-title">Sluice gate closure (ZLD)</div>
+                  <div class="stat-note">Routes to retention basin</div>
                 </div>
-                <div class="stat-box">
-                  <div class="stat-num" id="scoreHalfWind" style="color: var(--water-teal);">78</div>
-                  <div class="stat-title">Wind speed halved</div>
-                  <div class="stat-note">Doubles travel time</div>
+
+                <div class="stat-box" style="cursor: pointer;" onclick="switchTab('tab-5'); setSimPreset('calm');" title="Simulate calm in simulator">
+                  <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                    <div class="stat-num" id="scoreHalfWind" style="color: var(--caution-amber);">78</div>
+                    <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: var(--caution-amber); font-size: 0.7rem;">-19 pts</span>
+                  </div>
+                  <div class="stat-title">Wind speed drop (&lt;8 km/h)</div>
+                  <div class="stat-note">Doubles arrival response window</div>
                 </div>
+
               </div>
             </div>
 
@@ -629,41 +810,65 @@
             </div>
 
             <!-- Action Cards -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
               
-              <!-- Action 1 -->
-              <div class="stat-box" id="cardAct1">
-                <div style="font-weight: 800; font-size: 0.95rem;">1. Reduce factory emissions by 40%</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
-                  De-rates furnace burners. Plume shrinks and advection intensity drops.
+              <!-- Action 1: Atmospheric Scrubber Control -->
+              <div class="stat-box" id="cardAct1" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span class="badge" style="background: rgba(20, 184, 166, 0.15); color: var(--water-teal); font-size: 0.72rem; font-weight: 800; border: 1px solid rgba(20, 184, 166, 0.3);">ATMOSPHERIC SCRUBBER CONTROL</span>
+                  <span id="act1StatusTag" style="font-size: 0.74rem; color: var(--text-muted);">Standby</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                <div style="font-weight: 800; font-size: 0.96rem; color: var(--text-bright);">1. Emergency Scrubber Scrubbing & Lime Injection</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+                  Trigger alkaline wet scrubbers, inject calcium hydroxide (lime) slurry into flue stack, and de-rate furnace flux by 40%. Neutralizes toxic SO2 before chimney exit.
+                </div>
+                <div style="background: var(--bg-input); padding: 8px 10px; border-radius: 4px; font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                  <span>SO2 Stack Suppression: <strong style="color: var(--safe-green);">-40%</strong></span>
+                  <span>Furnace Flux: <strong style="color: var(--caution-amber);">60%</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 6px;">
                   <span id="scoreAct1" style="font-size: 0.76rem; font-weight: 700; color: var(--water-teal);">New risk: 51/100</span>
-                  <button id="btnAct1" class="btn btn-ghost" type="button">Approve action</button>
+                  <button id="btnAct1" class="btn btn-ghost" type="button">Deploy scrubbers</button>
                 </div>
               </div>
 
-              <!-- Action 2 -->
-              <div class="stat-box" id="cardAct2">
-                <div style="font-weight: 800; font-size: 0.95rem;">2. Close the effluent gate</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
-                  Locks secondary weir. Surface runoff contamination risk drops by ~15%.
+              <!-- Action 2: Zero Liquid Discharge (ZLD) Diversion -->
+              <div class="stat-box" id="cardAct2" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: var(--caution-amber); font-size: 0.72rem; font-weight: 800; border: 1px solid rgba(245, 158, 11, 0.3);">ZERO LIQUID DISCHARGE (ZLD)</span>
+                  <span id="act2StatusTag" style="font-size: 0.74rem; color: var(--text-muted);">Open Weir</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                <div style="font-weight: 800; font-size: 0.96rem; color: var(--text-bright);">2. Zero Liquid Discharge (ZLD) Sluice Diversion</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+                  Actuate pneumatic weir sluice gates to route chemical wastewater into secondary HDPE-lined retention ponds, cutting direct hydraulic runoff into the municipal basin by 15–20%.
+                </div>
+                <div style="background: var(--bg-input); padding: 8px 10px; border-radius: 4px; font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                  <span>Hydraulic Runoff: <strong style="color: var(--safe-green);">Diverted</strong></span>
+                  <span>Containment Basin: <strong style="color: var(--water-teal);">Active</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 6px;">
                   <span id="scoreAct2" style="font-size: 0.76rem; font-weight: 700; color: var(--water-teal);">New risk: 82/100</span>
-                  <button id="btnAct2" class="btn btn-ghost" type="button">Approve action</button>
+                  <button id="btnAct2" class="btn btn-ghost" type="button">Drop sluice gate</button>
                 </div>
               </div>
 
-              <!-- Action 3 -->
-              <div class="stat-box" id="cardAct3">
-                <div style="font-weight: 800; font-size: 0.95rem;">3. Alert downstream communities</div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
-                  Broadcasts shelter-in-place directives across Community A & B corridors.
+              <!-- Action 3: Municipal Early Warning -->
+              <div class="stat-box" id="cardAct3" style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #fca5a5; font-size: 0.72rem; font-weight: 800; border: 1px solid rgba(239, 68, 68, 0.3);">MUNICIPAL EARLY WARNING</span>
+                  <span id="act3StatusTag" style="font-size: 0.74rem; color: var(--text-muted);">Queued</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto;">
+                <div style="font-weight: 800; font-size: 0.96rem; color: var(--text-bright);">3. Municipal Intake Early Warning Dispatch</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+                  Auto-dispatch encrypted telemetry webhook and SMS alerts to downstream drinking water treatment engineers to seal Municipal Intake Sluice #4 before arrival window elapses.
+                </div>
+                <div style="background: var(--bg-input); padding: 8px 10px; border-radius: 4px; font-size: 0.75rem; color: var(--text-muted); display: flex; justify-content: space-between;">
+                  <span>Intake Gate #4: <strong style="color: var(--caution-amber);">Standby</strong></span>
+                  <span>Alert Payload: <strong style="color: var(--safe-green);">Pre-drafted</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 6px;">
                   <span id="scoreAct3" style="font-size: 0.76rem; font-weight: 700; color: var(--water-teal);">Lead time protection</span>
-                  <button id="btnAct3" class="btn btn-ghost" type="button">Approve action</button>
+                  <button id="btnAct3" class="btn btn-ghost" type="button">Transmit advisory</button>
                 </div>
               </div>
 
@@ -671,20 +876,20 @@
 
             <!-- Action Playbook -->
             <div style="background: var(--bg-surface); padding: 16px 20px; border-radius: var(--radius-md); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 8px;">
-              <span style="font-weight: 800; font-size: 0.9rem;">Operational Response Playbook</span>
+              <span style="font-weight: 800; font-size: 0.9rem;">Operational Response Playbook (Standard Operating Procedure)</span>
               <div class="playbook-row">
                 <span style="font-weight: 800; color: var(--caution-amber);">0–30 min</span>
-                <span>Throttle boilers, engage scrubbers, and close canal outfall sluice gates.</span>
+                <span>Trigger alkaline wet scrubbers, de-rate burner flux to 60%, drop ZLD weir sluices, and dispatch early intake warning.</span>
                 <span style="font-weight: 700; text-align: right;">Priority 1</span>
               </div>
               <div class="playbook-row">
                 <span style="font-weight: 800; color: var(--caution-amber);">30–90 min</span>
-                <span>Deploy floating oil booms at lake intake weir and alert water utility engineers.</span>
+                <span>Confirm municipal intake sluice #4 closure, deploy floating booms at canal headworks, switch city supply to reserve aquifers.</span>
                 <span style="font-weight: 700; text-align: right;">Priority 2</span>
               </div>
               <div class="playbook-row">
                 <span style="font-weight: 800; color: var(--caution-amber);">2 hr and after</span>
-                <span>Sample wetland bio-buffer pH levels and verify sediment clearance.</span>
+                <span>Sample bio-buffer pH thresholds in downstream wetlands, verify sediment neutralization, and inspect holding pond levels.</span>
                 <span style="font-weight: 700; text-align: right;">Priority 3</span>
               </div>
             </div>
@@ -746,10 +951,10 @@
 
                 <div>
                   <div style="display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700;">
-                    <span>Wind direction (60–220°)</span>
+                    <span>Wind direction (0–360°)</span>
                     <span id="simValDir" style="color: var(--water-teal);">138° SE</span>
                   </div>
-                  <input type="range" id="simRangeDir" class="range-slider" min="60" max="220" step="1" value="138">
+                  <input type="range" id="simRangeDir" class="range-slider" min="0" max="360" step="1" value="138">
                 </div>
 
                 <div>
@@ -819,6 +1024,18 @@
                   <rect width="880" height="500" fill="url(#simMapSafeGrad)"/>
                   <rect width="880" height="500" fill="url(#simMapGridPatt)"/>
 
+                  <!-- Concentric Distance Range Rings (1.0 km, 2.0 km, 3.0 km) -->
+                  <g id="simDistanceRingsLayer" stroke="rgba(20, 184, 166, 0.25)" stroke-width="1.2" stroke-dasharray="5,5" fill="none">
+                    <circle cx="110" cy="100" r="140"/>
+                    <text x="252" y="96" fill="#14b8a6" font-size="9" font-weight="700" stroke="none">1.0 km</text>
+
+                    <circle cx="110" cy="100" r="280"/>
+                    <text x="392" y="96" fill="#14b8a6" font-size="9" font-weight="700" stroke="none">2.0 km</text>
+
+                    <circle cx="110" cy="100" r="420"/>
+                    <text x="532" y="96" fill="#14b8a6" font-size="9" font-weight="700" stroke="none">3.0 km</text>
+                  </g>
+
                   <!-- Outflow River -->
                   <path id="svgSimRiverPath" d="M 530 360 Q 580 410 650 450 T 730 480" fill="none" stroke="#0f766e" stroke-width="30" stroke-linecap="round"/>
                   <text x="610" y="420" fill="#5eead4" font-size="11" font-weight="700">Outflow canal</text>
@@ -843,6 +1060,12 @@
 
                   <!-- Nested Plume Rotator around Factory (110, 100) -->
                   <g id="simPlumeRotator">
+                    <!-- Active Downwind Axis Line with distance ticks -->
+                    <line x1="110" y1="100" x2="560" y2="100" stroke="rgba(244, 63, 94, 0.5)" stroke-width="1.5" stroke-dasharray="6,4"/>
+                    <circle cx="250" cy="100" r="3" fill="#14b8a6"/>
+                    <circle cx="390" cy="100" r="3" fill="#14b8a6"/>
+                    <circle cx="530" cy="100" r="3" fill="#14b8a6"/>
+
                     <!-- Zone Yellow (2.5 - 4.0 km) -->
                     <ellipse id="svgSimPlumeYellow" cx="300" cy="100" rx="190" ry="60" fill="rgba(245, 158, 11, 0.25)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,4"/>
                     <!-- Zone Orange (1.0 - 2.5 km) -->
@@ -924,53 +1147,61 @@
 
             <!-- Six Sequential Stops -->
             <div class="journey-timeline-stack">
+              
+              <!-- Point 1: Facility Stack -->
               <div class="journey-stop danger" id="jStop1">
                 <div>
-                  <strong style="font-size: 0.95rem;">1. Facility (Epicenter)</strong>
-                  <div style="font-size: 0.8rem; color: var(--text-muted);">Shut down blowers, deploy scrubber lime slurries, seal drains</div>
+                  <strong style="font-size: 0.95rem;">1. Facility Stack & Industrial Outfall (T = 0)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Primary source release: Deploy wet scrubber lime slurry and actuate ZLD sluice diversion.</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">now</span>
               </div>
 
+              <!-- Point 2: Basin Perimeter -->
               <div class="journey-stop danger" id="jStop2">
                 <div>
-                  <strong id="jStop2Title" style="font-size: 0.95rem;">2. Downstream Water Basin Perimeter (+10 min)</strong>
-                  <div style="font-size: 0.8rem; color: var(--text-muted);">Activate perimeter aeration to prevent dissolved oxygen collapse</div>
+                  <strong id="jStop2Title" style="font-size: 0.95rem;">2. Downstream Basin Perimeter (+10 min)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Atmospheric plume touchdown on open water; activate perimeter aerators against dissolved oxygen collapse.</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">+10m</span>
               </div>
 
+              <!-- Point 3: Municipal Intake Sluice -->
               <div class="journey-stop danger" id="jStop3">
                 <div>
-                  <strong style="font-size: 0.95rem;">3. Intake Gates (+20 min)</strong>
-                  <div style="font-size: 0.8rem; color: var(--text-muted);">Seal municipal raw-water sluices and switch to reserve basins</div>
+                  <strong id="jStop3Title" style="font-size: 0.95rem;">3. Municipal Intake Sluice Gate #4 (+20 min)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Direct municipal drinking water intake; seal raw water sluice gates and switch city to reserve aquifers.</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">+20m</span>
               </div>
 
+              <!-- Point 4: Outflow / Irrigation Canals -->
               <div class="journey-stop danger" id="jStop4">
                 <div>
-                  <strong style="font-size: 0.95rem;">4. Outflow River (+30 min)</strong>
-                  <div style="font-size: 0.8rem; color: var(--text-muted);">Halt downstream agricultural diversion gates and irrigation pumps</div>
+                  <strong id="jStop4Title" style="font-size: 0.95rem;">4. Outflow / Irrigation Canals (+30 min)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Halt downstream agricultural canal headworks to protect crop soil from acidic runoff contamination.</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">+30m</span>
               </div>
 
+              <!-- Point 5: Downstream Communities -->
               <div class="journey-stop danger" id="jStop5">
                 <div>
-                  <strong style="font-size: 0.95rem;">5. Downstream Villages (+1 hr)</strong>
-                  <div style="font-size: 0.8rem; color: var(--text-muted);">Issue broadcast civil sirens and boil-water health advisories</div>
+                  <strong id="jStop5Title" style="font-size: 0.95rem;">5. Downstream Communities & Population Buffer (+1 hr)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Activate civil defense sirens, transmit shelter-in-place SMS directives, and broadcast water boil notice.</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">+1h</span>
               </div>
 
+              <!-- Point 6: Downstream Wetland Reserve -->
               <div class="journey-stop danger" id="jStop6">
                 <div>
-                  <strong style="font-size: 0.95rem;">6. Wetland Reserve (+2 hr)</strong>
-                  <div style="font-size: 0.8rem; color: var(--text-muted);">Sample bio-buffer thresholds and protect migratory waterfowl habitat</div>
+                  <strong id="jStop6Title" style="font-size: 0.95rem;">6. Protected Downstream Wetland Sanctuary (+2 hr)</strong>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">Sample bio-buffer pH levels, verify sediment neutralizer thresholds, and protect waterfowl sanctuary.</div>
                 </div>
                 <span class="journey-time" style="font-weight: 800;">+2h</span>
               </div>
+
             </div>
 
           </div>
@@ -1015,15 +1246,52 @@
 
             <!-- Risk Over Time Chart -->
             <div style="background: var(--bg-input); padding: 18px; border-radius: var(--radius-md); border: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: 800; font-size: 0.9rem;">Risk over time (7 steps)</span>
-                <div style="display: flex; gap: 12px; font-size: 0.76rem; font-weight: 700;">
-                  <span style="color: var(--danger-red);">■ Without action</span>
-                  <span style="color: var(--safe-green);">■ After action</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span style="font-weight: 800; font-size: 0.9rem;">Dual Trajectory: Threat Dispersion Over Time (7 Steps)</span>
+                <div style="display: flex; gap: 14px; font-size: 0.76rem; font-weight: 700; align-items: center;">
+                  <span style="color: var(--danger-red);">■ Without action (Escalating Unchecked)</span>
+                  <span style="color: var(--safe-green);">■ After action (Controlled Containment)</span>
+                  <span style="color: var(--caution-amber); border-left: 1px solid var(--border-dim); padding-left: 10px;">- - - Regulatory Threshold: 35</span>
                 </div>
               </div>
-              <div id="baChartBars" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 160px; align-items: flex-end; padding-top: 10px; border-bottom: 1px solid var(--border-dim);">
-                <!-- Bars rendered via JS -->
+
+              <!-- Threshold dotted indicator line -->
+              <div style="position: relative;">
+                <div style="position: absolute; top: 48px; left: 0; right: 0; border-top: 1px dashed rgba(245, 158, 11, 0.4); z-index: 1; pointer-events: none; display: flex; justify-content: flex-end;">
+                  <span style="background: rgba(15, 23, 42, 0.85); color: var(--caution-amber); font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 3px; transform: translateY(-50%);">
+                    Safety Threshold: 35
+                  </span>
+                </div>
+                <div id="baChartBars" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; height: 160px; align-items: flex-end; padding-top: 10px; border-bottom: 1px solid var(--border-dim); position: relative; z-index: 2;">
+                  <!-- Bars rendered via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Trajectory Metrics Summary Card -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+              <div class="stat-box" style="padding: 12px 16px;">
+                <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--text-faint);">Net Risk Removed</div>
+                <div id="baMetricNetDrop" style="font-size: 1.5rem; font-weight: 800; color: var(--safe-green);">-46 points</div>
+                <div style="font-size: 0.76rem; color: var(--text-muted);">De-escalated from Critical &rarr; Moderate</div>
+              </div>
+
+              <div class="stat-box" style="padding: 12px 16px;">
+                <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--text-faint);">Plume Reach Retracted</div>
+                <div id="baMetricReachDrop" style="font-size: 1.5rem; font-weight: 800; color: var(--water-teal);">4.0 km &rarr; 2.8 km</div>
+                <div style="font-size: 0.76rem; color: var(--text-muted);">-1.2 km dispersion buffer restored</div>
+              </div>
+
+              <div class="stat-box" style="padding: 12px 16px;">
+                <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--text-faint);">Municipal Intake Sluice #4</div>
+                <div id="baMetricSluiceStatus" style="font-size: 1.5rem; font-weight: 800; color: var(--safe-green);">PROTECTED</div>
+                <div style="font-size: 0.76rem; color: var(--text-muted);">Drinking water sluice sealed in time</div>
+              </div>
+
+              <div class="stat-box" style="padding: 12px 16px;">
+                <div style="font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--text-faint);">Population Shielded</div>
+                <div id="baMetricPopShield" style="font-size: 1.5rem; font-weight: 800; color: var(--text-bright);">18,000 residents</div>
+                <div style="font-size: 0.76rem; color: var(--text-muted);">Shielded from toxic exposure arc</div>
               </div>
             </div>
 

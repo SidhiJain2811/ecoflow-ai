@@ -889,6 +889,26 @@ header.app-header {
   animation: breachRingAnim 2s infinite ease-out;
 }
 
+@keyframes lakeBreachPulse {
+  0% { stroke: #ef4444; stroke-width: 2.5; filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.45)); }
+  50% { stroke: #ff0000; stroke-width: 4.5; filter: drop-shadow(0 0 18px rgba(239, 68, 68, 0.95)); }
+  100% { stroke: #ef4444; stroke-width: 2.5; filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.45)); }
+}
+
+.lake-pulsing {
+  animation: lakeBreachPulse 1.6s infinite ease-in-out !important;
+}
+
+@keyframes plumeBreachPulse {
+  0% { filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4)); opacity: 0.85; }
+  50% { filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.9)); opacity: 1; }
+  100% { filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4)); opacity: 0.85; }
+}
+
+.plume-pulsing {
+  animation: plumeBreachPulse 1.8s infinite ease-in-out;
+}
+
 /* MAP CHIPS BAR */
 .chips-bar {
   display: flex;

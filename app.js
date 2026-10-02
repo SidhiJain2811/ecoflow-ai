@@ -264,7 +264,7 @@
       hexColor = '#f59e0b';
     }
 
-    const timeToLakeMin = Math.max(1, Math.round(10 * (19.4 / Math.max(1, windSpeed))));
+    const timeToLakeMin = Math.max(1, Math.round((appState.settings.waterDistanceKm / Math.max(1, windSpeed)) * 60));
     const plumeReachKm = (4.0 * windFactor * Math.sqrt(E)).toFixed(1);
     const residentsAtRisk = Math.round(appState.settings.population * (score / 97));
 
@@ -534,9 +534,9 @@
     appState.incident.actions[actionKey] = true;
 
     const actionNames = {
-      reduceEmissions40: 'Reduce factory emissions by 40%',
-      closeEffluentGate: 'Close the effluent gate',
-      alertDownstream: 'Alert downstream communities'
+      reduceEmissions40: 'Atmospheric Scrubber Control & Lime Slurry Injection',
+      closeEffluentGate: 'Zero Liquid Discharge (ZLD) Sluice Weir Diversion',
+      alertDownstream: 'Municipal Early Warning API & Siren Dispatch'
     };
 
     const method = isAuto ? 'Autopilot auto-applied' : 'Operator approved';
@@ -940,6 +940,93 @@
     if (resCard) resCard.textContent = activeRisk.residentsAtRisk.toLocaleString();
     if (reachCard) reachCard.textContent = `${activeRisk.plumeReachKm} km`;
 
+    // Dedicated Downstream Water Bodies at Risk Panel
+    const p = getEffectiveParams();
+    const arrMin = activeRisk.timeToLakeMin;
+    const pName = document.getElementById('dashWaterPrimaryName');
+    const pDist = document.getElementById('dashWaterDist');
+    const pArr = document.getElementById('dashWaterArrival');
+    const pBadge = document.getElementById('dashWaterPrimaryThreatBadge');
+    const pIntakeStatus = document.getElementById('dashWaterIntakeStatus');
+
+    if (pName) pName.textContent = appState.settings.waterBodyName || 'Downstream Water Basin';
+    if (pDist) pDist.textContent = `${appState.settings.waterDistanceKm} km`;
+    if (pArr) pArr.textContent = `${arrMin} min (at ${p.windSpeed.toFixed(1)} km/h)`;
+
+    if (pBadge) {
+      if (activeRisk.score >= appState.settings.threshCritical) {
+        pBadge.textContent = 'CRITICAL RISK';
+        pBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+        pBadge.style.color = 'var(--danger-red)';
+        pBadge.style.borderColor = 'var(--danger-red)';
+      } else if (activeRisk.score >= appState.settings.threshWarning) {
+        pBadge.textContent = 'MODERATE RISK';
+        pBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+        pBadge.style.color = 'var(--caution-amber)';
+        pBadge.style.borderColor = 'var(--caution-amber)';
+      } else {
+        pBadge.textContent = 'BUFFER SAFE';
+        pBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+        pBadge.style.color = 'var(--safe-green)';
+        pBadge.style.borderColor = 'var(--safe-green)';
+      }
+    }
+
+    if (pIntakeStatus) {
+      if (activeRisk.score >= appState.settings.threshCritical) {
+        pIntakeStatus.textContent = '⚠️ Direct plume centerline alignment detected — Intake sluice gate closure protocol armed.';
+        pIntakeStatus.style.color = 'var(--danger-red)';
+      } else if (activeRisk.score >= appState.settings.threshWarning) {
+        pIntakeStatus.textContent = '⚠️ Elevated plume proximity — Water intake monitor on high alert.';
+        pIntakeStatus.style.color = 'var(--caution-amber)';
+      } else {
+        pIntakeStatus.textContent = '✓ Plume trajectory clear of intake gates — Normal operational baseline.';
+        pIntakeStatus.style.color = 'var(--safe-green)';
+      }
+    }
+
+    // Secondary & Tertiary Water Assets
+    const secBadge = document.getElementById('dashWaterSecondaryThreatBadge');
+    const secArr = document.getElementById('dashCanalArrival');
+    const secStatus = document.getElementById('dashCanalStatus');
+    const canalMin = Math.round(arrMin * 1.6);
+    if (secArr) secArr.textContent = `+${canalMin} min`;
+    if (secBadge) {
+      if (activeRisk.score >= appState.settings.threshCritical) {
+        secBadge.textContent = 'HIGH RISK';
+        secBadge.style.color = 'var(--danger-red)';
+      } else if (activeRisk.score >= appState.settings.threshWarning) {
+        secBadge.textContent = 'MODERATE RISK';
+        secBadge.style.color = 'var(--caution-amber)';
+      } else {
+        secBadge.textContent = 'ISOLATED';
+        secBadge.style.color = 'var(--safe-green)';
+      }
+    }
+    if (secStatus) {
+      if (activeRisk.score >= appState.settings.threshWarning) {
+        secStatus.textContent = 'Secondary canal runoff; diversion headworks isolation advised within 30 min.';
+        secStatus.style.color = 'var(--caution-amber)';
+      } else {
+        secStatus.textContent = 'Canal runoff nominal; agricultural headworks protected.';
+        secStatus.style.color = 'var(--safe-green)';
+      }
+    }
+
+    const wetBadge = document.getElementById('dashWetlandThreatBadge');
+    const wetArr = document.getElementById('dashWetlandArrival');
+    const wetMin = Math.round(arrMin * 2.8);
+    if (wetArr) wetArr.textContent = `+${wetMin} min`;
+    if (wetBadge) {
+      if (activeRisk.score >= appState.settings.threshCritical) {
+        wetBadge.textContent = 'VULNERABLE';
+        wetBadge.style.color = 'var(--caution-amber)';
+      } else {
+        wetBadge.textContent = 'PROTECTED';
+        wetBadge.style.color = 'var(--safe-green)';
+      }
+    }
+
     // Risk Ladder Markers
     const pinWithout = document.getElementById('dashPinWithout');
     const tagWithout = document.getElementById('dashTagWithout');
@@ -1060,7 +1147,13 @@
     const chipLake = document.getElementById('chipLake');
     if (svgLakeLabel) svgLakeLabel.textContent = appState.settings.waterBodyName;
     if (svgFacLabel) svgFacLabel.textContent = appState.settings.siteName;
-    if (svgLake) svgLake.setAttribute('fill', isLakeAffected ? '#991b1b' : 'url(#lakeWaterGrad)');
+    if (svgLake) {
+      svgLake.setAttribute('fill', isLakeAffected ? '#991b1b' : 'url(#lakeWaterGrad)');
+      svgLake.classList.toggle('lake-pulsing', isLakeAffected);
+    }
+    if (elRed) {
+      elRed.classList.toggle('plume-pulsing', isLakeAffected);
+    }
     if (breachGroup) breachGroup.style.display = isLakeAffected ? 'block' : 'none';
     if (chipLake) chipLake.innerHTML = `<span class="chip-circle" style="background:${isLakeAffected ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>${escapeHtml(appState.settings.waterBodyName)}: ${isLakeAffected ? 'Critical breach' : 'Clean'}`;
 
@@ -1117,11 +1210,14 @@
       eqResult.style.color = activeRisk.hexColor;
     }
 
+    const bName = escapeHtml(appState.settings.waterBodyName);
+    const bDeg = appState.settings.lakeBearing;
+    const bCompass = getCompassSector(bDeg);
+    const alignPct = Math.round(activeRisk.alignment * 100);
+    const offsetDeg = angleDifference(p.windDirection, bDeg);
+
     const reason = document.getElementById('whyReasonSentence');
     if (reason) {
-      const bName = escapeHtml(appState.settings.waterBodyName);
-      const bDeg = appState.settings.lakeBearing;
-      const bCompass = getCompassSector(bDeg);
       if (activeRisk.alignment > 0.8) {
         reason.textContent = `Live winds at ${p.windSpeed.toFixed(1)} km/h blow directly along the ${bDeg}° ${bCompass} water basin axis with high industrial emissions, placing drinking intake gates directly in the plume crosshairs.`;
       } else if (activeRisk.alignment > 0.25) {
@@ -1131,13 +1227,102 @@
       }
     }
 
+    // Vector Alignment Breakdown Card
+    const elAlignMetric = document.getElementById('whyAlignMetric');
+    const elAlignSub = document.getElementById('whyAlignSub');
+    const elAlignExpl = document.getElementById('whyAlignExpl');
+    const elAlignBadge = document.getElementById('whyAlignBadge');
+
+    if (elAlignMetric) {
+      elAlignMetric.textContent = `${alignPct}% Vector Alignment`;
+      elAlignMetric.style.color = alignPct >= 75 ? 'var(--danger-red)' : alignPct >= 25 ? 'var(--caution-amber)' : 'var(--safe-green)';
+    }
+    if (elAlignSub) {
+      elAlignSub.textContent = `Wind ${p.windDirection}° ${getCompassSector(p.windDirection)} aligns with ${bDeg}° ${bCompass} basin corridor (${offsetDeg}° offset)`;
+    }
+    if (elAlignExpl) {
+      if (alignPct >= 75) {
+        elAlignExpl.textContent = `Severe direct alignment. The industrial emission cone is steered directly along the aquatic corridor, channeling acid gases and particulate matter straight into the intake reservoir with minimal lateral dispersion.`;
+      } else if (alignPct >= 25) {
+        elAlignExpl.textContent = `Glancing corridor exposure. Plume dispersion cone fringes overlap with the secondary basin buffer, posing moderate contamination risk to outer drainage canals.`;
+      } else {
+        elAlignExpl.textContent = `Off-axis dispersion. Plume vectors blow ${offsetDeg}° away from the primary water body corridor, dispersing pollutants across non-aquatic buffer terrain.`;
+      }
+    }
+    if (elAlignBadge) {
+      if (alignPct >= 75) {
+        elAlignBadge.textContent = 'DIRECT HIT';
+        elAlignBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+        elAlignBadge.style.color = 'var(--danger-red)';
+        elAlignBadge.style.borderColor = 'var(--danger-red)';
+      } else if (alignPct >= 25) {
+        elAlignBadge.textContent = 'MARGINAL GLANCE';
+        elAlignBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+        elAlignBadge.style.color = 'var(--caution-amber)';
+        elAlignBadge.style.borderColor = 'var(--caution-amber)';
+      } else {
+        elAlignBadge.textContent = 'CLEAR AXIS';
+        elAlignBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+        elAlignBadge.style.color = 'var(--safe-green)';
+        elAlignBadge.style.borderColor = 'var(--safe-green)';
+      }
+    }
+
+    // Speed Effect Breakdown Card (>20 km/h advective rush vs <8 km/h stagnant accumulation)
+    const elSpeedMetric = document.getElementById('whySpeedMetric');
+    const elSpeedSub = document.getElementById('whySpeedSub');
+    const elSpeedExpl = document.getElementById('whySpeedExpl');
+    const elSpeedBadge = document.getElementById('whySpeedBadge');
+
+    if (elSpeedMetric) {
+      if (p.windSpeed >= 20) {
+        elSpeedMetric.textContent = `${p.windSpeed.toFixed(1)} km/h (Advective Rush)`;
+        elSpeedMetric.style.color = 'var(--danger-red)';
+      } else if (p.windSpeed < 8) {
+        elSpeedMetric.textContent = `${p.windSpeed.toFixed(1)} km/h (Stagnant Accumulation)`;
+        elSpeedMetric.style.color = 'var(--caution-amber)';
+      } else {
+        elSpeedMetric.textContent = `${p.windSpeed.toFixed(1)} km/h (Steady Convection)`;
+        elSpeedMetric.style.color = 'var(--water-teal)';
+      }
+    }
+    if (elSpeedSub) {
+      elSpeedSub.textContent = `Hydraulic arrival window: ~${activeRisk.timeToLakeMin} minutes`;
+    }
+    if (elSpeedExpl) {
+      if (p.windSpeed >= 20) {
+        elSpeedExpl.textContent = `High wind velocity (>20 km/h) creates rapid advection, compressing emergency response lead time and driving concentrated plume mass to downstream intake gates before atmospheric dilution can take place.`;
+      } else if (p.windSpeed < 8) {
+        elSpeedExpl.textContent = `Low wind speed (<8 km/h) creates stagnant air pooling and localized ground-level accumulation near the stack and immediate perimeter, delaying lake arrival but maximizing dosage.`;
+      } else {
+        elSpeedExpl.textContent = `Moderate convective wind velocity (8–20 km/h) provides predictable linear dispersion along the prevailing wind vector.`;
+      }
+    }
+    if (elSpeedBadge) {
+      if (p.windSpeed >= 20) {
+        elSpeedBadge.textContent = 'RAPID ADVECTION';
+        elSpeedBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+        elSpeedBadge.style.color = 'var(--danger-red)';
+        elSpeedBadge.style.borderColor = 'var(--danger-red)';
+      } else if (p.windSpeed < 8) {
+        elSpeedBadge.textContent = 'STAGNANT AIR';
+        elSpeedBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+        elSpeedBadge.style.color = 'var(--caution-amber)';
+        elSpeedBadge.style.borderColor = 'var(--caution-amber)';
+      } else {
+        elSpeedBadge.textContent = 'STEADY CONVECTION';
+        elSpeedBadge.style.background = 'rgba(20, 184, 166, 0.2)';
+        elSpeedBadge.style.color = 'var(--water-teal)';
+        elSpeedBadge.style.borderColor = 'var(--water-teal)';
+      }
+    }
+
     // Contribution bars
     const fillWind = document.getElementById('fillContribWind');
     const txtWind = document.getElementById('txtContribWind');
     if (fillWind && txtWind) {
-      const pct = Math.round(activeRisk.alignment * 100);
-      fillWind.style.width = `${pct}%`;
-      txtWind.textContent = `${pct}%`;
+      fillWind.style.width = `${alignPct}%`;
+      txtWind.textContent = `${alignPct}%`;
     }
 
     const fillEm = document.getElementById('fillContribEmission');
@@ -1154,10 +1339,10 @@
     const sGate = document.getElementById('scoreGate');
     const sHalfWind = document.getElementById('scoreHalfWind');
 
-    if (sWind40) sWind40.textContent = evaluateRiskModel(p.windSpeed, p.windDirection + 40, p.emission, appState.incident.actions.reduceEmissions40, appState.incident.actions.closeEffluentGate).score;
+    if (sWind40) sWind40.textContent = evaluateRiskModel(p.windSpeed, (p.windDirection + 40) % 360, p.emission, appState.incident.actions.reduceEmissions40, appState.incident.actions.closeEffluentGate).score;
     if (sEm40) sEm40.textContent = evaluateRiskModel(p.windSpeed, p.windDirection, p.emission, true, appState.incident.actions.closeEffluentGate).score;
     if (sGate) sGate.textContent = evaluateRiskModel(p.windSpeed, p.windDirection, p.emission, appState.incident.actions.reduceEmissions40, true).score;
-    if (sHalfWind) sHalfWind.textContent = evaluateRiskModel(p.windSpeed / 2, p.windDirection, p.emission, appState.incident.actions.reduceEmissions40, appState.incident.actions.closeEffluentGate).score;
+    if (sHalfWind) sHalfWind.textContent = evaluateRiskModel(6.0, p.windDirection, p.emission, appState.incident.actions.reduceEmissions40, appState.incident.actions.closeEffluentGate).score;
   }
 
   function updateAIActionTab(activeRisk) {
@@ -1167,10 +1352,45 @@
       curRiskReadout.style.color = activeRisk.hexColor;
     }
 
+    // Engineering Status Tags
+    const act1Status = document.getElementById('act1StatusTag');
+    const act2Status = document.getElementById('act2StatusTag');
+    const act3Status = document.getElementById('act3StatusTag');
+
+    if (act1Status) {
+      if (appState.incident.actions.reduceEmissions40) {
+        act1Status.textContent = 'Lime Slurry Active (60% Feed)';
+        act1Status.style.color = 'var(--safe-green)';
+      } else {
+        act1Status.textContent = 'Standby / Bypassed';
+        act1Status.style.color = 'var(--text-muted)';
+      }
+    }
+
+    if (act2Status) {
+      if (appState.incident.actions.closeEffluentGate) {
+        act2Status.textContent = 'Diverted to Retention Pond (Closed)';
+        act2Status.style.color = 'var(--safe-green)';
+      } else {
+        act2Status.textContent = 'Open Weir / Direct Discharge';
+        act2Status.style.color = 'var(--caution-amber)';
+      }
+    }
+
+    if (act3Status) {
+      if (appState.incident.actions.alertDownstream) {
+        act3Status.textContent = 'Dispatched (API / SMS Sent)';
+        act3Status.style.color = 'var(--safe-green)';
+      } else {
+        act3Status.textContent = 'Armed / Standby';
+        act3Status.style.color = 'var(--text-muted)';
+      }
+    }
+
     // Action cards
-    updateActionCard('cardAct1', 'btnAct1', 'scoreAct1', appState.incident.actions.reduceEmissions40, 'reduceEmissions40');
-    updateActionCard('cardAct2', 'btnAct2', 'scoreAct2', appState.incident.actions.closeEffluentGate, 'closeEffluentGate');
-    updateActionCard('cardAct3', 'btnAct3', 'scoreAct3', appState.incident.actions.alertDownstream, 'alertDownstream');
+    updateActionCard('cardAct1', 'btnAct1', 'scoreAct1', appState.incident.actions.reduceEmissions40, 'reduceEmissions40', 'Lime Scrubber');
+    updateActionCard('cardAct2', 'btnAct2', 'scoreAct2', appState.incident.actions.closeEffluentGate, 'closeEffluentGate', 'ZLD Sluice Gate');
+    updateActionCard('cardAct3', 'btnAct3', 'scoreAct3', appState.incident.actions.alertDownstream, 'alertDownstream', 'Early Warning');
 
     // Incident Log Table
     const logBox = document.getElementById('incidentLogContainer');
@@ -1184,7 +1404,7 @@
     }
   }
 
-  function updateActionCard(cardId, btnId, scoreId, isActive, actionKey) {
+  function updateActionCard(cardId, btnId, scoreId, isActive, actionKey, customBtnLabel) {
     const card = document.getElementById(cardId);
     const btn = document.getElementById(btnId);
     const score = document.getElementById(scoreId);
@@ -1192,7 +1412,8 @@
 
     card.style.borderColor = isActive ? 'var(--safe-green)' : 'var(--border-dim)';
     card.style.background = isActive ? 'var(--safe-bg)' : 'var(--bg-input)';
-    btn.textContent = isActive ? 'Simulated Active ✓' : (appState.autopilotMode === 'assisted' ? 'Approve action' : 'Apply action');
+    const label = customBtnLabel || 'Action';
+    btn.textContent = isActive ? 'Simulated Active ✓' : (appState.autopilotMode === 'assisted' ? `Approve ${label}` : `Apply ${label}`);
     btn.className = isActive ? 'btn btn-teal' : 'btn btn-ghost';
 
     if (score && !isActive) {
@@ -1342,34 +1563,62 @@
     if (simSvgLakeLabel) simSvgLakeLabel.textContent = appState.settings.waterBodyName;
     if (simSvgFacLabel) simSvgFacLabel.textContent = appState.settings.siteName;
 
-    if (simSvgLake) simSvgLake.setAttribute('fill', isSimLakeBreach ? '#991b1b' : 'url(#simLakeWaterGrad)');
+    if (simSvgLake) {
+      simSvgLake.setAttribute('fill', isSimLakeBreach ? '#991b1b' : 'url(#simLakeWaterGrad)');
+      simSvgLake.classList.toggle('lake-pulsing', isSimLakeBreach);
+    }
+    if (sRed) {
+      sRed.classList.toggle('plume-pulsing', isSimLakeBreach);
+    }
     if (simBreach) simBreach.style.display = isSimLakeBreach ? 'block' : 'none';
     if (simChipLake) simChipLake.innerHTML = `<span class="chip-circle" style="background:${isSimLakeBreach ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>${escapeHtml(appState.settings.waterBodyName)}: ${isSimLakeBreach ? 'Impinged (' + activeRisk.level + ')' : 'Clean'}`;
   }
 
   function updatePollutionJourneyTab(activeRisk, p) {
+    const tLake = activeRisk.timeToLakeMin;
+    const tIntake = Math.max(tLake + 4, Math.round(tLake * 1.5));
+    const tRiver = Math.max(tIntake + 8, Math.round(tLake * 2.2));
+    const tVillages = Math.max(tRiver + 15, Math.round(tLake * 3.6));
+    const tWetland = Math.max(tVillages + 25, Math.round(tLake * 5.2));
+
     const winLine = document.getElementById('journeyActionWindow');
     if (winLine) {
-      winLine.textContent = `Action window: ${activeRisk.timeToLakeMin} minutes until plume impinges on ${appState.settings.waterBodyName}`;
+      winLine.textContent = `Action window: ${tLake} minutes until plume impinges on ${appState.settings.waterBodyName}`;
     }
 
     const jTitle2 = document.getElementById('jStop2Title');
     if (jTitle2) {
-      jTitle2.textContent = `2. ${appState.settings.waterBodyName} Perimeter (+${activeRisk.timeToLakeMin} min)`;
+      jTitle2.textContent = `2. ${appState.settings.waterBodyName} Perimeter (+${tLake} min)`;
     }
 
-    const tLake = activeRisk.timeToLakeMin;
-    const tIntake = Math.round(20 * (19.4 / Math.max(1, p.windSpeed)));
-    const tRiver = Math.round(30 * (19.4 / Math.max(1, p.windSpeed)));
-    const tVillages = Math.round(60 * (19.4 / Math.max(1, p.windSpeed)));
-    const tWetland = Math.round(120 * (19.4 / Math.max(1, p.windSpeed)));
+    const jTitle3 = document.getElementById('jStop3Title');
+    if (jTitle3) {
+      jTitle3.textContent = `3. Municipal Intake Sluice Gate #4 (+${tIntake} min)`;
+    }
+
+    const jTitle4 = document.getElementById('jStop4Title');
+    if (jTitle4) {
+      jTitle4.textContent = `4. Outflow / Irrigation Canals (+${tRiver} min)`;
+    }
+
+    const jTitle5 = document.getElementById('jStop5Title');
+    if (jTitle5) {
+      const lblVill = tVillages >= 60 ? `+${(tVillages / 60).toFixed(1)} hr` : `+${tVillages} min`;
+      jTitle5.textContent = `5. Downstream Communities & Population Buffer (${lblVill})`;
+    }
+
+    const jTitle6 = document.getElementById('jStop6Title');
+    if (jTitle6) {
+      const lblWet = tWetland >= 60 ? `+${(tWetland / 60).toFixed(1)} hr` : `+${tWetland} min`;
+      jTitle6.textContent = `6. Protected Downstream Wetland Sanctuary (${lblWet})`;
+    }
 
     setJourneyStop('jStop1', 15, activeRisk.score, 'now');
     setJourneyStop('jStop2', 25, activeRisk.score, `+${tLake}m`);
     setJourneyStop('jStop3', 35, activeRisk.score, `+${tIntake}m`);
     setJourneyStop('jStop4', 45, activeRisk.score, `+${tRiver}m`);
-    setJourneyStop('jStop5', 50, activeRisk.score, `+${tVillages}m`);
-    setJourneyStop('jStop6', 55, activeRisk.score, `+${tWetland}m`);
+    setJourneyStop('jStop5', 50, activeRisk.score, tVillages >= 60 ? `+${Math.round(tVillages / 60)}h` : `+${tVillages}m`);
+    setJourneyStop('jStop6', 55, activeRisk.score, tWetland >= 60 ? `+${Math.round(tWetland / 60)}h` : `+${tWetland}m`);
   }
 
   function setJourneyStop(elementId, threshold, currentScore, timeLabel) {
@@ -1413,35 +1662,81 @@
 
     if (aTitle) {
       const applied = [];
-      if (appState.incident.actions.reduceEmissions40) applied.push('40% emission cut');
-      if (appState.incident.actions.closeEffluentGate) applied.push('effluent gate closed');
-      if (appState.incident.actions.alertDownstream) applied.push('community sirens');
-      aTitle.textContent = applied.length > 0 ? `After ${applied.join(' & ')}` : 'Without actions applied';
+      if (appState.incident.actions.reduceEmissions40) applied.push('Lime scrubber active');
+      if (appState.incident.actions.closeEffluentGate) applied.push('ZLD weir diverted');
+      if (appState.incident.actions.alertDownstream) applied.push('Early warning dispatched');
+      aTitle.textContent = applied.length > 0 ? `After ${applied.join(' + ')}` : 'Without actions applied';
     }
 
+    const drop = baseRisk.score - activeRisk.score;
     const deltaTxt = document.getElementById('baDeltaSentence');
     if (deltaTxt) {
-      const drop = baseRisk.score - activeRisk.score;
       if (drop > 0) {
-        deltaTxt.textContent = `Acting now cuts predicted risk by ${drop} points, from ${baseRisk.level} (${baseRisk.score}/100) to ${activeRisk.level} (${activeRisk.score}/100).`;
+        deltaTxt.textContent = `Acting now cuts predicted risk by ${drop} points, from ${baseRisk.level} (${baseRisk.score}/100) to ${activeRisk.level} (${activeRisk.score}/100) — Diving below regulatory threshold of 35 pts.`;
       } else {
-        deltaTxt.textContent = `No active mitigations applied yet. Predicted risk stands at ${baseRisk.level} (${baseRisk.score}/100).`;
+        deltaTxt.textContent = `Without intervention, risk escalates to ${baseRisk.level} (${baseRisk.score}/100). Apply the 3 engineering actions to bring trajectory below 35 pts.`;
       }
     }
 
-    // Render 7-step comparison chart
+    // 4 Trajectory Summary Metric Cards
+    const mNetDrop = document.getElementById('baMetricNetDrop');
+    const mReachDrop = document.getElementById('baMetricReachDrop');
+    const mSluice = document.getElementById('baMetricSluiceStatus');
+    const mPopShield = document.getElementById('baMetricPopShield');
+
+    if (mNetDrop) {
+      mNetDrop.textContent = drop > 0 ? `-${drop} points` : '0 points';
+      mNetDrop.style.color = drop > 0 ? 'var(--safe-green)' : 'var(--text-muted)';
+    }
+    if (mReachDrop) {
+      mReachDrop.textContent = `${baseRisk.plumeReachKm} km → ${activeRisk.plumeReachKm} km`;
+      mReachDrop.style.color = activeRisk.plumeReachKm < baseRisk.plumeReachKm ? 'var(--water-teal)' : 'var(--text-bright)';
+    }
+    if (mSluice) {
+      if (appState.incident.actions.closeEffluentGate) {
+        mSluice.textContent = 'SECURED (DIVERTED)';
+        mSluice.style.color = 'var(--safe-green)';
+      } else if (activeRisk.score >= appState.settings.threshWarning) {
+        mSluice.textContent = 'VULNERABLE (OPEN)';
+        mSluice.style.color = 'var(--danger-red)';
+      } else {
+        mSluice.textContent = 'SECURED (LOW FLOW)';
+        mSluice.style.color = 'var(--safe-green)';
+      }
+    }
+    if (mPopShield) {
+      const popShielded = Math.max(0, baseRisk.residentsAtRisk - activeRisk.residentsAtRisk);
+      mPopShield.textContent = `${popShielded.toLocaleString()} residents`;
+      mPopShield.style.color = popShielded > 0 ? 'var(--safe-green)' : 'var(--text-bright)';
+    }
+
+    // Render Dual Trajectory Comparison Chart
     const chartContainer = document.getElementById('baChartBars');
     if (chartContainer) {
-      const mults = [0.2, 0.6, 0.85, 1.0, 1.0, 0.8, 0.5];
+      const p = getEffectiveParams();
+      const hasActions = appState.incident.actions.reduceEmissions40 || appState.incident.actions.closeEffluentGate || appState.incident.actions.alertDownstream;
+      const hypMit = evaluateRiskModel(p.windSpeed, p.windDirection, p.emission, true, true);
+
+      // Trajectory multipliers
+      const uncheckedMults = [0.85, 0.95, 1.0, 1.05, 1.02, 0.9, 0.75];
+      const ctrlMults = [0.85, 0.52, 0.35, 0.25, 0.18, 0.14, 0.10];
       const labels = ['NOW', '+10m', '+30m', '+1h', '+2h', '+3h', '+6h'];
+
       chartContainer.innerHTML = labels.map((lbl, idx) => {
-        const hBase = Math.round(baseRisk.score * mults[idx] * 1.2);
-        const hAfter = Math.round(activeRisk.score * mults[idx] * 1.2);
+        const uncheckScore = Math.min(100, Math.round(baseRisk.score * uncheckedMults[idx]));
+        const targetBase = hasActions ? activeRisk.score : hypMit.score;
+        const ctrlScore = Math.max(5, Math.round(targetBase * ctrlMults[idx]));
+
+        // Height out of 145px
+        const hBase = Math.max(8, Math.round((uncheckScore / 100) * 135));
+        const hAfter = Math.max(8, Math.round((ctrlScore / 100) * 135));
+        const isBelowThreshold = ctrlScore <= 35;
+
         return `
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px;">
-            <div style="display:flex; align-items:flex-end; gap:3px; height:120px;">
-              <div style="width:14px; height:${hBase}px; background:var(--danger-red); border-radius:3px 3px 0 0;" title="Without action: ${Math.round(baseRisk.score * mults[idx])}"></div>
-              <div style="width:14px; height:${hAfter}px; background:var(--safe-green); border-radius:3px 3px 0 0;" title="After action: ${Math.round(activeRisk.score * mults[idx])}"></div>
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px; flex:1;">
+            <div style="display:flex; align-items:flex-end; justify-content:center; gap:5px; height:140px; width:100%;">
+              <div style="width:16px; height:${hBase}px; background:linear-gradient(to top, #b91c1c, #ef4444); border-radius:3px 3px 0 0; transition:height 0.4s ease;" title="Unchecked trajectory: ${uncheckScore}/100"></div>
+              <div style="width:16px; height:${hAfter}px; background:${isBelowThreshold ? 'linear-gradient(to top, #047857, #10b981)' : 'linear-gradient(to top, #b45309, #f59e0b)'}; border-radius:3px 3px 0 0; transition:height 0.4s ease;" title="Controlled trajectory: ${ctrlScore}/100 ${isBelowThreshold ? '(Below Regulatory Threshold)' : ''}"></div>
             </div>
             <span style="font-size:0.72rem; color:var(--text-faint); font-weight:700;">${lbl}</span>
           </div>
@@ -1580,6 +1875,23 @@ Generated automatically by EcoAI Flow Incident Autopilot.`;
       tabPanels.forEach(panel => {
         panel.classList.toggle('active', panel.id === targetId);
       });
+      updateAllUI();
+    };
+
+    window.setSimPreset = function(preset) {
+      appState.simulation.isActive = true;
+      const p = getEffectiveParams();
+      if (preset === 'shift40') {
+        appState.simulation.windDirection = (appState.settings.lakeBearing + 50) % 360;
+        appState.simulation.windSpeed = p.windSpeed;
+        appState.simulation.emission = p.emission;
+        showToast(`Sensitivity preset: Wind shifted to ${appState.simulation.windDirection}° (corridor cleared).`, 'info');
+      } else if (preset === 'calm') {
+        appState.simulation.windSpeed = 6.0;
+        appState.simulation.windDirection = p.windDirection;
+        appState.simulation.emission = p.emission;
+        showToast('Sensitivity preset: Calm conditions (<8 km/h).', 'info');
+      }
       updateAllUI();
     };
 
