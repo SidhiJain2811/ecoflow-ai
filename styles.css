@@ -256,8 +256,90 @@ body {
 }
 
 /* ==========================================================================
-   PORTAL MAIN LAYOUT GRID
+   PORTAL MAIN LAYOUT GRID & MULTI-TAB ARCHITECTURE
    ========================================================================== */
+.persona-window {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.persona-window[style*="display: none"] {
+  display: none !important;
+}
+
+.sub-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  box-shadow: var(--shadow-card);
+  scrollbar-width: thin;
+}
+
+.sub-tab-bar::-webkit-scrollbar {
+  height: 4px;
+}
+.sub-tab-bar::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 4px;
+}
+
+.sub-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.sub-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.sub-tab-btn:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: -1px;
+}
+
+.sub-tab-btn.active {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.45);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+}
+
+.sub-tab-panel {
+  display: none;
+  width: 100%;
+  animation: fadeInPanel 0.2s ease-out;
+}
+
+.sub-tab-panel.active {
+  display: block;
+}
+
+@keyframes fadeInPanel {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .portal-view {
   width: 100%;
 }
@@ -628,6 +710,606 @@ body {
 }
 
 /* ==========================================================================
+   TAB 1: COMPLIANCE & 6-HOUR FORECAST STYLES
+   ========================================================================== */
+.compliance-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.comp-item {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.comp-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.comp-status {
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.comp-status.danger { color: #f87171; }
+.comp-status.amber { color: var(--caution-amber); }
+.comp-status.safe { color: var(--safe-green); }
+
+.forecast-timeline-bars {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.f-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.f-bar-track {
+  width: 100%;
+  height: 58px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  display: flex;
+  align-items: flex-end;
+  padding: 2px;
+  overflow: hidden;
+}
+
+.f-bar-fill {
+  width: 100%;
+  border-radius: 2px;
+  transition: height 0.3s ease;
+}
+
+.f-bar-fill.danger { background: var(--danger-red); box-shadow: 0 0 8px var(--danger-glow); }
+.f-bar-fill.amber { background: var(--caution-amber); }
+.f-bar-fill.safe { background: var(--safe-green); }
+
+.f-hour-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.f-val-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   TAB 2: MAP REPLAY TOOLBAR
+   ========================================================================== */
+.map-replay-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-map-control {
+  background: var(--bg-input);
+  border: 1px solid var(--border-bright);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-map-control:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-cyan);
+}
+
+.divider-v {
+  width: 1px;
+  height: 18px;
+  background: var(--border-bright);
+}
+
+/* ==========================================================================
+   TAB 3: WHY THIS RISK? (DECAY & SENSITIVITY)
+   ========================================================================== */
+.decay-graph-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.decay-row {
+  display: grid;
+  grid-template-columns: 85px 1fr 50px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.75rem;
+}
+
+.decay-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.decay-bar-track {
+  height: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: 9999px;
+  overflow: hidden;
+  display: flex;
+}
+
+.decay-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.decay-bar-fill.danger { background: var(--danger-red); }
+.decay-bar-fill.amber { background: var(--caution-amber); }
+.decay-bar-fill.safe { background: var(--safe-green); }
+
+.decay-val {
+  text-align: right;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.sensitivity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.sens-tile {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sens-tile:hover {
+  border-color: var(--accent-cyan);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.sens-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sens-score {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.sens-score.danger { color: #f87171; }
+.sens-score.amber { color: var(--caution-amber); }
+.sens-score.safe { color: var(--safe-green); }
+
+.sens-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+}
+
+.sens-badge.danger { background: var(--danger-bg); color: var(--danger-red); border: 1px solid var(--danger-border); }
+.sens-badge.amber { background: var(--caution-bg); color: var(--caution-amber); border: 1px solid var(--caution-border); }
+.sens-badge.safe { background: var(--safe-bg); color: var(--safe-green); border: 1px solid var(--safe-border); }
+
+.sens-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.sens-sub {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   TAB 4: AI ACTION PLAYBOOK & SOP & AUDIT LOG
+   ========================================================================== */
+.action-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.eng-action-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.eng-action-card.active {
+  border-color: var(--safe-green);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.eng-action-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.eng-action-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.eng-action-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.action-status-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.action-status-tag.active {
+  background: var(--safe-bg);
+  color: var(--safe-green);
+  border: 1px solid var(--safe-border);
+}
+
+.sop-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.sop-row {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: 80px 1fr 70px;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.sop-time {
+  font-weight: 800;
+  color: var(--accent-cyan);
+}
+
+.sop-priority {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  text-align: center;
+}
+
+.sop-priority.p1 { background: var(--danger-bg); color: var(--danger-red); border: 1px solid var(--danger-border); }
+.sop-priority.p2 { background: var(--caution-bg); color: var(--caution-amber); border: 1px solid var(--caution-border); }
+.sop-priority.p3 { background: var(--safe-bg); color: var(--safe-green); border: 1px solid var(--safe-border); }
+
+.audit-log-container {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 10px;
+  height: 480px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+
+.audit-entry {
+  display: flex;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid var(--border-bright);
+}
+
+.audit-entry.danger { border-left-color: var(--danger-red); color: #fca5a5; }
+.audit-entry.safe { border-left-color: var(--safe-green); color: #86efac; }
+.audit-entry.caution { border-left-color: var(--caution-amber); color: #fde047; }
+.audit-entry.info { border-left-color: var(--accent-cyan); color: #bae6fd; }
+
+.audit-time {
+  color: var(--text-faint);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   TAB 5: WHAT-IF SIMULATOR LAB
+   ========================================================================== */
+.sim-presets-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sim-sliders-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sim-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slider-header-sm {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.neon-slider-sm {
+  width: 100%;
+  accent-color: var(--accent-cyan);
+  height: 4px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   TAB 6: POLLUTION JOURNEY MILESTONES
+   ========================================================================== */
+.journey-action-window-badge {
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-red);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.journey-milestone-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.journey-milestone-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 36px 140px 1fr 140px 100px;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.journey-milestone-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-bright);
+}
+
+.journey-milestone-card.danger {
+  border-left: 4px solid var(--danger-red);
+}
+
+.journey-milestone-card.amber {
+  border-left: 4px solid var(--caution-amber);
+}
+
+.journey-milestone-card.safe {
+  border-left: 4px solid var(--safe-green);
+}
+
+.journey-ms-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #142844;
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.journey-ms-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.journey-ms-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.journey-ms-time {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-main);
+  text-align: right;
+}
+
+.journey-ms-badge {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  text-align: center;
+}
+
+.journey-ms-badge.danger { background: var(--danger-bg); color: var(--danger-red); border: 1px solid var(--danger-border); }
+.journey-ms-badge.amber { background: var(--caution-bg); color: var(--caution-amber); border: 1px solid var(--caution-border); }
+.journey-ms-badge.safe { background: var(--safe-bg); color: var(--safe-green); border: 1px solid var(--safe-border); }
+
+/* ==========================================================================
+   TAB 7: BEFORE VS. AFTER DUAL TRAJECTORY
+   ========================================================================== */
+.delta-sentence-box {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--safe-green);
+  color: #a7f3d0;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.stat-metric-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trajectory-chart-wrapper {
+  position: relative;
+  background: var(--bg-input);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-xs);
+  height: 260px;
+  margin-top: 10px;
+  padding: 16px 20px 24px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.threshold-benchmark-line {
+  position: absolute;
+  top: 65%; /* 35 pts benchmark */
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, #f59e0b, #f59e0b 6px, transparent 6px, transparent 12px);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.threshold-label {
+  position: absolute;
+  right: 12px;
+  top: -16px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--caution-amber);
+  background: var(--bg-input);
+  padding: 0 4px;
+}
+
+.trajectory-bars-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: space-around;
+  align-items: flex-end;
+  z-index: 1;
+}
+
+.traj-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.traj-pair {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  height: 180px;
+}
+
+.traj-bar {
+  width: 24px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.4s ease;
+  position: relative;
+}
+
+.traj-bar.without {
+  background: linear-gradient(180deg, #ef4444 0%, #b91c1c 100%);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.traj-bar.with {
+  background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.traj-val-label {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.traj-time-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
    MAP PANEL CARD
    ========================================================================== */
 .map-panel-card {
@@ -711,6 +1393,15 @@ body {
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+.leaflet-container {
+  background: #070e17 !important;
+  font-family: inherit;
+}
+
+.leaflet-tile {
+  filter: brightness(0.95) contrast(1.05);
 }
 
 .map-overlay-svg {
