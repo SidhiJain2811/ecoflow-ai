@@ -1,1756 +1,162 @@
 /**
- * EcoAI Flow — Core Application Logic (app.js)
- * Modular Architecture:
- * 1. State & Storage Layer
- * 2. Data Layer (Open-Meteo Live, NASA POWER, Simulated Plant Sensors)
- * 3. Risk Engine & 6-Hour Forecast
- * 4. Incident Automation State Machine & Autopilot
- * 5. Audio, Toasts & Browser Notifications
- * 6. SVG Map & Mathematical Point-in-Ellipse Evaluator
- * 7. Demo Scenario Controller
- * 8. UI Rendering & Event Controller
- * 9. PWA Service Worker Registration
+ * EcoFlow AI — Geospatial Risk Network & Industrial Early-Warning Dashboard
+ * Dual-Persona Architecture:
+ * 1. Factory Operator Portal (Industrial telemetry, dispersion modeling, AI mitigation playbook, what-if simulator)
+ * 2. Residential Citizen Portal (Localized exposure, arrival countdown, AQI impact, drinking water safety, emergency feed)
  */
 
 (function() {
   'use strict';
 
   /* ==========================================================================
-     1. STATE & STORAGE LAYER
+     1. APPLICATION STATE
      ========================================================================== */
-  const DEFAULT_SETTINGS = {
-    siteName: 'Monitored Facility',
-    waterBodyName: 'Downstream Water Basin',
-    waterDistanceKm: 2.4,
-    latitude: 28.54,
-    longitude: 77.30,
-    lakeBearing: 138,
-    population: 38000,
-    weatherInterval: 60,
-    aqiInterval: 300,
-    sensorInterval: 2,
-    threshCritical: 70,
-    threshWarning: 35,
-    unitSpeed: 'kmh', // 'kmh' | 'ms'
-    unitTemp: 'c',    // 'c' | 'f'
-    enableNotifications: false,
-    enableSound: false,
-    autopilotCountdown: 10,
-    theme: 'dark'
-  };
-
-  function loadSettings() {
-    try {
-      const saved = localStorage.getItem('ecoai_flow_settings');
-      return saved ? Object.assign({}, DEFAULT_SETTINGS, JSON.parse(saved)) : Object.assign({}, DEFAULT_SETTINGS);
-    } catch (e) {
-      return Object.assign({}, DEFAULT_SETTINGS);
-    }
-  }
-
-  function saveSettings(settings) {
-    try {
-      localStorage.setItem('ecoai_flow_settings', JSON.stringify(settings));
-    } catch (e) {
-      console.warn('Storage save failed:', e);
-    }
-  }
-
-  function loadIncidentLog() {
-    try {
-      const saved = localStorage.getItem('ecoai_flow_incident_log');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function saveIncidentLog(log) {
-    try {
-      localStorage.setItem('ecoai_flow_incident_log', JSON.stringify(log.slice(-100)));
-    } catch (e) {
-      console.warn('Log save failed:', e);
-    }
-  }
-
   const appState = {
-    settings: loadSettings(),
-    activeTab: 'tab-1',
-    mode: 'live', // 'live' | 'demo'
-    autopilotMode: 'assisted', // 'manual' | 'assisted' | 'auto'
+    persona: 'factory', // 'factory' | 'citizen'
+    isLeakTriggered: false,
 
-    // Environmental Telemetry
+    // Factory Configuration & Location
+    factory: {
+      preset: 'Apex Petrochem',
+      name: 'Apex Petrochem',
+      lat: 28.61,
+      lng: 77.23,
+      coordsStr: '28.61° N, 77.23° E',
+      emissionType: 'SO₂ & Acid Vapors',
+      boilerOutput: 85, // % (20 to 150)
+      sluiceGate: 'OPEN', // 'OPEN' | 'CLOSED'
+      stackHeightM: 85
+    },
+
+    // Downstream Target Basin
+    waterBody: {
+      name: 'Lake Yamuna Municipal Basin',
+      lat: 28.54,
+      lng: 77.30,
+      coordsStr: '28.54° N, 77.30° E',
+      distanceKm: 2.4,
+      bearingDeg: 138 // SE corridor
+    },
+
+    // Live Atmospheric Telemetry (NASA POWER / Open-Meteo)
     weather: {
-      status: 'Offline', // 'Live' | 'Cached' | 'Offline'
-      updated: '--:--',
-      windSpeed: 19.4,
-      windDirection: 138,
+      status: 'Connected',
+      windSpeed: 19.4, // km/h
+      windDirection: 138, // deg (SE)
       temperature: 28.5,
       humidity: 58,
-      hourlyForecast: [] // 6 hourly entries
+      baselineAqi: 42
     },
 
-    airQuality: {
-      status: 'Offline',
-      updated: '--:--',
-      pm25: 42,
-      so2: 18
+    // Mitigation Playbook State
+    playbook: {
+      derateBoiler: true,
+      divertEffluent: true,
+      dispatchWarning: true,
+      emergencyInspect: false,
+      isExecuted: false
     },
 
-    nasaPower: {
-      status: 'Unavailable', // 'NASA POWER (latest available)' | 'Unavailable' | 'Cached'
-      updated: '--:--',
-      windSpeed: 18.9,
-      windDirection: 135,
-      temperature: 28.0,
-      humidity: 60
-    },
-
-    // Simulated Plant Sensor Telemetry
-    plant: {
-      status: 'Simulated plant sensor',
-      updated: '--:--',
-      emission: 100, // % of normal (random walk)
-      furnaceOutput: 100, // %
-      effluentGate: 'Open', // 'Open' | 'Closed'
-      isLeakTriggered: false
-    },
-
-    // What-If Simulation Overrides (when in Tab 5)
+    // What-If Scenario Simulator
     simulation: {
-      isActive: false,
-      windSpeed: 19.4,
       windDirection: 138,
-      emission: 100
+      windSpeed: 22.0,
+      emission: 90,
+      isActive: false
     },
 
-    // Replay State (Tab 2)
-    replay: {
-      step: 0, // 0 to 6
-      isPlaying: false,
-      intervalId: null
-    },
-
-    // Incident Automation State Machine
-    incident: {
-      state: 'Monitoring', // 'Monitoring' | 'Warning' | 'Critical' | 'Responding' | 'Recovering' | 'Resolved'
-      activeId: null,
-      startTime: null,
-      peakRisk: 0,
-      recoveryTimer: 0,
-      actions: {
-        reduceEmissions40: false,
-        closeEffluentGate: false,
-        alertDownstream: false
+    // Citizen Neighborhood Details
+    citizen: {
+      selectedCommunityKey: 'Community B',
+      communities: {
+        'Community A': {
+          name: 'Community A (Riverbank North)',
+          sector: 'Sector 8 / Riverbank',
+          lat: 28.60,
+          lng: 77.24,
+          distKm: 1.2,
+          bearingDeg: 115,
+          coordsStr: '28.60° N, 77.24° E (1.2 km from stack)'
+        },
+        'Community B': {
+          name: 'Community B (Okhla East / Sector 14)',
+          sector: 'Okhla East / Sector 14',
+          lat: 28.58,
+          lng: 77.26,
+          distKm: 1.8,
+          bearingDeg: 138,
+          coordsStr: '28.58° N, 77.26° E (1.8 km from stack)'
+        },
+        'Community C': {
+          name: 'Community C (Downstream Agri-Belt)',
+          sector: 'Canal Headworks Agri-Belt',
+          lat: 28.55,
+          lng: 77.29,
+          distKm: 2.9,
+          bearingDeg: 145,
+          coordsStr: '28.55° N, 77.29° E (2.9 km from stack)'
+        },
+        'Community D': {
+          name: 'Community D (Hillside Buffer)',
+          sector: 'Ridge Wildlife Sanctuary',
+          lat: 28.63,
+          lng: 77.20,
+          distKm: 2.2,
+          bearingDeg: 300,
+          coordsStr: '28.63° N, 77.20° E (2.2 km from stack)'
+        }
       },
-      log: loadIncidentLog(),
-      autopilotCountdownRemaining: null,
-      autopilotCountdownTimer: null
-    },
-
-    // Demo Scenario Runner State
-    demo: {
-      isPlaying: false,
-      secondsElapsed: 0,
-      totalSeconds: 60,
-      intervalId: null
+      shelterStatus: 'INDOORS', // 'INDOORS' | 'OUTDOORS'
+      windShiftSim: 0, // deg offset from current wind
+      notifications: [
+        { time: '10:52 AM', text: '[FACTORY TELEMETRY]: Burner flux monitored at 85%. Plume dispersion cone active toward SE corridor.', type: 'info' },
+        { time: '10:48 AM', text: '[MUNICIPAL WATER BOARD]: Automated intake sluice gate #4 armed for zero-liquid diversion.', type: 'safe' },
+        { time: '10:45 AM', text: '[CIVIL DEFENSE]: Community B (Sector 14) marked inside downwind buffer. Atmospheric monitors active.', type: 'caution' },
+        { time: '10:40 AM', text: '[NASA POWER API]: Telemetry stream synchronized: WS10M=19.4 km/h, WD10M=138° SE.', type: 'info' }
+      ]
     }
   };
 
   /* ==========================================================================
-     2. AUDIO & NOTIFICATIONS LAYER
+     2. AUDIO & NOTIFICATION FEED HELPERS
      ========================================================================== */
-  let audioContext = null;
+  let audioCtx = null;
 
   function playAlertBeep(freq = 660, duration = 0.25, type = 'sine') {
-    if (!appState.settings.enableSound) return;
     try {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioContext.state === 'suspended') {
-        audioContext.resume();
-      }
-      const osc = audioContext.createOscillator();
-      const gain = audioContext.createGain();
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
       osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioContext.currentTime);
-
-      gain.gain.setValueAtTime(0.2, audioContext.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
-
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
       osc.connect(gain);
-      gain.connect(audioContext.destination);
-
+      gain.connect(audioCtx.destination);
       osc.start();
-      osc.stop(audioContext.currentTime + duration);
+      osc.stop(audioCtx.currentTime + duration);
     } catch (e) {
-      console.warn('Audio playback error:', e);
+      // Audio autoplay policy
     }
   }
 
   function showToast(message, type = 'info', duration = 4000) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
-
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.setAttribute('role', 'alert');
     toast.innerHTML = `
       <span>${escapeHtml(message)}</span>
-      <button style="background:none; border:none; color:inherit; font-size:1.1rem; cursor:pointer; margin-left:auto;" onclick="this.parentElement.remove()">×</button>
+      <button style="background:none; border:none; color:inherit; font-size:1.15rem; cursor:pointer; margin-left:auto;" onclick="this.parentElement.remove()">×</button>
     `;
     container.appendChild(toast);
-
     setTimeout(() => {
       toast.style.opacity = '0';
       toast.style.transform = 'translateY(10px)';
       setTimeout(() => toast.remove(), 250);
     }, duration);
-  }
-
-  function triggerSystemNotification(title, body) {
-    if (!appState.settings.enableNotifications) return;
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(title, {
-          body,
-          icon: './icons/icon-192.png',
-          tag: 'ecoai-flow-incident'
-        });
-      } catch (e) {
-        console.warn('Notification API error:', e);
-      }
-    }
-  }
-
-  /* ==========================================================================
-     3. RISK ENGINE & 6-HOUR FORECAST
-     ========================================================================== */
-  function angleDifference(a, b) {
-    let diff = Math.abs(a - b) % 360;
-    return diff > 180 ? 360 - diff : diff;
-  }
-
-  /**
-   * Risk Formula (Demo model as specified):
-   * alignment = max(0, 1 - angleDiff(windDirection, lakeBearing) / 45)
-   * E = emission/100, times 0.6 if reduceEmissions40 is on
-   * windFactor = min(1.15, 0.6 + windSpeed/48.5)
-   * risk = min(100, 97 x alignment x E^1.25 x windFactor), times 0.85 if closeEffluentGate is on
-   */
-  function evaluateRiskModel(windSpeed, windDir, emission, red40, closeGate, bearing = appState.settings.lakeBearing) {
-    const alignment = Math.max(0, 1 - angleDifference(windDir, bearing) / 45);
-    let E = (emission / 100);
-    if (red40) E *= 0.6;
-
-    const windFactor = Math.min(1.15, 0.6 + windSpeed / 48.5);
-    let rawRisk = Math.min(100, 97 * alignment * Math.pow(E, 1.25) * windFactor);
-    if (closeGate) rawRisk *= 0.85;
-
-    const score = Math.round(Math.min(100, Math.max(0, rawRisk)));
-
-    let level = 'Low';
-    let colorClass = 'low';
-    let hexColor = '#10b981';
-
-    if (score >= appState.settings.threshCritical) {
-      level = 'Critical';
-      colorClass = 'critical';
-      hexColor = '#ef4444';
-    } else if (score >= appState.settings.threshWarning) {
-      level = 'Moderate';
-      colorClass = 'moderate';
-      hexColor = '#f59e0b';
-    }
-
-    const timeToLakeMin = Math.max(1, Math.round((appState.settings.waterDistanceKm / Math.max(1, windSpeed)) * 60));
-    const plumeReachKm = (4.0 * windFactor * Math.sqrt(E)).toFixed(1);
-    const residentsAtRisk = Math.round(appState.settings.population * (score / 97));
-
-    return {
-      score,
-      level,
-      colorClass,
-      hexColor,
-      alignment,
-      E,
-      windFactor,
-      timeToLakeMin,
-      plumeReachKm,
-      residentsAtRisk
-    };
-  }
-
-  function getEffectiveParams() {
-    if (appState.activeTab === 'tab-5' && appState.simulation.isActive) {
-      return {
-        windSpeed: appState.simulation.windSpeed,
-        windDirection: appState.simulation.windDirection,
-        emission: appState.simulation.emission
-      };
-    }
-    return {
-      windSpeed: appState.weather.windSpeed,
-      windDirection: appState.weather.windDirection,
-      emission: appState.plant.emission
-    };
-  }
-
-  function getActiveRisk() {
-    const p = getEffectiveParams();
-    return evaluateRiskModel(
-      p.windSpeed,
-      p.windDirection,
-      p.emission,
-      appState.incident.actions.reduceEmissions40,
-      appState.incident.actions.closeEffluentGate
-    );
-  }
-
-  function getBaselineRisk() {
-    const p = getEffectiveParams();
-    return evaluateRiskModel(
-      p.windSpeed,
-      p.windDirection,
-      p.emission,
-      false,
-      false
-    );
-  }
-
-  /* ==========================================================================
-     4. DATA LAYER (Open-Meteo, NASA POWER, Simulated Sensors)
-     ========================================================================== */
-  function getFormattedTime() {
-    const now = new Date();
-    return now.toTimeString().substring(0, 5);
-  }
-
-  // 1. Open-Meteo Live Forecast API
-  async function fetchLiveWeather() {
-    if (appState.mode === 'demo') return;
-    const lat = appState.settings.latitude;
-    const lon = appState.settings.longitude;
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m&hourly=wind_speed_10m,wind_direction_10m&wind_speed_unit=kmh&forecast_hours=6`;
-
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      if (data.current) {
-        appState.weather.status = 'Live';
-        appState.weather.updated = getFormattedTime();
-        appState.weather.windSpeed = parseFloat(data.current.wind_speed_10m) || 19.4;
-        appState.weather.windDirection = parseInt(data.current.wind_direction_10m, 10) || 138;
-        appState.weather.temperature = parseFloat(data.current.temperature_2m) || 28.0;
-        appState.weather.humidity = parseFloat(data.current.relative_humidity_2m) || 55;
-
-        // Parse 6-hour hourly forecast
-        if (data.hourly && data.hourly.wind_speed_10m) {
-          appState.weather.hourlyForecast = [];
-          for (let i = 0; i < Math.min(6, data.hourly.wind_speed_10m.length); i++) {
-            const hSpeed = data.hourly.wind_speed_10m[i];
-            const hDir = data.hourly.wind_direction_10m[i];
-            const hRisk = evaluateRiskModel(hSpeed, hDir, appState.plant.emission, false, false);
-            appState.weather.hourlyForecast.push({
-              hour: `+${i + 1}h`,
-              speed: hSpeed,
-              dir: hDir,
-              level: hRisk.level,
-              colorClass: hRisk.colorClass
-            });
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('[Open-Meteo Weather] Fetch error:', err);
-      if (appState.weather.status === 'Live') {
-        appState.weather.status = 'Cached';
-        showToast('Open-Meteo weather unreachable. Operating from cached data.', 'warning');
-      } else if (appState.weather.status !== 'Cached') {
-        appState.weather.status = 'Offline';
-      }
-    } finally {
-      processIncidentTick();
-      updateAllUI();
-    }
-  }
-
-  // 2. Open-Meteo Air Quality API
-  async function fetchLiveAQI() {
-    if (appState.mode === 'demo') return;
-    const lat = appState.settings.latitude;
-    const lon = appState.settings.longitude;
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5,sulphur_dioxide`;
-
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (data.current) {
-        appState.airQuality.status = 'Live';
-        appState.airQuality.updated = getFormattedTime();
-        appState.airQuality.pm25 = Math.round(data.current.pm2_5 || 42);
-        appState.airQuality.so2 = Math.round(data.current.sulphur_dioxide || 18);
-      }
-    } catch (err) {
-      console.warn('[Open-Meteo AQI] Fetch error:', err);
-      appState.airQuality.status = appState.airQuality.status === 'Live' ? 'Cached' : 'Offline';
-    } finally {
-      updateAllUI();
-    }
-  }
-
-  // 3. NASA POWER API (Hourly point data, honest latest available timestamp)
-  async function fetchNasaPower() {
-    if (appState.mode === 'demo') return;
-    const lat = appState.settings.latitude;
-    const lon = appState.settings.longitude;
-
-    // Use current date / recent day formatted YYYYMMDD
-    const d = new Date();
-    d.setDate(d.getDate() - 3); // NASA POWER has standard latency
-    const dateStr = d.toISOString().slice(0, 10).replace(/-/g, '');
-    const url = `https://power.larc.nasa.gov/api/temporal/hourly/point?parameters=WS10M,WD10M,T2M,RH2M&community=RE&longitude=${lon}&latitude=${lat}&format=JSON&start=${dateStr}&end=${dateStr}`;
-
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      if (json.properties && json.properties.parameter) {
-        const wsObj = json.properties.parameter.WS10M || {};
-        const wdObj = json.properties.parameter.WD10M || {};
-        const hours = Object.keys(wsObj);
-        if (hours.length > 0) {
-          const lastH = hours[hours.length - 1];
-          appState.nasaPower.status = 'NASA POWER (latest available)';
-          appState.nasaPower.updated = `${lastH.slice(0, 4)}-${lastH.slice(4, 6)}-${lastH.slice(6, 8)} ${lastH.slice(8, 10)}:00`;
-          appState.nasaPower.windSpeed = Math.round((wsObj[lastH] * 3.6) * 10) / 10; // m/s to km/h
-          appState.nasaPower.windDirection = Math.round(wdObj[lastH]);
-        }
-      }
-    } catch (err) {
-      // Browser blocked, CORS, or unavailable
-      appState.nasaPower.status = 'Unavailable';
-    } finally {
-      updateAllUI();
-    }
-  }
-
-  // 4. Simulated Plant Sensors (Updates every 2s)
-  function updateSimulatedPlantSensors() {
-    if (appState.mode === 'demo') return;
-
-    appState.plant.updated = getFormattedTime();
-
-    if (!appState.plant.isLeakTriggered) {
-      // Natural random walk around 100% (+/- 3%)
-      const delta = (Math.random() - 0.5) * 6;
-      appState.plant.emission = Math.min(115, Math.max(88, Math.round(appState.plant.emission + delta)));
-    }
-
-    // Effect of active actions on simulated plant
-    if (appState.incident.actions.reduceEmissions40) {
-      appState.plant.furnaceOutput = 60;
-    } else {
-      appState.plant.furnaceOutput = appState.plant.isLeakTriggered ? 100 : 95;
-    }
-
-    if (appState.incident.actions.closeEffluentGate) {
-      appState.plant.effluentGate = 'Closed';
-    } else {
-      appState.plant.effluentGate = 'Open';
-    }
-
-    processIncidentTick();
-    updateAllUI();
-  }
-
-  /* ==========================================================================
-     5. INCIDENT AUTOMATION STATE MACHINE & AUTOPILOT
-     ========================================================================== */
-  function logIncidentEvent(text, level = 'info') {
-    const entry = {
-      timestamp: getFormattedTime(),
-      text,
-      level
-    };
-    appState.incident.log.unshift(entry);
-    saveIncidentLog(appState.incident.log);
-  }
-
-  function openNewIncident() {
-    const incId = 'INC-' + Math.floor(1000 + Math.random() * 9000);
-    appState.incident.activeId = incId;
-    appState.incident.startTime = getFormattedTime();
-    appState.incident.peakRisk = getActiveRisk().score;
-    logIncidentEvent(`Active incident opened [${incId}] at ${appState.incident.startTime}. Initial risk score: ${appState.incident.peakRisk}`, 'critical');
-    showToast(`High hazard detected! Incident ${incId} opened.`, 'danger');
-    triggerSystemNotification('EcoAI Flow Alert: Critical Incident Opened', `Incident ${incId} triggered for ${appState.settings.waterBodyName} corridor.`);
-    playAlertBeep(880, 0.4, 'sawtooth');
-  }
-
-  function startAutopilotCountdown() {
-    if (appState.incident.autopilotCountdownTimer) return;
-    appState.incident.autopilotCountdownRemaining = appState.settings.autopilotCountdown;
-
-    logIncidentEvent(`Autopilot (Auto mode) initiated ${appState.settings.autopilotCountdown}s safety countdown before auto-dispatch.`, 'warning');
-    showToast(`Autopilot: applying mitigation in ${appState.settings.autopilotCountdown}s...`, 'warning');
-
-    appState.incident.autopilotCountdownTimer = setInterval(() => {
-      appState.incident.autopilotCountdownRemaining--;
-      if (appState.incident.autopilotCountdownRemaining <= 0) {
-        clearInterval(appState.incident.autopilotCountdownTimer);
-        appState.incident.autopilotCountdownTimer = null;
-        appState.incident.autopilotCountdownRemaining = null;
-
-        // Auto apply actions in sequence
-        applyAction('reduceEmissions40', true);
-        applyAction('closeEffluentGate', true);
-        applyAction('alertDownstream', true);
-        logIncidentEvent('Autopilot executed all 3 containment protocols automatically.', 'success');
-        showToast('Autopilot: All mitigation actions applied.', 'success');
-        playAlertBeep(520, 0.3, 'sine');
-      }
-      updateAllUI();
-    }, 1000);
-  }
-
-  function cancelAutopilotCountdown() {
-    if (appState.incident.autopilotCountdownTimer) {
-      clearInterval(appState.incident.autopilotCountdownTimer);
-      appState.incident.autopilotCountdownTimer = null;
-      appState.incident.autopilotCountdownRemaining = null;
-      logIncidentEvent('Operator manually cancelled the Autopilot countdown sequence.', 'warning');
-      showToast('Autopilot sequence cancelled by operator.', 'info');
-      updateAllUI();
-    }
-  }
-
-  function applyAction(actionKey, isAuto = false) {
-    if (appState.incident.actions[actionKey]) return; // already active
-    appState.incident.actions[actionKey] = true;
-
-    const actionNames = {
-      reduceEmissions40: 'Atmospheric Scrubber Control & Lime Slurry Injection',
-      closeEffluentGate: 'Zero Liquid Discharge (ZLD) Sluice Weir Diversion',
-      alertDownstream: 'Municipal Early Warning API & Siren Dispatch'
-    };
-
-    const method = isAuto ? 'Autopilot auto-applied' : 'Operator approved';
-    logIncidentEvent(`${method}: [${actionNames[actionKey]}]. Simulated telemetry updated.`, 'info');
-    showToast(`${actionNames[actionKey]} activated.`, 'success');
-    playAlertBeep(440, 0.15, 'sine');
-
-    if (appState.incident.state === 'Critical' || appState.incident.state === 'Warning') {
-      appState.incident.state = 'Responding';
-    }
-    updateAllUI();
-  }
-
-  function resetIncidentState() {
-    appState.incident.state = 'Monitoring';
-    appState.incident.activeId = null;
-    appState.incident.startTime = null;
-    appState.incident.peakRisk = 0;
-    appState.incident.recoveryTimer = 0;
-    appState.incident.actions.reduceEmissions40 = false;
-    appState.incident.actions.closeEffluentGate = false;
-    appState.incident.actions.alertDownstream = false;
-    cancelAutopilotCountdown();
-    logIncidentEvent('Incident resolved. Returning to baseline environmental monitoring.', 'success');
-    showToast('Incident fully resolved.', 'success');
-    updateAllUI();
-  }
-
-  // Periodic State Machine Evaluator
-  function processIncidentTick() {
-    const curRisk = getActiveRisk();
-
-    // Track peak risk
-    if (curRisk.score > appState.incident.peakRisk) {
-      appState.incident.peakRisk = curRisk.score;
-    }
-
-    const anyActionActive = appState.incident.actions.reduceEmissions40 ||
-                            appState.incident.actions.closeEffluentGate ||
-                            appState.incident.actions.alertDownstream;
-
-    // Transition State Machine
-    if (curRisk.score >= appState.settings.threshCritical) {
-      if (appState.incident.state === 'Monitoring' || appState.incident.state === 'Warning') {
-        appState.incident.state = 'Critical';
-        openNewIncident();
-        if (appState.autopilotMode === 'auto') {
-          startAutopilotCountdown();
-        }
-      } else if (anyActionActive) {
-        appState.incident.state = 'Responding';
-      }
-    } else if (curRisk.score >= appState.settings.threshWarning) {
-      if (appState.incident.state === 'Monitoring') {
-        appState.incident.state = 'Warning';
-        logIncidentEvent(`Risk increased to Warning (${curRisk.score}/100).`, 'warning');
-      } else if (anyActionActive) {
-        appState.incident.state = 'Responding';
-      }
-    } else {
-      // Risk is below 35 (Low)
-      if (appState.incident.state === 'Responding' || appState.incident.state === 'Critical' || appState.incident.state === 'Warning') {
-        appState.incident.state = 'Recovering';
-        appState.incident.recoveryTimer = 120; // 2 minutes countdown to resolution
-        logIncidentEvent('Risk fell below 35. Entered 2-minute recovery surveillance window.', 'info');
-      } else if (appState.incident.state === 'Recovering') {
-        if (appState.incident.recoveryTimer > 0) {
-          appState.incident.recoveryTimer -= 2;
-        } else {
-          resetIncidentState();
-        }
-      }
-    }
-  }
-
-  /* ==========================================================================
-     6. DEMO SCENARIO CONTROLLER (Scripted 60-Second Hackathon Judge Flow)
-     ========================================================================== */
-  function startDemoScenario() {
-    appState.mode = 'demo';
-    appState.demo.isPlaying = true;
-    appState.demo.secondsElapsed = 0;
-    resetIncidentState();
-
-    logIncidentEvent('Demo Scenario initiated: starting 60s scripted incident evaluation.', 'info');
-    showToast('Demo scenario started (60-second judge simulation).', 'info');
-
-    if (appState.demo.intervalId) clearInterval(appState.demo.intervalId);
-
-    appState.demo.intervalId = setInterval(() => {
-      appState.demo.secondsElapsed++;
-      const s = appState.demo.secondsElapsed;
-
-      // Scripted Stages:
-      if (s >= 0 && s < 10) {
-        // Stage 1: Calm monitoring
-        appState.weather.windSpeed = 12.0;
-        appState.weather.windDirection = 80; // away from lake
-        appState.plant.emission = 100;
-        appState.plant.isLeakTriggered = false;
-      } else if (s >= 10 && s < 25) {
-        // Stage 2: Leak & adverse wind shift
-        appState.weather.windSpeed = 22.4;
-        appState.weather.windDirection = 138; // direct vector to lake
-        appState.plant.emission = 150;
-        appState.plant.isLeakTriggered = true;
-      } else if (s >= 25 && s < 45) {
-        // Stage 3: Auto/Assisted action intervention
-        if (s === 26 && !appState.incident.actions.reduceEmissions40) {
-          applyAction('reduceEmissions40', true);
-        }
-        if (s === 32 && !appState.incident.actions.closeEffluentGate) {
-          applyAction('closeEffluentGate', true);
-        }
-        if (s === 38 && !appState.incident.actions.alertDownstream) {
-          applyAction('alertDownstream', true);
-        }
-      } else if (s >= 45 && s < 60) {
-        // Stage 4: Dispersion clearance & recovery
-        appState.plant.emission = 70;
-        appState.weather.windSpeed = 16.0;
-      } else if (s >= 60) {
-        // Finished
-        clearInterval(appState.demo.intervalId);
-        appState.demo.intervalId = null;
-        appState.demo.isPlaying = false;
-        appState.mode = 'live';
-        showToast('Demo scenario finished. Returning to live monitoring.', 'success');
-      }
-
-      processIncidentTick();
-      updateAllUI();
-    }, 1000);
-  }
-
-  function stopDemoScenario() {
-    if (appState.demo.intervalId) {
-      clearInterval(appState.demo.intervalId);
-      appState.demo.intervalId = null;
-    }
-    appState.demo.isPlaying = false;
-    appState.mode = 'live';
-    resetIncidentState();
-    updateAllUI();
-  }
-
-  /* ==========================================================================
-     7. MATHEMATICAL POINT-IN-ELLIPSE EVALUATION (Map Tab 2)
-     ========================================================================== */
-  function isPointInRotatedEllipse(px, py, cx, cy, rx, ry, angleDeg) {
-    const rad = angleDeg * (Math.PI / 180);
-    const cos = Math.cos(rad);
-    const sin = Math.sin(rad);
-
-    const dx = px - cx;
-    const dy = py - cy;
-
-    // Transform point to unrotated ellipse local coordinates
-    const localX = dx * cos + dy * sin;
-    const localY = -dx * sin + dy * cos;
-
-    return (Math.pow(localX / rx, 2) + Math.pow(localY / ry, 2)) <= 1.0;
-  }
-
-  /* ==========================================================================
-     8. UI RENDERING & COMPONENT SYNCHRONIZATION
-     ========================================================================== */
-  function updateAllUI() {
-    const activeRisk = getActiveRisk();
-    const baseRisk = getBaselineRisk();
-    const effectiveParams = getEffectiveParams();
-    const curStepData = [
-      { label: 'NOW',   mult: 0.50, pm: 285, doNow: 'Halt venting and lock effluent weir gates' },
-      { label: '+10m',  mult: 0.75, pm: 240, doNow: 'Issue immediate shelter-in-place for Community A' },
-      { label: '+30m',  mult: 0.95, pm: 195, doNow: 'Alert intake gates and the river authority' },
-      { label: '+1h',   mult: 1.10, pm: 160, doNow: 'Deploy mobile air filtration and warn agricultural users' },
-      { label: '+2h',   mult: 1.20, pm: 130, doNow: 'Notify the wetland authority and start water sampling' },
-      { label: '+3h',   mult: 1.30, pm: 105, doNow: 'Inspect secondary containment barriers and test water pH' },
-      { label: '+6h',   mult: 1.40, pm: 75,  doNow: 'Verify safe intake reactivation thresholds' }
-    ][appState.replay.step];
-
-    // 1. Header Badges & Risk Status
-    updateHeaderStatus(activeRisk);
-
-    // 2. Incident Flow Pipeline
-    updateFlowPipeline(activeRisk);
-
-    // 3. Autopilot Banner & Countdown
-    updateAutopilotBanner();
-
-    // 4. Demo Banner
-    updateDemoBanner();
-
-    // 5. Left Side Panel
-    updateSidePanel(activeRisk, effectiveParams);
-
-    // 6. Active Tab Updates
-    updateDashboardTab(activeRisk, baseRisk);
-    updateMapTab(activeRisk, effectiveParams, curStepData);
-    updateWhyRiskTab(activeRisk, effectiveParams);
-    updateAIActionTab(activeRisk);
-    updateSimulatorTab(activeRisk);
-    updatePollutionJourneyTab(activeRisk, effectiveParams);
-    updateBeforeAfterTab(activeRisk, baseRisk);
-  }
-
-  function updateHeaderStatus(activeRisk) {
-    const riskPill = document.getElementById('headerRiskPill');
-    const riskLevel = document.getElementById('headerRiskLevel');
-    const riskScore = document.getElementById('headerRiskScore');
-    if (riskPill && riskLevel && riskScore) {
-      riskPill.className = `risk-pill ${activeRisk.colorClass}`;
-      riskLevel.textContent = activeRisk.level;
-      riskScore.textContent = `${activeRisk.score}/100`;
-    }
-
-    // Source Badges with Honest Statuses
-    updateSourceBadge('badgeWeather', 'dotWeather', 'textWeather', appState.weather.status, `Updated ${appState.weather.updated}`);
-    updateSourceBadge('badgeAqi', 'dotAqi', 'textAqi', appState.airQuality.status, `AQI ${appState.airQuality.pm25} µg/m³`);
-    updateSourceBadge('badgeNasa', 'dotNasa', 'textNasa', appState.nasaPower.status, appState.nasaPower.status === 'Unavailable' ? 'Unavailable' : appState.nasaPower.updated);
-    updateSourceBadge('badgePlant', 'dotPlant', 'textPlant', 'Simulated', `Emission ${appState.plant.emission}%`);
-
-    // Autopilot 3-way toggle buttons
-    document.querySelectorAll('.seg-auto').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.mode === appState.autopilotMode);
-      if (btn.dataset.mode === 'auto' && btn.dataset.mode === appState.autopilotMode) {
-        btn.classList.add('auto-active');
-      } else {
-        btn.classList.remove('auto-active');
-      }
-    });
-
-    // Live vs Demo toggle button
-    const modeBtn = document.getElementById('btnToggleMode');
-    if (modeBtn) {
-      modeBtn.textContent = appState.mode === 'live' ? 'Live mode' : 'Demo scenario (active)';
-      modeBtn.className = appState.mode === 'live' ? 'btn btn-ghost' : 'btn btn-teal';
-    }
-  }
-
-  function updateSourceBadge(badgeId, dotId, textId, status, label) {
-    const dot = document.getElementById(dotId);
-    const txt = document.getElementById(textId);
-    if (!dot || !txt) return;
-
-    txt.textContent = label;
-    dot.className = 'status-dot';
-    if (status.includes('Live')) dot.classList.add('live');
-    else if (status.includes('Simulated')) dot.classList.add('simulated');
-    else if (status.includes('Cached')) dot.classList.add('cached');
-    else dot.classList.add('offline');
-  }
-
-  function updateFlowPipeline(activeRisk) {
-    const stepPollution = document.getElementById('stepPollution');
-    const stepWind = document.getElementById('stepWind');
-    const stepWater = document.getElementById('stepWater');
-    const stepPredict = document.getElementById('stepPredict');
-    const stepRecommend = document.getElementById('stepRecommend');
-    const stepMitigated = document.getElementById('stepMitigated');
-
-    const anyAction = appState.incident.actions.reduceEmissions40 ||
-                      appState.incident.actions.closeEffluentGate ||
-                      appState.incident.actions.alertDownstream;
-
-    if (stepPollution) stepPollution.className = appState.plant.emission > 110 ? 'pipeline-node active-hazard' : 'pipeline-node active-neutral';
-    if (stepWind) stepWind.className = activeRisk.alignment > 0.4 ? 'pipeline-node active-hazard' : 'pipeline-node active-neutral';
-    if (stepWater) stepWater.className = activeRisk.score >= 35 ? 'pipeline-node active-hazard' : 'pipeline-node active-success';
-    if (stepPredict) stepPredict.className = 'pipeline-node active-neutral';
-    if (stepRecommend) stepRecommend.className = 'pipeline-node active-neutral';
-    if (stepMitigated) stepMitigated.className = anyAction ? 'pipeline-node active-success' : 'pipeline-node';
-  }
-
-  function updateAutopilotBanner() {
-    const banner = document.getElementById('autopilotBanner');
-    const countText = document.getElementById('apCountdownText');
-    const fill = document.getElementById('apCountdownFill');
-    if (!banner || !countText || !fill) return;
-
-    if (appState.incident.autopilotCountdownTimer && appState.incident.autopilotCountdownRemaining !== null) {
-      banner.classList.add('visible');
-      countText.textContent = `${appState.incident.autopilotCountdownRemaining}s`;
-      const pct = (appState.incident.autopilotCountdownRemaining / appState.settings.autopilotCountdown) * 100;
-      fill.style.width = `${pct}%`;
-    } else {
-      banner.classList.remove('visible');
-    }
-  }
-
-  function updateDemoBanner() {
-    const banner = document.getElementById('demoBanner');
-    const fill = document.getElementById('demoProgressFill');
-    const label = document.getElementById('demoProgressText');
-    if (!banner || !fill || !label) return;
-
-    if (appState.mode === 'demo') {
-      banner.classList.add('visible');
-      const pct = Math.min(100, (appState.demo.secondsElapsed / appState.demo.totalSeconds) * 100);
-      fill.style.width = `${pct}%`;
-      label.textContent = `Demo running: ${appState.demo.secondsElapsed}s / ${appState.demo.totalSeconds}s (Stage: ${getDemoStageName(appState.demo.secondsElapsed)})`;
-    } else {
-      banner.classList.remove('visible');
-    }
-  }
-
-  function getDemoStageName(s) {
-    if (s < 10) return '1. Baseline monitoring';
-    if (s < 25) return '2. Simulated industrial breach';
-    if (s < 45) return '3. Autonomous mitigation dispatch';
-    return '4. Plume dispersion & recovery';
-  }
-
-  function updateSidePanel(activeRisk, p) {
-    // Site info
-    const siteTitle = document.getElementById('sideSiteTitle');
-    const siteCoords = document.getElementById('sideSiteCoords');
-    const topWaterSub = document.getElementById('topWaterBodySubtitle');
-    if (siteTitle) siteTitle.textContent = appState.settings.siteName;
-    if (siteCoords) siteCoords.textContent = `${appState.settings.latitude}° N, ${appState.settings.longitude}° E`;
-    if (topWaterSub) topWaterSub.textContent = `${appState.settings.waterBodyName} Drainage Corridor`;
-
-    // Factory Details
-    const emissionVal = document.getElementById('sideEmissionVal');
-    const furnaceVal = document.getElementById('sideFurnaceVal');
-    const gateVal = document.getElementById('sideGateVal');
-    const sideWater = document.getElementById('sideWaterDistance');
-    if (emissionVal) emissionVal.textContent = `${appState.plant.emission}%`;
-    if (furnaceVal) furnaceVal.textContent = `${appState.plant.furnaceOutput}%`;
-    if (gateVal) {
-      gateVal.textContent = appState.plant.effluentGate;
-      gateVal.style.color = appState.plant.effluentGate === 'Closed' ? 'var(--safe-green)' : 'var(--danger-red)';
-    }
-    if (sideWater) {
-      sideWater.textContent = `${appState.settings.waterBodyName} (${appState.settings.waterDistanceKm} km)`;
-    }
-
-    // Atmospheric Vector
-    const windVal = document.getElementById('sideWindVal');
-    const tempVal = document.getElementById('sideTempVal');
-    const humVal = document.getElementById('sideHumVal');
-    if (windVal) windVal.textContent = `${p.windSpeed.toFixed(1)} km/h @ ${p.windDirection}° (${getCompassSector(p.windDirection)})`;
-    if (tempVal) tempVal.textContent = `${appState.weather.temperature.toFixed(1)}°C`;
-    if (humVal) humVal.textContent = `${appState.weather.humidity}%`;
-
-    // Vulnerability Label
-    const vulnBadge = document.getElementById('sideVulnBadge');
-    if (vulnBadge) {
-      vulnBadge.className = `vuln-badge ${activeRisk.colorClass}`;
-      vulnBadge.textContent = `[ ${activeRisk.level.toUpperCase()} RISK : ${activeRisk.score}/100 ]`;
-    }
-
-    // 6-Hour Forecast Chips
-    const forecastGrid = document.getElementById('sideForecastGrid');
-    if (forecastGrid && appState.weather.hourlyForecast.length > 0) {
-      forecastGrid.innerHTML = appState.weather.hourlyForecast.map(f => `
-        <div class="forecast-chip">
-          <span class="f-hour">${f.hour}</span>
-          <span class="f-level" style="color: ${f.level === 'Critical' ? 'var(--danger-red)' : f.level === 'Moderate' ? 'var(--caution-amber)' : 'var(--safe-green)'};">${f.level.slice(0, 3)}</span>
-        </div>
-      `).join('');
-    }
-
-    // Safety Protocol Ticks
-    const proto1 = document.getElementById('protoStep1');
-    const proto2 = document.getElementById('protoStep2');
-    const proto3 = document.getElementById('protoStep3');
-    if (proto1) proto1.classList.toggle('ticked', appState.incident.actions.reduceEmissions40);
-    if (proto2) proto2.classList.toggle('ticked', appState.incident.actions.closeEffluentGate);
-    if (proto3) proto3.classList.toggle('ticked', appState.incident.actions.alertDownstream);
-  }
-
-  function updateDashboardTab(activeRisk, baseRisk) {
-    const hero = document.getElementById('dashHeroSentence');
-    if (hero) {
-      const waterName = appState.settings.waterBodyName || 'water basin';
-      if (activeRisk.score >= 70) {
-        hero.textContent = `The ${waterName} can be hit in about ${activeRisk.timeToLakeMin} min. Risk is Critical. ${appState.autopilotMode === 'auto' ? 'Autopilot armed for auto-mitigation.' : 'Act now to bring it down.'}`;
-      } else if (activeRisk.score >= 35) {
-        hero.textContent = `Risk reduced to Moderate (${activeRisk.score}/100). Exposure at ${waterName} curtailed; downwind buffer monitoring active.`;
-      } else {
-        hero.textContent = `Risk is Low (${activeRisk.score}/100). Aquatic thresholds preserved within legal environmental buffer.`;
-      }
-    }
-
-    // Incident Status Box
-    const incId = document.getElementById('dashIncId');
-    const incTimer = document.getElementById('dashIncTimer');
-    const incState = document.getElementById('dashIncState');
-    if (incId) incId.textContent = appState.incident.activeId ? `Active ID: ${appState.incident.activeId}` : 'No active critical breach';
-    if (incTimer) incTimer.textContent = appState.incident.startTime ? `Started: ${appState.incident.startTime}` : 'State: Normal';
-    if (incState) {
-      incState.textContent = appState.incident.state;
-      incState.className = `stat-num ${activeRisk.colorClass}`;
-    }
-
-    // Number Cards
-    const timeCard = document.getElementById('dashTimeToLake');
-    const resCard = document.getElementById('dashResidents');
-    const reachCard = document.getElementById('dashPlumeReach');
-    if (timeCard) timeCard.textContent = `${activeRisk.timeToLakeMin} min`;
-    if (resCard) resCard.textContent = activeRisk.residentsAtRisk.toLocaleString();
-    if (reachCard) reachCard.textContent = `${activeRisk.plumeReachKm} km`;
-
-    // Dedicated Downstream Water Bodies at Risk Panel
-    const p = getEffectiveParams();
-    const arrMin = activeRisk.timeToLakeMin;
-    const pName = document.getElementById('dashWaterPrimaryName');
-    const pDist = document.getElementById('dashWaterDist');
-    const pArr = document.getElementById('dashWaterArrival');
-    const pBadge = document.getElementById('dashWaterPrimaryThreatBadge');
-    const pIntakeStatus = document.getElementById('dashWaterIntakeStatus');
-
-    if (pName) pName.textContent = appState.settings.waterBodyName || 'Downstream Water Basin';
-    if (pDist) pDist.textContent = `${appState.settings.waterDistanceKm} km`;
-    if (pArr) pArr.textContent = `${arrMin} min (at ${p.windSpeed.toFixed(1)} km/h)`;
-
-    if (pBadge) {
-      if (activeRisk.score >= appState.settings.threshCritical) {
-        pBadge.textContent = 'CRITICAL RISK';
-        pBadge.style.background = 'rgba(239, 68, 68, 0.2)';
-        pBadge.style.color = 'var(--danger-red)';
-        pBadge.style.borderColor = 'var(--danger-red)';
-      } else if (activeRisk.score >= appState.settings.threshWarning) {
-        pBadge.textContent = 'MODERATE RISK';
-        pBadge.style.background = 'rgba(245, 158, 11, 0.2)';
-        pBadge.style.color = 'var(--caution-amber)';
-        pBadge.style.borderColor = 'var(--caution-amber)';
-      } else {
-        pBadge.textContent = 'BUFFER SAFE';
-        pBadge.style.background = 'rgba(16, 185, 129, 0.2)';
-        pBadge.style.color = 'var(--safe-green)';
-        pBadge.style.borderColor = 'var(--safe-green)';
-      }
-    }
-
-    if (pIntakeStatus) {
-      if (activeRisk.score >= appState.settings.threshCritical) {
-        pIntakeStatus.textContent = '⚠️ Direct plume centerline alignment detected — Intake sluice gate closure protocol armed.';
-        pIntakeStatus.style.color = 'var(--danger-red)';
-      } else if (activeRisk.score >= appState.settings.threshWarning) {
-        pIntakeStatus.textContent = '⚠️ Elevated plume proximity — Water intake monitor on high alert.';
-        pIntakeStatus.style.color = 'var(--caution-amber)';
-      } else {
-        pIntakeStatus.textContent = '✓ Plume trajectory clear of intake gates — Normal operational baseline.';
-        pIntakeStatus.style.color = 'var(--safe-green)';
-      }
-    }
-
-    // Secondary & Tertiary Water Assets
-    const secBadge = document.getElementById('dashWaterSecondaryThreatBadge');
-    const secArr = document.getElementById('dashCanalArrival');
-    const secStatus = document.getElementById('dashCanalStatus');
-    const canalMin = Math.round(arrMin * 1.6);
-    if (secArr) secArr.textContent = `+${canalMin} min`;
-    if (secBadge) {
-      if (activeRisk.score >= appState.settings.threshCritical) {
-        secBadge.textContent = 'HIGH RISK';
-        secBadge.style.color = 'var(--danger-red)';
-      } else if (activeRisk.score >= appState.settings.threshWarning) {
-        secBadge.textContent = 'MODERATE RISK';
-        secBadge.style.color = 'var(--caution-amber)';
-      } else {
-        secBadge.textContent = 'ISOLATED';
-        secBadge.style.color = 'var(--safe-green)';
-      }
-    }
-    if (secStatus) {
-      if (activeRisk.score >= appState.settings.threshWarning) {
-        secStatus.textContent = 'Secondary canal runoff; diversion headworks isolation advised within 30 min.';
-        secStatus.style.color = 'var(--caution-amber)';
-      } else {
-        secStatus.textContent = 'Canal runoff nominal; agricultural headworks protected.';
-        secStatus.style.color = 'var(--safe-green)';
-      }
-    }
-
-    const wetBadge = document.getElementById('dashWetlandThreatBadge');
-    const wetArr = document.getElementById('dashWetlandArrival');
-    const wetMin = Math.round(arrMin * 2.8);
-    if (wetArr) wetArr.textContent = `+${wetMin} min`;
-    if (wetBadge) {
-      if (activeRisk.score >= appState.settings.threshCritical) {
-        wetBadge.textContent = 'VULNERABLE';
-        wetBadge.style.color = 'var(--caution-amber)';
-      } else {
-        wetBadge.textContent = 'PROTECTED';
-        wetBadge.style.color = 'var(--safe-green)';
-      }
-    }
-
-    // Risk Ladder Markers
-    const pinWithout = document.getElementById('dashPinWithout');
-    const tagWithout = document.getElementById('dashTagWithout');
-    const pinAfter = document.getElementById('dashPinAfter');
-    const tagAfter = document.getElementById('dashTagAfter');
-    if (pinWithout && tagWithout) {
-      pinWithout.style.left = `${baseRisk.score}%`;
-      tagWithout.textContent = `Without action: ${baseRisk.score}`;
-    }
-    if (pinAfter && tagAfter) {
-      pinAfter.style.left = `${activeRisk.score}%`;
-      tagAfter.textContent = `After action: ${activeRisk.score}`;
-    }
-  }
-
-  function updateMapTab(activeRisk, p, curStep) {
-    const stepLabel = document.getElementById('replayStepDisplay');
-    const slider = document.getElementById('replaySlider');
-    if (stepLabel) stepLabel.textContent = curStep.label;
-    if (slider) slider.value = appState.replay.step;
-
-    // Rotate Compass Needle
-    const needle = document.getElementById('compassNeedle');
-    const compassText = document.getElementById('compassText');
-    if (needle) needle.setAttribute('transform', `rotate(${p.windDirection})`);
-    if (compassText) compassText.textContent = `${p.windDirection}° ${getCompassSector(p.windDirection)}`;
-
-    // Scale Plume according to wind, emission, step multiplier, actions
-    const plumeContainer = document.getElementById('plumeRotator');
-    if (plumeContainer) {
-      const rotAngle = p.windDirection - 90;
-      plumeContainer.setAttribute('transform', `rotate(${rotAngle}, 110, 100)`);
-    }
-
-    const mult = curStep.mult;
-    const emScale = (p.emission / 100) * (appState.incident.actions.reduceEmissions40 ? 0.75 : 1.0);
-    const speedScale = Math.pow(p.windSpeed / 19.4, 0.4);
-
-    const lenA = 70 * mult * emScale * speedScale;
-    const widA = 28 * mult * emScale / Math.pow(speedScale, 0.3);
-
-    const lenB = 150 * mult * emScale * speedScale;
-    const widB = 45 * mult * emScale / Math.pow(speedScale, 0.3);
-
-    const lenC = 250 * mult * emScale * speedScale;
-    const widC = 68 * mult * emScale / Math.pow(speedScale, 0.3);
-
-    const elRed = document.getElementById('svgPlumeRed');
-    const elOrange = document.getElementById('svgPlumeOrange');
-    const elYellow = document.getElementById('svgPlumeYellow');
-
-    if (elRed) {
-      elRed.setAttribute('cx', 110 + lenA * 0.55);
-      elRed.setAttribute('rx', Math.max(15, lenA * 0.55));
-      elRed.setAttribute('ry', Math.max(8, widA));
-    }
-    if (elOrange) {
-      elOrange.setAttribute('cx', 110 + lenB * 0.55);
-      elOrange.setAttribute('rx', Math.max(25, lenB * 0.55));
-      elOrange.setAttribute('ry', Math.max(12, widB));
-    }
-    if (elYellow) {
-      elYellow.setAttribute('cx', 110 + lenC * 0.55);
-      elYellow.setAttribute('rx', Math.max(35, lenC * 0.55));
-      elYellow.setAttribute('ry', Math.max(16, widC));
-    }
-
-    // Mathematical point-in-ellipse testing for Communities A-D
-    const rad = (p.windDirection - 90) * (Math.PI / 180);
-    const rot = p.windDirection - 90;
-
-    const cRedX = 110 + Math.cos(rad) * (lenA * 0.55);
-    const cRedY = 100 + Math.sin(rad) * (lenA * 0.55);
-
-    const cOrangeX = 110 + Math.cos(rad) * (lenB * 0.55);
-    const cOrangeY = 100 + Math.sin(rad) * (lenB * 0.55);
-
-    const cYellowX = 110 + Math.cos(rad) * (lenC * 0.55);
-    const cYellowY = 100 + Math.sin(rad) * (lenC * 0.55);
-
-    const comms = [
-      { id: 'A', x: 190, y: 180, circleId: 'commCircleA', chipId: 'chipCommA' },
-      { id: 'B', x: 285, y: 275, circleId: 'commCircleB', chipId: 'chipCommB' },
-      { id: 'C', x: 420, y: 370, circleId: 'commCircleC', chipId: 'chipCommC' },
-      { id: 'D', x: 300, y: 110, circleId: 'commCircleD', chipId: 'chipCommD' }
-    ];
-
-    comms.forEach(c => {
-      const inRed = isPointInRotatedEllipse(c.x, c.y, cRedX, cRedY, Math.max(15, lenA * 0.55), Math.max(8, widA), rot);
-      const inOrange = isPointInRotatedEllipse(c.x, c.y, cOrangeX, cOrangeY, Math.max(25, lenB * 0.55), Math.max(12, widB), rot);
-      const inYellow = isPointInRotatedEllipse(c.x, c.y, cYellowX, cYellowY, Math.max(35, lenC * 0.55), Math.max(16, widC), rot);
-
-      let color = 'var(--safe-green)';
-      let label = 'Safe';
-      if (inRed) {
-        color = 'var(--danger-red)';
-        label = 'Red zone (Evacuate)';
-      } else if (inOrange || inYellow) {
-        color = 'var(--caution-amber)';
-        label = 'Caution zone';
-      }
-
-      const circ = document.getElementById(c.circleId);
-      const ch = document.getElementById(c.chipId);
-      if (circ) circ.setAttribute('fill', color);
-      if (ch) ch.innerHTML = `<span class="chip-circle" style="background:${color};"></span>Community ${c.id}: ${label}`;
-    });
-
-    // Water Contamination Rules
-    const isLakeAffected = (appState.replay.step >= 1) && (activeRisk.score >= 15);
-    const isRiverAffected = (appState.replay.step >= 2) && (activeRisk.score >= 35);
-    const isWetlandAffected = (appState.replay.step >= 4) && (activeRisk.score >= 55);
-
-    const svgLake = document.getElementById('svgLakeShape');
-    const svgLakeLabel = document.getElementById('svgWaterBodyLabel');
-    const svgFacLabel = document.getElementById('svgFactoryLabel');
-    const breachGroup = document.getElementById('breachGroup');
-    const chipLake = document.getElementById('chipLake');
-    if (svgLakeLabel) svgLakeLabel.textContent = appState.settings.waterBodyName;
-    if (svgFacLabel) svgFacLabel.textContent = appState.settings.siteName;
-    if (svgLake) {
-      svgLake.setAttribute('fill', isLakeAffected ? '#991b1b' : 'url(#lakeWaterGrad)');
-      svgLake.classList.toggle('lake-pulsing', isLakeAffected);
-    }
-    if (elRed) {
-      elRed.classList.toggle('plume-pulsing', isLakeAffected);
-    }
-    if (breachGroup) breachGroup.style.display = isLakeAffected ? 'block' : 'none';
-    if (chipLake) chipLake.innerHTML = `<span class="chip-circle" style="background:${isLakeAffected ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>${escapeHtml(appState.settings.waterBodyName)}: ${isLakeAffected ? 'Critical breach' : 'Clean'}`;
-
-    const svgRiver = document.getElementById('svgRiverPath');
-    const chipRiver = document.getElementById('chipRiver');
-    if (svgRiver) svgRiver.setAttribute('stroke', isRiverAffected ? '#dc2626' : '#0f766e');
-    if (chipRiver) chipRiver.innerHTML = `<span class="chip-circle" style="background:${isRiverAffected ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>River: ${isRiverAffected ? 'Contaminated' : 'Clean'}`;
-
-    const svgWetland = document.getElementById('svgWetlandShape');
-    const chipWetland = document.getElementById('chipWetland');
-    if (svgWetland) {
-      svgWetland.setAttribute('fill', isWetlandAffected ? 'rgba(220, 38, 38, 0.7)' : 'rgba(15, 118, 110, 0.6)');
-      svgWetland.setAttribute('stroke', isWetlandAffected ? '#ef4444' : '#14b8a6');
-    }
-    if (chipWetland) chipWetland.innerHTML = `<span class="chip-circle" style="background:${isWetlandAffected ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>Wetland: ${isWetlandAffected ? 'Contaminated' : 'Clean'}`;
-
-    // Step Time Card
-    const waterCell = document.getElementById('tcWater');
-    const pmCell = document.getElementById('tcPm');
-    const resCell = document.getElementById('tcResidents');
-    const doNowCell = document.getElementById('tcDoNow');
-
-    const affected = [];
-    if (isLakeAffected) affected.push(appState.settings.waterBodyName);
-    if (isRiverAffected) affected.push('Outflow river');
-    if (isWetlandAffected) affected.push('Wetlands');
-
-    if (waterCell) {
-      waterCell.textContent = affected.length > 0 ? affected.join(', ') : 'None (Safe)';
-      waterCell.style.color = affected.length > 0 ? 'var(--danger-red)' : 'var(--safe-green)';
-    }
-    if (pmCell) {
-      const pmVal = Math.round(curStep.pm * (p.emission / 100) * (appState.incident.actions.reduceEmissions40 ? 0.6 : 1.0));
-      pmCell.textContent = `${pmVal} µg/m³`;
-    }
-    if (resCell) resCell.textContent = `${activeRisk.residentsAtRisk.toLocaleString()} people`;
-    if (doNowCell) doNowCell.textContent = curStep.doNow;
-  }
-
-  function updateWhyRiskTab(activeRisk, p) {
-    const whyTitle = document.getElementById('whyRiskTitle');
-    if (whyTitle) {
-      whyTitle.textContent = `Why is it ${activeRisk.level}?`;
-      whyTitle.style.color = activeRisk.hexColor;
-    }
-
-    const eqWind = document.getElementById('eqWind');
-    const eqEmission = document.getElementById('eqEmission');
-    const eqResult = document.getElementById('eqResult');
-    if (eqWind) eqWind.textContent = `Wind @ ${p.windDirection}° ${getCompassSector(p.windDirection)}`;
-    if (eqEmission) eqEmission.textContent = `SO2 Emission: ${p.emission}%`;
-    if (eqResult) {
-      eqResult.textContent = `${appState.settings.waterBodyName} risk: ${activeRisk.level} (${activeRisk.score}/100)`;
-      eqResult.style.color = activeRisk.hexColor;
-    }
-
-    const bName = escapeHtml(appState.settings.waterBodyName);
-    const bDeg = appState.settings.lakeBearing;
-    const bCompass = getCompassSector(bDeg);
-    const alignPct = Math.round(activeRisk.alignment * 100);
-    const offsetDeg = angleDifference(p.windDirection, bDeg);
-
-    const reason = document.getElementById('whyReasonSentence');
-    if (reason) {
-      if (activeRisk.alignment > 0.8) {
-        reason.textContent = `Live winds at ${p.windSpeed.toFixed(1)} km/h blow directly along the ${bDeg}° ${bCompass} water basin axis with high industrial emissions, placing drinking intake gates directly in the plume crosshairs.`;
-      } else if (activeRisk.alignment > 0.25) {
-        reason.textContent = `Winds blow at a glancing angle toward the ${bName} corridor; lateral plume spreading causes elevated caution along the perimeter.`;
-      } else {
-        reason.textContent = `Current winds blow away from ${bName} (${p.windDirection}°), dispersing emissions over the non-aquatic buffer.`;
-      }
-    }
-
-    // Vector Alignment Breakdown Card
-    const elAlignMetric = document.getElementById('whyAlignMetric');
-    const elAlignSub = document.getElementById('whyAlignSub');
-    const elAlignExpl = document.getElementById('whyAlignExpl');
-    const elAlignBadge = document.getElementById('whyAlignBadge');
-
-    if (elAlignMetric) {
-      elAlignMetric.textContent = `${alignPct}% Vector Alignment`;
-      elAlignMetric.style.color = alignPct >= 75 ? 'var(--danger-red)' : alignPct >= 25 ? 'var(--caution-amber)' : 'var(--safe-green)';
-    }
-    if (elAlignSub) {
-      elAlignSub.textContent = `Wind ${p.windDirection}° ${getCompassSector(p.windDirection)} aligns with ${bDeg}° ${bCompass} basin corridor (${offsetDeg}° offset)`;
-    }
-    if (elAlignExpl) {
-      if (alignPct >= 75) {
-        elAlignExpl.textContent = `Severe direct alignment. The industrial emission cone is steered directly along the aquatic corridor, channeling acid gases and particulate matter straight into the intake reservoir with minimal lateral dispersion.`;
-      } else if (alignPct >= 25) {
-        elAlignExpl.textContent = `Glancing corridor exposure. Plume dispersion cone fringes overlap with the secondary basin buffer, posing moderate contamination risk to outer drainage canals.`;
-      } else {
-        elAlignExpl.textContent = `Off-axis dispersion. Plume vectors blow ${offsetDeg}° away from the primary water body corridor, dispersing pollutants across non-aquatic buffer terrain.`;
-      }
-    }
-    if (elAlignBadge) {
-      if (alignPct >= 75) {
-        elAlignBadge.textContent = 'DIRECT HIT';
-        elAlignBadge.style.background = 'rgba(239, 68, 68, 0.2)';
-        elAlignBadge.style.color = 'var(--danger-red)';
-        elAlignBadge.style.borderColor = 'var(--danger-red)';
-      } else if (alignPct >= 25) {
-        elAlignBadge.textContent = 'MARGINAL GLANCE';
-        elAlignBadge.style.background = 'rgba(245, 158, 11, 0.2)';
-        elAlignBadge.style.color = 'var(--caution-amber)';
-        elAlignBadge.style.borderColor = 'var(--caution-amber)';
-      } else {
-        elAlignBadge.textContent = 'CLEAR AXIS';
-        elAlignBadge.style.background = 'rgba(16, 185, 129, 0.2)';
-        elAlignBadge.style.color = 'var(--safe-green)';
-        elAlignBadge.style.borderColor = 'var(--safe-green)';
-      }
-    }
-
-    // Speed Effect Breakdown Card (>20 km/h advective rush vs <8 km/h stagnant accumulation)
-    const elSpeedMetric = document.getElementById('whySpeedMetric');
-    const elSpeedSub = document.getElementById('whySpeedSub');
-    const elSpeedExpl = document.getElementById('whySpeedExpl');
-    const elSpeedBadge = document.getElementById('whySpeedBadge');
-
-    if (elSpeedMetric) {
-      if (p.windSpeed >= 20) {
-        elSpeedMetric.textContent = `${p.windSpeed.toFixed(1)} km/h (Advective Rush)`;
-        elSpeedMetric.style.color = 'var(--danger-red)';
-      } else if (p.windSpeed < 8) {
-        elSpeedMetric.textContent = `${p.windSpeed.toFixed(1)} km/h (Stagnant Accumulation)`;
-        elSpeedMetric.style.color = 'var(--caution-amber)';
-      } else {
-        elSpeedMetric.textContent = `${p.windSpeed.toFixed(1)} km/h (Steady Convection)`;
-        elSpeedMetric.style.color = 'var(--water-teal)';
-      }
-    }
-    if (elSpeedSub) {
-      elSpeedSub.textContent = `Hydraulic arrival window: ~${activeRisk.timeToLakeMin} minutes`;
-    }
-    if (elSpeedExpl) {
-      if (p.windSpeed >= 20) {
-        elSpeedExpl.textContent = `High wind velocity (>20 km/h) creates rapid advection, compressing emergency response lead time and driving concentrated plume mass to downstream intake gates before atmospheric dilution can take place.`;
-      } else if (p.windSpeed < 8) {
-        elSpeedExpl.textContent = `Low wind speed (<8 km/h) creates stagnant air pooling and localized ground-level accumulation near the stack and immediate perimeter, delaying lake arrival but maximizing dosage.`;
-      } else {
-        elSpeedExpl.textContent = `Moderate convective wind velocity (8–20 km/h) provides predictable linear dispersion along the prevailing wind vector.`;
-      }
-    }
-    if (elSpeedBadge) {
-      if (p.windSpeed >= 20) {
-        elSpeedBadge.textContent = 'RAPID ADVECTION';
-        elSpeedBadge.style.background = 'rgba(239, 68, 68, 0.2)';
-        elSpeedBadge.style.color = 'var(--danger-red)';
-        elSpeedBadge.style.borderColor = 'var(--danger-red)';
-      } else if (p.windSpeed < 8) {
-        elSpeedBadge.textContent = 'STAGNANT AIR';
-        elSpeedBadge.style.background = 'rgba(245, 158, 11, 0.2)';
-        elSpeedBadge.style.color = 'var(--caution-amber)';
-        elSpeedBadge.style.borderColor = 'var(--caution-amber)';
-      } else {
-        elSpeedBadge.textContent = 'STEADY CONVECTION';
-        elSpeedBadge.style.background = 'rgba(20, 184, 166, 0.2)';
-        elSpeedBadge.style.color = 'var(--water-teal)';
-        elSpeedBadge.style.borderColor = 'var(--water-teal)';
-      }
-    }
-
-    // Contribution bars
-    const fillWind = document.getElementById('fillContribWind');
-    const txtWind = document.getElementById('txtContribWind');
-    if (fillWind && txtWind) {
-      fillWind.style.width = `${alignPct}%`;
-      txtWind.textContent = `${alignPct}%`;
-    }
-
-    const fillEm = document.getElementById('fillContribEmission');
-    const txtEm = document.getElementById('txtContribEmission');
-    if (fillEm && txtEm) {
-      const pct = Math.min(100, Math.round((p.emission / 150) * 100));
-      fillEm.style.width = `${pct}%`;
-      txtEm.textContent = `${p.emission}%`;
-    }
-
-    // "What would lower the risk?" Computed Scores
-    const sWind40 = document.getElementById('scoreWind40');
-    const sEm40 = document.getElementById('scoreEm40');
-    const sGate = document.getElementById('scoreGate');
-    const sHalfWind = document.getElementById('scoreHalfWind');
-
-    if (sWind40) sWind40.textContent = evaluateRiskModel(p.windSpeed, (p.windDirection + 40) % 360, p.emission, appState.incident.actions.reduceEmissions40, appState.incident.actions.closeEffluentGate).score;
-    if (sEm40) sEm40.textContent = evaluateRiskModel(p.windSpeed, p.windDirection, p.emission, true, appState.incident.actions.closeEffluentGate).score;
-    if (sGate) sGate.textContent = evaluateRiskModel(p.windSpeed, p.windDirection, p.emission, appState.incident.actions.reduceEmissions40, true).score;
-    if (sHalfWind) sHalfWind.textContent = evaluateRiskModel(6.0, p.windDirection, p.emission, appState.incident.actions.reduceEmissions40, appState.incident.actions.closeEffluentGate).score;
-  }
-
-  function updateAIActionTab(activeRisk) {
-    const curRiskReadout = document.getElementById('aiTabCurrentRisk');
-    if (curRiskReadout) {
-      curRiskReadout.textContent = `${activeRisk.score}/100 (${activeRisk.level})`;
-      curRiskReadout.style.color = activeRisk.hexColor;
-    }
-
-    // Engineering Status Tags
-    const act1Status = document.getElementById('act1StatusTag');
-    const act2Status = document.getElementById('act2StatusTag');
-    const act3Status = document.getElementById('act3StatusTag');
-
-    if (act1Status) {
-      if (appState.incident.actions.reduceEmissions40) {
-        act1Status.textContent = 'Lime Slurry Active (60% Feed)';
-        act1Status.style.color = 'var(--safe-green)';
-      } else {
-        act1Status.textContent = 'Standby / Bypassed';
-        act1Status.style.color = 'var(--text-muted)';
-      }
-    }
-
-    if (act2Status) {
-      if (appState.incident.actions.closeEffluentGate) {
-        act2Status.textContent = 'Diverted to Retention Pond (Closed)';
-        act2Status.style.color = 'var(--safe-green)';
-      } else {
-        act2Status.textContent = 'Open Weir / Direct Discharge';
-        act2Status.style.color = 'var(--caution-amber)';
-      }
-    }
-
-    if (act3Status) {
-      if (appState.incident.actions.alertDownstream) {
-        act3Status.textContent = 'Dispatched (API / SMS Sent)';
-        act3Status.style.color = 'var(--safe-green)';
-      } else {
-        act3Status.textContent = 'Armed / Standby';
-        act3Status.style.color = 'var(--text-muted)';
-      }
-    }
-
-    // Action cards
-    updateActionCard('cardAct1', 'btnAct1', 'scoreAct1', appState.incident.actions.reduceEmissions40, 'reduceEmissions40', 'Lime Scrubber');
-    updateActionCard('cardAct2', 'btnAct2', 'scoreAct2', appState.incident.actions.closeEffluentGate, 'closeEffluentGate', 'ZLD Sluice Gate');
-    updateActionCard('cardAct3', 'btnAct3', 'scoreAct3', appState.incident.actions.alertDownstream, 'alertDownstream', 'Early Warning');
-
-    // Incident Log Table
-    const logBox = document.getElementById('incidentLogContainer');
-    if (logBox) {
-      logBox.innerHTML = appState.incident.log.map(item => `
-        <div class="log-entry">
-          <span class="log-time">${item.timestamp}</span>
-          <span style="color:${item.level === 'critical' ? 'var(--danger-red)' : item.level === 'warning' ? 'var(--caution-amber)' : item.level === 'success' ? 'var(--safe-green)' : 'var(--text-main)'};">${escapeHtml(item.text)}</span>
-        </div>
-      `).join('');
-    }
-  }
-
-  function updateActionCard(cardId, btnId, scoreId, isActive, actionKey, customBtnLabel) {
-    const card = document.getElementById(cardId);
-    const btn = document.getElementById(btnId);
-    const score = document.getElementById(scoreId);
-    if (!card || !btn) return;
-
-    card.style.borderColor = isActive ? 'var(--safe-green)' : 'var(--border-dim)';
-    card.style.background = isActive ? 'var(--safe-bg)' : 'var(--bg-input)';
-    const label = customBtnLabel || 'Action';
-    btn.textContent = isActive ? 'Simulated Active ✓' : (appState.autopilotMode === 'assisted' ? `Approve ${label}` : `Apply ${label}`);
-    btn.className = isActive ? 'btn btn-teal' : 'btn btn-ghost';
-
-    if (score && !isActive) {
-      const p = getEffectiveParams();
-      const hypothetical = Object.assign({}, appState.incident.actions, { [actionKey]: true });
-      const predicted = evaluateRiskModel(p.windSpeed, p.windDirection, p.emission, hypothetical.reduceEmissions40, hypothetical.closeEffluentGate);
-      score.textContent = `New risk if applied: ${predicted.score}/100`;
-    } else if (score) {
-      score.textContent = 'Command executed (Simulated)';
-    }
-  }
-
-  function updateSimulatorTab(activeRisk) {
-    const p = getEffectiveParams();
-    const isSim = appState.simulation.isActive;
-
-    const banner = document.getElementById('simActiveBanner');
-    if (banner) banner.style.display = isSim ? 'block' : 'none';
-
-    const rSpeed = document.getElementById('simRangeSpeed');
-    const rDir = document.getElementById('simRangeDir');
-    const rEm = document.getElementById('simRangeEmission');
-
-    const vSpeed = document.getElementById('simValSpeed');
-    const vDir = document.getElementById('simValDir');
-    const vEm = document.getElementById('simValEmission');
-
-    if (rSpeed) rSpeed.value = p.windSpeed;
-    if (rDir) rDir.value = p.windDirection;
-    if (rEm) rEm.value = p.emission;
-
-    if (vSpeed) vSpeed.textContent = `${p.windSpeed.toFixed(1)} km/h`;
-    if (vDir) vDir.textContent = `${p.windDirection}° ${getCompassSector(p.windDirection)}`;
-    if (vEm) vEm.textContent = `${p.emission}%`;
-
-    // Live result line
-    const resReach = document.getElementById('simResReach');
-    const resRisk = document.getElementById('simResRisk');
-    const resTime = document.getElementById('simResTime');
-    const resPop = document.getElementById('simResPop');
-
-    if (resReach) resReach.textContent = `${activeRisk.plumeReachKm} km`;
-    if (resRisk) {
-      resRisk.textContent = `${activeRisk.score}/100 (${activeRisk.level})`;
-      resRisk.style.color = activeRisk.hexColor;
-    }
-    if (resTime) resTime.textContent = `${activeRisk.timeToLakeMin} min`;
-    if (resPop) resPop.textContent = `${activeRisk.residentsAtRisk.toLocaleString()}`;
-
-    const riskLbl = document.getElementById('simWaterRiskLabel');
-    if (riskLbl) riskLbl.textContent = `${appState.settings.waterBodyName} risk:`;
-
-    // Update Simulator Map Compass
-    const simNeedle = document.getElementById('simCompassNeedle');
-    const simCompassTxt = document.getElementById('simCompassText');
-    if (simNeedle) simNeedle.setAttribute('transform', `rotate(${p.windDirection})`);
-    if (simCompassTxt) simCompassTxt.textContent = `${p.windDirection}° ${getCompassSector(p.windDirection)}`;
-
-    // Rotate and scale plume for simulator
-    const simPlume = document.getElementById('simPlumeRotator');
-    if (simPlume) {
-      const rotAngle = p.windDirection - 90;
-      simPlume.setAttribute('transform', `rotate(${rotAngle}, 110, 100)`);
-    }
-
-    const emScale = Math.sqrt(p.emission / 100);
-    const speedScale = Math.min(1.4, Math.max(0.7, p.windSpeed / 19.4));
-
-    const sLenA = 80 * emScale * speedScale;
-    const sWidA = 28 * emScale / Math.pow(speedScale, 0.3);
-
-    const sLenB = 150 * emScale * speedScale;
-    const sWidB = 45 * emScale / Math.pow(speedScale, 0.3);
-
-    const sLenC = 250 * emScale * speedScale;
-    const sWidC = 68 * emScale / Math.pow(speedScale, 0.3);
-
-    const sRed = document.getElementById('svgSimPlumeRed');
-    const sOrange = document.getElementById('svgSimPlumeOrange');
-    const sYellow = document.getElementById('svgSimPlumeYellow');
-
-    if (sRed) {
-      sRed.setAttribute('cx', 110 + sLenA * 0.55);
-      sRed.setAttribute('rx', Math.max(15, sLenA * 0.55));
-      sRed.setAttribute('ry', Math.max(8, sWidA));
-    }
-    if (sOrange) {
-      sOrange.setAttribute('cx', 110 + sLenB * 0.55);
-      sOrange.setAttribute('rx', Math.max(25, sLenB * 0.55));
-      sOrange.setAttribute('ry', Math.max(12, sWidB));
-    }
-    if (sYellow) {
-      sYellow.setAttribute('cx', 110 + sLenC * 0.55);
-      sYellow.setAttribute('rx', Math.max(35, sLenC * 0.55));
-      sYellow.setAttribute('ry', Math.max(16, sWidC));
-    }
-
-    // Community point-in-ellipse testing under simulated conditions
-    const sRad = (p.windDirection - 90) * (Math.PI / 180);
-    const sRot = p.windDirection - 90;
-
-    const scRedX = 110 + Math.cos(sRad) * (sLenA * 0.55);
-    const scRedY = 100 + Math.sin(sRad) * (sLenA * 0.55);
-
-    const scOrangeX = 110 + Math.cos(sRad) * (sLenB * 0.55);
-    const scOrangeY = 100 + Math.sin(sRad) * (sLenB * 0.55);
-
-    const scYellowX = 110 + Math.cos(sRad) * (sLenC * 0.55);
-    const scYellowY = 100 + Math.sin(sRad) * (sLenC * 0.55);
-
-    const simComms = [
-      { id: 'A', x: 190, y: 180, circleId: 'commSimCircleA', chipId: 'chipSimCommA' },
-      { id: 'B', x: 285, y: 275, circleId: 'commSimCircleB', chipId: 'chipSimCommB' },
-      { id: 'C', x: 420, y: 370, circleId: 'commSimCircleC', chipId: 'chipSimCommC' },
-      { id: 'D', x: 300, y: 110, circleId: 'commSimCircleD', chipId: 'chipSimCommD' }
-    ];
-
-    simComms.forEach(c => {
-      const inRed = isPointInRotatedEllipse(c.x, c.y, scRedX, scRedY, Math.max(15, sLenA * 0.55), Math.max(8, sWidA), sRot);
-      const inOrange = isPointInRotatedEllipse(c.x, c.y, scOrangeX, scOrangeY, Math.max(25, sLenB * 0.55), Math.max(12, sWidB), sRot);
-      const inYellow = isPointInRotatedEllipse(c.x, c.y, scYellowX, scYellowY, Math.max(35, sLenC * 0.55), Math.max(16, sWidC), sRot);
-
-      let color = 'var(--safe-green)';
-      let label = 'Safer zone';
-      if (inRed) {
-        color = 'var(--danger-red)';
-        label = 'High risk';
-      } else if (inOrange || inYellow) {
-        color = 'var(--caution-amber)';
-        label = 'Caution zone';
-      }
-
-      const circ = document.getElementById(c.circleId);
-      const ch = document.getElementById(c.chipId);
-      if (circ) circ.setAttribute('fill', color);
-      if (ch) ch.innerHTML = `<span class="chip-circle" style="background:${color};"></span>Community ${c.id}: ${label}`;
-    });
-
-    // Water Body impact in simulator
-    const isSimLakeBreach = activeRisk.score >= 35;
-    const simSvgLake = document.getElementById('svgSimLakeShape');
-    const simBreach = document.getElementById('simBreachGroup');
-    const simChipLake = document.getElementById('chipSimLake');
-    const simSvgLakeLabel = document.getElementById('svgSimWaterBodyLabel');
-    const simSvgFacLabel = document.getElementById('svgSimFactoryLabel');
-
-    if (simSvgLakeLabel) simSvgLakeLabel.textContent = appState.settings.waterBodyName;
-    if (simSvgFacLabel) simSvgFacLabel.textContent = appState.settings.siteName;
-
-    if (simSvgLake) {
-      simSvgLake.setAttribute('fill', isSimLakeBreach ? '#991b1b' : 'url(#simLakeWaterGrad)');
-      simSvgLake.classList.toggle('lake-pulsing', isSimLakeBreach);
-    }
-    if (sRed) {
-      sRed.classList.toggle('plume-pulsing', isSimLakeBreach);
-    }
-    if (simBreach) simBreach.style.display = isSimLakeBreach ? 'block' : 'none';
-    if (simChipLake) simChipLake.innerHTML = `<span class="chip-circle" style="background:${isSimLakeBreach ? 'var(--danger-red)' : 'var(--water-teal)'};"></span>${escapeHtml(appState.settings.waterBodyName)}: ${isSimLakeBreach ? 'Impinged (' + activeRisk.level + ')' : 'Clean'}`;
-  }
-
-  function updatePollutionJourneyTab(activeRisk, p) {
-    const tLake = activeRisk.timeToLakeMin;
-    const tIntake = Math.max(tLake + 4, Math.round(tLake * 1.5));
-    const tRiver = Math.max(tIntake + 8, Math.round(tLake * 2.2));
-    const tVillages = Math.max(tRiver + 15, Math.round(tLake * 3.6));
-    const tWetland = Math.max(tVillages + 25, Math.round(tLake * 5.2));
-
-    const winLine = document.getElementById('journeyActionWindow');
-    if (winLine) {
-      winLine.textContent = `Action window: ${tLake} minutes until plume impinges on ${appState.settings.waterBodyName}`;
-    }
-
-    const jTitle2 = document.getElementById('jStop2Title');
-    if (jTitle2) {
-      jTitle2.textContent = `2. ${appState.settings.waterBodyName} Perimeter (+${tLake} min)`;
-    }
-
-    const jTitle3 = document.getElementById('jStop3Title');
-    if (jTitle3) {
-      jTitle3.textContent = `3. Municipal Intake Sluice Gate #4 (+${tIntake} min)`;
-    }
-
-    const jTitle4 = document.getElementById('jStop4Title');
-    if (jTitle4) {
-      jTitle4.textContent = `4. Outflow / Irrigation Canals (+${tRiver} min)`;
-    }
-
-    const jTitle5 = document.getElementById('jStop5Title');
-    if (jTitle5) {
-      const lblVill = tVillages >= 60 ? `+${(tVillages / 60).toFixed(1)} hr` : `+${tVillages} min`;
-      jTitle5.textContent = `5. Downstream Communities & Population Buffer (${lblVill})`;
-    }
-
-    const jTitle6 = document.getElementById('jStop6Title');
-    if (jTitle6) {
-      const lblWet = tWetland >= 60 ? `+${(tWetland / 60).toFixed(1)} hr` : `+${tWetland} min`;
-      jTitle6.textContent = `6. Protected Downstream Wetland Sanctuary (${lblWet})`;
-    }
-
-    setJourneyStop('jStop1', 15, activeRisk.score, 'now');
-    setJourneyStop('jStop2', 25, activeRisk.score, `+${tLake}m`);
-    setJourneyStop('jStop3', 35, activeRisk.score, `+${tIntake}m`);
-    setJourneyStop('jStop4', 45, activeRisk.score, `+${tRiver}m`);
-    setJourneyStop('jStop5', 50, activeRisk.score, tVillages >= 60 ? `+${Math.round(tVillages / 60)}h` : `+${tVillages}m`);
-    setJourneyStop('jStop6', 55, activeRisk.score, tWetland >= 60 ? `+${Math.round(tWetland / 60)}h` : `+${tWetland}m`);
-  }
-
-  function setJourneyStop(elementId, threshold, currentScore, timeLabel) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    const atRisk = currentScore >= threshold;
-    el.className = `journey-stop ${atRisk ? 'danger' : 'safe'}`;
-    const timeEl = el.querySelector('.journey-time');
-    if (timeEl) timeEl.textContent = timeLabel;
-  }
-
-  function updateBeforeAfterTab(activeRisk, baseRisk) {
-    const bScore = document.getElementById('baBaseScore');
-    const bLevel = document.getElementById('baBaseLevel');
-    const bReach = document.getElementById('baBaseReach');
-
-    const aScore = document.getElementById('baAfterScore');
-    const aLevel = document.getElementById('baAfterLevel');
-    const aReach = document.getElementById('baAfterReach');
-    const aTitle = document.getElementById('baAfterTitle');
-
-    if (bScore) {
-      bScore.textContent = baseRisk.score;
-      bScore.style.color = baseRisk.hexColor;
-    }
-    if (bLevel) {
-      bLevel.textContent = baseRisk.level;
-      bLevel.style.color = baseRisk.hexColor;
-    }
-    if (bReach) bReach.textContent = `${baseRisk.plumeReachKm} km`;
-
-    if (aScore) {
-      aScore.textContent = activeRisk.score;
-      aScore.style.color = activeRisk.hexColor;
-    }
-    if (aLevel) {
-      aLevel.textContent = activeRisk.level;
-      aLevel.style.color = activeRisk.hexColor;
-    }
-    if (aReach) aReach.textContent = `${activeRisk.plumeReachKm} km`;
-
-    if (aTitle) {
-      const applied = [];
-      if (appState.incident.actions.reduceEmissions40) applied.push('Lime scrubber active');
-      if (appState.incident.actions.closeEffluentGate) applied.push('ZLD weir diverted');
-      if (appState.incident.actions.alertDownstream) applied.push('Early warning dispatched');
-      aTitle.textContent = applied.length > 0 ? `After ${applied.join(' + ')}` : 'Without actions applied';
-    }
-
-    const drop = baseRisk.score - activeRisk.score;
-    const deltaTxt = document.getElementById('baDeltaSentence');
-    if (deltaTxt) {
-      if (drop > 0) {
-        deltaTxt.textContent = `Acting now cuts predicted risk by ${drop} points, from ${baseRisk.level} (${baseRisk.score}/100) to ${activeRisk.level} (${activeRisk.score}/100) — Diving below regulatory threshold of 35 pts.`;
-      } else {
-        deltaTxt.textContent = `Without intervention, risk escalates to ${baseRisk.level} (${baseRisk.score}/100). Apply the 3 engineering actions to bring trajectory below 35 pts.`;
-      }
-    }
-
-    // 4 Trajectory Summary Metric Cards
-    const mNetDrop = document.getElementById('baMetricNetDrop');
-    const mReachDrop = document.getElementById('baMetricReachDrop');
-    const mSluice = document.getElementById('baMetricSluiceStatus');
-    const mPopShield = document.getElementById('baMetricPopShield');
-
-    if (mNetDrop) {
-      mNetDrop.textContent = drop > 0 ? `-${drop} points` : '0 points';
-      mNetDrop.style.color = drop > 0 ? 'var(--safe-green)' : 'var(--text-muted)';
-    }
-    if (mReachDrop) {
-      mReachDrop.textContent = `${baseRisk.plumeReachKm} km → ${activeRisk.plumeReachKm} km`;
-      mReachDrop.style.color = activeRisk.plumeReachKm < baseRisk.plumeReachKm ? 'var(--water-teal)' : 'var(--text-bright)';
-    }
-    if (mSluice) {
-      if (appState.incident.actions.closeEffluentGate) {
-        mSluice.textContent = 'SECURED (DIVERTED)';
-        mSluice.style.color = 'var(--safe-green)';
-      } else if (activeRisk.score >= appState.settings.threshWarning) {
-        mSluice.textContent = 'VULNERABLE (OPEN)';
-        mSluice.style.color = 'var(--danger-red)';
-      } else {
-        mSluice.textContent = 'SECURED (LOW FLOW)';
-        mSluice.style.color = 'var(--safe-green)';
-      }
-    }
-    if (mPopShield) {
-      const popShielded = Math.max(0, baseRisk.residentsAtRisk - activeRisk.residentsAtRisk);
-      mPopShield.textContent = `${popShielded.toLocaleString()} residents`;
-      mPopShield.style.color = popShielded > 0 ? 'var(--safe-green)' : 'var(--text-bright)';
-    }
-
-    // Render Dual Trajectory Comparison Chart
-    const chartContainer = document.getElementById('baChartBars');
-    if (chartContainer) {
-      const p = getEffectiveParams();
-      const hasActions = appState.incident.actions.reduceEmissions40 || appState.incident.actions.closeEffluentGate || appState.incident.actions.alertDownstream;
-      const hypMit = evaluateRiskModel(p.windSpeed, p.windDirection, p.emission, true, true);
-
-      // Trajectory multipliers
-      const uncheckedMults = [0.85, 0.95, 1.0, 1.05, 1.02, 0.9, 0.75];
-      const ctrlMults = [0.85, 0.52, 0.35, 0.25, 0.18, 0.14, 0.10];
-      const labels = ['NOW', '+10m', '+30m', '+1h', '+2h', '+3h', '+6h'];
-
-      chartContainer.innerHTML = labels.map((lbl, idx) => {
-        const uncheckScore = Math.min(100, Math.round(baseRisk.score * uncheckedMults[idx]));
-        const targetBase = hasActions ? activeRisk.score : hypMit.score;
-        const ctrlScore = Math.max(5, Math.round(targetBase * ctrlMults[idx]));
-
-        // Height out of 145px
-        const hBase = Math.max(8, Math.round((uncheckScore / 100) * 135));
-        const hAfter = Math.max(8, Math.round((ctrlScore / 100) * 135));
-        const isBelowThreshold = ctrlScore <= 35;
-
-        return `
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:4px; flex:1;">
-            <div style="display:flex; align-items:flex-end; justify-content:center; gap:5px; height:140px; width:100%;">
-              <div style="width:16px; height:${hBase}px; background:linear-gradient(to top, #b91c1c, #ef4444); border-radius:3px 3px 0 0; transition:height 0.4s ease;" title="Unchecked trajectory: ${uncheckScore}/100"></div>
-              <div style="width:16px; height:${hAfter}px; background:${isBelowThreshold ? 'linear-gradient(to top, #047857, #10b981)' : 'linear-gradient(to top, #b45309, #f59e0b)'}; border-radius:3px 3px 0 0; transition:height 0.4s ease;" title="Controlled trajectory: ${ctrlScore}/100 ${isBelowThreshold ? '(Below Regulatory Threshold)' : ''}"></div>
-            </div>
-            <span style="font-size:0.72rem; color:var(--text-faint); font-weight:700;">${lbl}</span>
-          </div>
-        `;
-      }).join('');
-    }
-  }
-
-  function getCompassSector(deg) {
-    if (deg >= 70 && deg < 110) return 'E';
-    if (deg >= 110 && deg < 160) return 'SE';
-    if (deg >= 160 && deg < 200) return 'S';
-    if (deg >= 200 && deg < 240) return 'SW';
-    return 'W';
   }
 
   function escapeHtml(str) {
@@ -1759,492 +165,871 @@
     })[m]);
   }
 
+  function angleDifference(a, b) {
+    let diff = Math.abs(a - b) % 360;
+    return diff > 180 ? 360 - diff : diff;
+  }
+
+  function getCompassSector(deg) {
+    const d = (deg % 360 + 360) % 360;
+    if (d >= 337.5 || d < 22.5) return 'N';
+    if (d >= 22.5 && d < 67.5) return 'NE';
+    if (d >= 67.5 && d < 112.5) return 'E';
+    if (d >= 112.5 && d < 157.5) return 'SE';
+    if (d >= 157.5 && d < 202.5) return 'S';
+    if (d >= 202.5 && d < 247.5) return 'SW';
+    if (d >= 247.5 && d < 292.5) return 'W';
+    return 'NW';
+  }
+
   /* ==========================================================================
-     9. MODALS, REPORT EXPORT & NOTIFICATIONS
+     3. MATHEMATICAL DISPERSION & IMPACT ENGINE
      ========================================================================== */
-  function openAlertModal() {
-    const modal = document.getElementById('alertModalOverlay');
-    const msgArea = document.getElementById('alertMessageText');
-    if (!modal || !msgArea) return;
+  function computeDispersionMetrics() {
+    const isSim = appState.simulation.isActive;
+    const windSpeed = isSim ? appState.simulation.windSpeed : appState.weather.windSpeed;
+    const windDir = isSim ? appState.simulation.windDirection : appState.weather.windDirection;
+    const boiler = appState.isLeakTriggered ? 150 : (isSim ? appState.simulation.emission : appState.factory.boilerOutput);
+    
+    // Playbook effect: if executed, reduces effective flux
+    const isDerated = appState.playbook.isExecuted && appState.playbook.derateBoiler;
+    const effectiveBoiler = isDerated ? Math.round(boiler * 0.6) : boiler;
+    
+    // Plume reach calculation
+    // Base reach ~ 2.8 km at 85% boiler & 19.4 km/h
+    const boilerScale = Math.sqrt(effectiveBoiler / 85);
+    const speedScale = Math.pow(windSpeed / 19.4, 0.45);
+    let plumeReachKm = parseFloat((2.8 * boilerScale * speedScale).toFixed(1));
+    if (appState.isLeakTriggered) {
+      plumeReachKm = Math.max(plumeReachKm, 4.2);
+    }
+    
+    // Water basin distance and arrival window (Distance / WindSpeed * 60)
+    const distBasin = appState.waterBody.distanceKm; // 2.4 km
+    const timeContamMin = Math.max(1, Math.round((distBasin / Math.max(1, windSpeed)) * 60));
 
-    const risk = getActiveRisk();
-    const timeToLake = risk.timeToLakeMin;
-    const areas = ['Community A', 'Community B', `${appState.settings.waterBodyName} Buffer`].join(', ');
+    // Vector alignment with lake corridor (bearing 138°)
+    const angleDiff = angleDifference(windDir, appState.waterBody.bearingDeg);
+    const isAligned = angleDiff <= 25;
+    const isLakeBreached = (plumeReachKm >= distBasin) && isAligned;
 
-    const message = `[CIVIL ADVISORY - ECOAI FLOW]
-INCIDENT: Industrial Chemical Outfall & Plume Dispersion
-EPICENTER: ${appState.settings.siteName}
-SEVERITY: ${risk.level.toUpperCase()} (Risk Score: ${risk.score}/100)
-TARGET BASIN: ${appState.settings.waterBodyName} (${appState.settings.waterDistanceKm} km downwind)
-AFFECTED ZONES: ${areas}
-ACTION WINDOW: Estimated ${timeToLake} minutes until plume impinges on water intake.
-DIRECTIVE:
-1. Stay indoors and close all windows/air intakes immediately.
-2. Avoid using raw water drawn from the affected water corridor.
-3. Prepare for localized municipal drinking water gate closures.
-Generated automatically by EcoAI Flow Incident Autopilot.`;
+    // Lake pH threat
+    let lakePhStart = 7.4;
+    let lakePhEnd = isLakeBreached ? (appState.isLeakTriggered ? 5.2 : 5.6) : (isAligned ? 6.4 : 7.2);
+    if (appState.playbook.isExecuted && appState.playbook.divertEffluent) {
+      lakePhEnd = 6.8;
+    }
 
-    msgArea.value = message;
-    modal.classList.add('open');
-  }
+    // Risk level
+    let riskLevel = 'CRITICAL';
+    let riskClass = 'danger';
+    if (!isAligned && plumeReachKm < distBasin) {
+      riskLevel = 'LOW';
+      riskClass = 'safe';
+    } else if (!isLakeBreached) {
+      riskLevel = 'MODERATE';
+      riskClass = 'amber';
+    }
 
-  function closeAlertModal() {
-    const modal = document.getElementById('alertModalOverlay');
-    if (modal) modal.classList.remove('open');
-  }
+    // Citizen calculations for selected community
+    const curComm = appState.citizen.communities[appState.citizen.selectedCommunityKey];
+    const commAngleDiff = angleDifference(windDir, curComm.bearingDeg);
+    const isCitizenInPlume = (commAngleDiff <= 22) && (plumeReachKm >= curComm.distKm * 0.85);
+    const citizenArrivalMin = Math.max(1, Math.round((curComm.distKm / Math.max(1, windSpeed)) * 60));
+    
+    // Peak AQI calculation
+    const peakAqi = isCitizenInPlume 
+      ? (appState.isLeakTriggered ? 380 : Math.round(appState.weather.baselineAqi + (effectiveBoiler / 85) * 243))
+      : appState.weather.baselineAqi;
+    
+    const peakSo2 = isCitizenInPlume
+      ? (appState.isLeakTriggered ? 210 : Math.round(18 + (effectiveBoiler / 85) * 127))
+      : 18;
 
-  function exportIncidentReport() {
-    const curRisk = getActiveRisk();
-    const baseRisk = getBaselineRisk();
-    const now = new Date().toLocaleString();
-
-    const reportContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>EcoAI Flow Incident Report - ${appState.incident.activeId || 'LOG'}</title>
-  <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; color: #0f172a; }
-    h1 { color: #0f766e; border-bottom: 2px solid #0f766e; padding-bottom: 8px; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
-    th { background: #f1f5f9; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-    .critical { background: #fee2e2; color: #dc2626; }
-    .moderate { background: #fef3c7; color: #d97706; }
-    .safe { background: #d1fae5; color: #059669; }
-  </style>
-</head>
-<body>
-  <h1>EcoAI Flow Incident Response Report</h1>
-  <p><strong>Incident ID:</strong> ${appState.incident.activeId || 'DEMO-EVAL'}</p>
-  <p><strong>Generated At:</strong> ${now}</p>
-  <p><strong>Target Water Body:</strong> ${appState.settings.waterBodyName} (${appState.settings.waterDistanceKm} km downwind, bearing ${appState.settings.lakeBearing}°)</p>
-  <p><strong>Monitored Facility:</strong> ${appState.settings.siteName} (${appState.settings.latitude}° N, ${appState.settings.longitude}° E)</p>
-
-  <h2>Risk Mitigation Summary</h2>
-  <table>
-    <tr><th>Condition</th><th>Score</th><th>Level</th><th>Plume Reach</th></tr>
-    <tr><td>Without Action (Unabated)</td><td>${baseRisk.score}/100</td><td><span class="badge critical">${baseRisk.level}</span></td><td>${baseRisk.plumeReachKm} km</td></tr>
-    <tr><td>With Applied Actions</td><td>${curRisk.score}/100</td><td><span class="badge ${curRisk.colorClass}">${curRisk.level}</span></td><td>${curRisk.plumeReachKm} km</td></tr>
-  </table>
-
-  <p><strong>Net Risk Reduction:</strong> ${baseRisk.score - curRisk.score} points (${baseRisk.level} &rarr; ${curRisk.level})</p>
-
-  <h2>Active Containment Protocols</h2>
-  <ul>
-    <li>Reduce emissions 40%: <strong>${appState.incident.actions.reduceEmissions40 ? 'Simulated Active' : 'Not Active'}</strong></li>
-    <li>Close effluent gate: <strong>${appState.incident.actions.closeEffluentGate ? 'Simulated Active' : 'Not Active'}</strong></li>
-    <li>Alert downstream communities: <strong>${appState.incident.actions.alertDownstream ? 'Active' : 'Not Active'}</strong></li>
-  </ul>
-
-  <h2>Incident Log Timeline</h2>
-  <table>
-    <tr><th>Time</th><th>Event Description</th></tr>
-    ${appState.incident.log.map(item => `<tr><td>${item.timestamp}</td><td>${escapeHtml(item.text)}</td></tr>`).join('')}
-  </table>
-
-  <hr>
-  <p style="font-size: 0.85rem; color: #64748b;">Notice: This report was generated by EcoAI Flow for decision support demonstration purposes.</p>
-</body>
-</html>`;
-
-    const blob = new Blob([reportContent], { type: 'text/html' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `EcoAI-Flow-Report-${appState.incident.activeId || 'Demonstration'}.html`;
-    a.click();
-    showToast('Incident report exported successfully.', 'success');
+    return {
+      windSpeed,
+      windDir,
+      effectiveBoiler,
+      plumeReachKm,
+      distBasin,
+      timeContamMin,
+      isAligned,
+      isLakeBreached,
+      lakePhStart,
+      lakePhEnd,
+      riskLevel,
+      riskClass,
+      curComm,
+      isCitizenInPlume,
+      citizenArrivalMin,
+      peakAqi,
+      peakSo2
+    };
   }
 
   /* ==========================================================================
-     10. SETUP EVENT LISTENERS & INITIALIZATION
+     4. MAP ENGINE (Leaflet + Dynamic SVG Plume & Breach Projection)
+     ========================================================================== */
+  let factoryMapInstance = null;
+  let citizenMapInstance = null;
+
+  function initLeafletMaps() {
+    const centerCoords = [28.58, 77.26];
+    const zoomLevel = 13;
+
+    // 1. Factory Operator Map
+    const factoryContainer = document.getElementById('factoryLeafletMap');
+    if (factoryContainer && typeof L !== 'undefined') {
+      try {
+        factoryMapInstance = L.map('factoryLeafletMap', {
+          center: centerCoords,
+          zoom: zoomLevel,
+          zoomControl: false,
+          attributionControl: false
+        });
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 18
+        }).addTo(factoryMapInstance);
+
+        factoryMapInstance.on('move', renderSvgOverlays);
+        factoryMapInstance.on('zoom', renderSvgOverlays);
+      } catch (e) {
+        console.warn('Leaflet initialization fallback:', e);
+      }
+    }
+
+    // 2. Citizen Portal Map
+    const citizenContainer = document.getElementById('citizenLeafletMap');
+    if (citizenContainer && typeof L !== 'undefined') {
+      try {
+        citizenMapInstance = L.map('citizenLeafletMap', {
+          center: centerCoords,
+          zoom: zoomLevel,
+          zoomControl: false,
+          attributionControl: false
+        });
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 18
+        }).addTo(citizenMapInstance);
+
+        citizenMapInstance.on('move', renderSvgOverlays);
+        citizenMapInstance.on('zoom', renderSvgOverlays);
+      } catch (e) {
+        console.warn('Citizen Leaflet initialization fallback:', e);
+      }
+    }
+
+    renderSvgOverlays();
+  }
+
+  function getProjectedPoint(mapInstance, lat, lng, defX, defY) {
+    if (mapInstance && typeof mapInstance.latLngToContainerPoint === 'function') {
+      try {
+        const container = mapInstance.getContainer();
+        if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+          const pt = mapInstance.latLngToContainerPoint([lat, lng]);
+          const scaleX = 1000 / container.clientWidth;
+          const scaleY = 500 / container.clientHeight;
+          const px = pt.x * scaleX;
+          const py = pt.y * scaleY;
+          if (!isNaN(px) && !isNaN(py)) {
+            return { x: Math.round(px), y: Math.round(py) };
+          }
+        }
+      } catch (e) {}
+    }
+    return { x: defX, y: defY };
+  }
+
+  function getProjectedRadius1Km(mapInstance, lat, lng, defR) {
+    if (mapInstance && typeof mapInstance.latLngToContainerPoint === 'function') {
+      try {
+        const container = mapInstance.getContainer();
+        if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+          const pt1 = mapInstance.latLngToContainerPoint([lat, lng]);
+          const pt2 = mapInstance.latLngToContainerPoint([lat + 0.009, lng]);
+          const scaleY = 500 / container.clientHeight;
+          const r = Math.abs(pt2.y - pt1.y) * scaleY;
+          if (r > 30 && r < 350) return Math.round(r);
+        }
+      } catch (e) {}
+    }
+    return defR;
+  }
+
+  function renderSvgOverlays() {
+    const metrics = computeDispersionMetrics();
+    
+    // 1. Render Factory Overlay
+    const fLayer = document.getElementById('svgDynamicLayer');
+    if (fLayer) {
+      const srcPt = getProjectedPoint(factoryMapInstance, appState.factory.lat, appState.factory.lng, 240, 160);
+      const lakePt = getProjectedPoint(factoryMapInstance, appState.waterBody.lat, appState.waterBody.lng, 680, 360);
+      const r1km = getProjectedRadius1Km(factoryMapInstance, appState.factory.lat, appState.factory.lng, 110);
+      fLayer.innerHTML = generateMapSvgContent(metrics, 'factory', srcPt.x, srcPt.y, lakePt.x, lakePt.y, r1km, factoryMapInstance);
+    }
+
+    // 2. Render Citizen Overlay
+    const cLayer = document.getElementById('citizenSvgDynamicLayer');
+    if (cLayer) {
+      const srcPtC = getProjectedPoint(citizenMapInstance, appState.factory.lat, appState.factory.lng, 240, 160);
+      const lakePtC = getProjectedPoint(citizenMapInstance, appState.waterBody.lat, appState.waterBody.lng, 680, 360);
+      const r1kmC = getProjectedRadius1Km(citizenMapInstance, appState.factory.lat, appState.factory.lng, 110);
+      cLayer.innerHTML = generateMapSvgContent(metrics, 'citizen', srcPtC.x, srcPtC.y, lakePtC.x, lakePtC.y, r1kmC, citizenMapInstance);
+    }
+  }
+
+  function generateMapSvgContent(metrics, mode, srcX, srcY, lakeX, lakeY, r1km = 110, mapInst = null) {
+    const rad = (metrics.windDir - 90) * (Math.PI / 180);
+    const pixelReach = Math.min(650, (metrics.plumeReachKm / 2.4) * 440);
+    const coneSpread = Math.min(130, 42 + pixelReach * 0.16);
+
+    // Tip of plume cone
+    const tipX = srcX + Math.cos(rad) * pixelReach;
+    const tipY = srcY + Math.sin(rad) * pixelReach;
+
+    // Flanks of the plume cone
+    const normRad = rad + Math.PI / 2;
+    const flank1X = tipX + Math.cos(normRad) * coneSpread;
+    const flank1Y = tipY + Math.sin(normRad) * coneSpread;
+    const flank2X = tipX - Math.cos(normRad) * coneSpread;
+    const flank2Y = tipY - Math.sin(normRad) * coneSpread;
+
+    const plumePath = `M ${srcX} ${srcY} L ${flank1X} ${flank1Y} Q ${tipX} ${tipY} ${flank2X} ${flank2Y} Z`;
+
+    // Downwind arrow line
+    const arrowLen = 90;
+    const arrowEndX = srcX + Math.cos(rad) * arrowLen;
+    const arrowEndY = srcY + Math.sin(rad) * arrowLen;
+
+    // Breach state
+    const isBreach = metrics.isLakeBreached || appState.isLeakTriggered;
+
+    let svgHtml = `
+      <!-- Aerial Hydrological Corridor (Photorealistic River Channel & Lake Basin) -->
+      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(14, 116, 144, 0.35)" stroke-width="48" stroke-linecap="round"/>
+      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(6, 182, 212, 0.48)" stroke-width="24" stroke-linecap="round"/>
+      <ellipse cx="${lakeX}" cy="${lakeY}" rx="95" ry="46" fill="rgba(8, 51, 68, 0.55)" stroke="rgba(6, 182, 212, 0.65)" stroke-width="2"/>
+
+      <!-- Concentric Distance Hazard Rings -->
+      <g stroke="rgba(6, 182, 212, 0.3)" stroke-width="1.2" stroke-dasharray="6,6" fill="none">
+        <circle cx="${srcX}" cy="${srcY}" r="${r1km}"/>
+        <text x="${srcX + r1km + 4}" y="${srcY - 4}" fill="#06b6d4" font-size="10" font-weight="700">1.0 km</text>
+
+        <circle cx="${srcX}" cy="${srcY}" r="${r1km * 2}"/>
+        <text x="${srcX + r1km * 2 + 4}" y="${srcY - 4}" fill="#06b6d4" font-size="10" font-weight="700">2.0 km</text>
+
+        <circle cx="${srcX}" cy="${srcY}" r="${r1km * 3}"/>
+        <text x="${srcX + r1km * 3 + 4}" y="${srcY - 4}" fill="#06b6d4" font-size="10" font-weight="700">3.0 km</text>
+      </g>
+
+      <!-- 1.0 km Hazard Zone High-Alert Dashed Ring -->
+      <circle cx="${srcX}" cy="${srcY}" r="${r1km}" stroke="rgba(239, 68, 68, 0.65)" stroke-width="2" stroke-dasharray="5,4" fill="rgba(239, 68, 68, 0.08)"/>
+
+      <!-- Trajectory vector connecting stack to water basin (2.4 km) -->
+      <line x1="${srcX}" y1="${srcY}" x2="${lakeX}" y2="${lakeY}" stroke="rgba(255, 255, 255, 0.45)" stroke-width="1.8" stroke-dasharray="6,4"/>
+      <rect x="${(srcX + lakeX)/2 - 32}" y="${(srcY + lakeY)/2 - 12}" width="64" height="20" rx="4" fill="rgba(7, 14, 23, 0.85)" stroke="#162a45"/>
+      <text x="${(srcX + lakeX)/2}" y="${(srcY + lakeY)/2 + 2}" fill="#ffffff" font-size="10.5" font-weight="800" text-anchor="middle">2.4 km</text>
+
+      <!-- Predicted Plume Dispersion Cone -->
+      <path d="${plumePath}" fill="url(#plumeGrad)" stroke="#f59e0b" stroke-width="1.5" stroke-opacity="0.8" class="${isBreach ? 'breach-pulsing' : ''}"/>
+
+      <!-- Plume Corridor Label Badge -->
+      <g transform="translate(${(srcX + tipX)/2}, ${(srcY + tipY)/2 - 15})">
+        <rect x="-70" y="-12" width="140" height="22" rx="4" fill="rgba(185, 28, 28, 0.85)" stroke="#ef4444" stroke-width="1.2"/>
+        <text x="0" y="2" fill="#ffffff" font-size="10" font-weight="800" text-anchor="middle">Predicted Plume Corridor</text>
+      </g>
+
+      <!-- Downwind Vector Indicator Arrow -->
+      <g stroke="#ffffff" stroke-width="2.5" fill="none">
+        <line x1="${srcX}" y1="${srcY}" x2="${arrowEndX}" y2="${arrowEndY}" stroke-linecap="round"/>
+        <polygon points="${arrowEndX},${arrowEndY} ${arrowEndX - 10 * Math.cos(rad - 0.4)},${arrowEndY - 10 * Math.sin(rad - 0.4)} ${arrowEndX - 10 * Math.cos(rad + 0.4)},${arrowEndY - 10 * Math.sin(rad + 0.4)}" fill="#ffffff" stroke="none"/>
+      </g>
+      <text x="${arrowEndX + 14 * Math.cos(rad)}" y="${arrowEndY + 14 * Math.sin(rad)}" fill="#e0f2fe" font-size="11" font-weight="800">
+        Wind Direction ${metrics.windDir}° ${getCompassSector(metrics.windDir)}
+      </text>
+
+      <!-- Factory Source Marker -->
+      <g transform="translate(${srcX}, ${srcY})">
+        <circle cx="0" cy="0" r="22" fill="#ea580c" stroke="#ffffff" stroke-width="2.5" filter="url(#glowFilter)"/>
+        <text x="0" y="5" fill="#ffffff" font-size="14" font-weight="900" text-anchor="middle">🏭</text>
+        <rect x="-55" y="-36" width="110" height="19" rx="3" fill="rgba(7, 14, 23, 0.9)" stroke="#ea580c"/>
+        <text x="0" y="-23" fill="#ffffff" font-size="10.5" font-weight="800" text-anchor="middle">${appState.factory.name}</text>
+        <text x="28" y="16" fill="#fca5a5" font-size="9.5" font-weight="700">1.0 km Hazard Zone</text>
+      </g>
+
+      <!-- Downstream Water Body Target -->
+      <g transform="translate(${lakeX}, ${lakeY})">
+        <circle cx="0" cy="0" r="${isBreach ? '28' : '22'}" fill="${isBreach ? '#ef4444' : '#0284c7'}" stroke="#ffffff" stroke-width="2.5" class="${isBreach ? 'breach-pulsing' : ''}" filter="url(#glowFilter)"/>
+        <text x="0" y="6" fill="#ffffff" font-size="15" text-anchor="middle">💧</text>
+        
+        <!-- Impact Badge -->
+        <g transform="translate(18, -14)">
+          <rect x="0" y="-12" width="170" height="26" rx="4" fill="${isBreach ? 'rgba(127, 29, 29, 0.92)' : 'rgba(7, 24, 44, 0.9)'}" stroke="${isBreach ? '#ef4444' : '#0ea5e9'}" stroke-width="1.5"/>
+          <text x="10" y="4" fill="${isBreach ? '#fca5a5' : '#7dd3fc'}" font-size="10" font-weight="800">
+            ${isBreach ? '⚠️ CRITICAL WATER IMPACT' : '✔ WATER BASIN BUFFER'}
+          </text>
+          <text x="10" y="24" fill="#ffffff" font-size="11" font-weight="800">${appState.waterBody.name}</text>
+        </g>
+      </g>
+    `;
+
+    // 3. Community Points (A, B, C, D)
+    const comms = [
+      { id: 'A', lat: 28.60, lng: 77.24, defX: 380, defY: 220, key: 'Community A' },
+      { id: 'B', lat: 28.58, lng: 77.26, defX: 520, defY: 290, key: 'Community B' },
+      { id: 'C', lat: 28.55, lng: 77.29, defX: 740, defY: 390, key: 'Community C' },
+      { id: 'D', lat: 28.63, lng: 77.20, defX: 190, defY: 300, key: 'Community D' }
+    ];
+
+    comms.forEach(c => {
+      const pt = getProjectedPoint(mapInst, c.lat, c.lng, c.defX, c.defY);
+      const isSelectedCitizen = (mode === 'citizen') && (appState.citizen.selectedCommunityKey === c.key);
+      const isBreachedComm = (c.key === 'Community B' && metrics.isAligned) || (c.key === 'Community A' && metrics.plumeReachKm >= 1.2);
+
+      svgHtml += `
+        <g transform="translate(${pt.x}, ${pt.y})">
+          ${isSelectedCitizen ? `
+            <circle cx="0" cy="0" r="26" fill="rgba(6, 182, 212, 0.25)" stroke="#06b6d4" stroke-width="2" class="breach-pulsing"/>
+            <circle cx="0" cy="0" r="16" fill="rgba(6, 182, 212, 0.5)"/>
+          ` : ''}
+          <circle cx="0" cy="0" r="8" fill="${isBreachedComm ? '#ef4444' : '#10b981'}" stroke="#ffffff" stroke-width="2"/>
+          <rect x="12" y="-10" width="95" height="18" rx="3" fill="rgba(7, 14, 23, 0.88)" stroke="#162a45"/>
+          <text x="16" y="3" fill="#ffffff" font-size="9.5" font-weight="700">${c.id}: ${c.key.split(' ')[1]}</text>
+        </g>
+      `;
+    });
+
+    return svgHtml;
+  }
+
+  /* ==========================================================================
+     5. UI CONTROLLER & DATA BINDINGS
+     ========================================================================== */
+  function updateAllUI() {
+    const metrics = computeDispersionMetrics();
+
+    // 1. Top Header Wind Text & Status
+    const windPill = document.getElementById('mapWindText');
+    const citWindPill = document.getElementById('citizenWindText');
+    const windStr = `NASA Wind: ${metrics.windSpeed.toFixed(1)} km/h @ ${metrics.windDir}° ${getCompassSector(metrics.windDir)}`;
+    if (windPill) windPill.textContent = windStr;
+    if (citWindPill) citWindPill.textContent = windStr;
+
+    // Trigger Leak Button State
+    const btnLeak = document.getElementById('btnTriggerLeak');
+    const btnLeakText = document.getElementById('btnTriggerLeakText');
+    if (btnLeak && btnLeakText) {
+      if (appState.isLeakTriggered) {
+        btnLeak.classList.add('active-breach');
+        btnLeakText.textContent = '↺ Reset to Baseline';
+      } else {
+        btnLeak.classList.remove('active-breach');
+        btnLeakText.textContent = 'Trigger Incident Leak';
+      }
+    }
+
+    // ========================================================================
+    // FACTORY OPERATOR VIEW UPDATES
+    // ========================================================================
+    const readoutCoords = document.getElementById('readoutCoords');
+    const readoutEmission = document.getElementById('readoutEmission');
+    const valBoiler = document.getElementById('valBoiler');
+    const sliderBoiler = document.getElementById('sliderBoiler');
+    const btnGateOpen = document.getElementById('btnGateOpen');
+    const btnGateClosed = document.getElementById('btnGateClosed');
+
+    if (readoutCoords) readoutCoords.innerHTML = `<span class="pin-icon">📍</span> ${appState.factory.coordsStr}`;
+    if (readoutEmission) readoutEmission.textContent = appState.factory.emissionType;
+    if (valBoiler) valBoiler.textContent = `${metrics.effectiveBoiler}%`;
+    if (sliderBoiler) sliderBoiler.value = appState.factory.boilerOutput;
+
+    if (btnGateOpen && btnGateClosed) {
+      const isOpen = appState.factory.sluiceGate === 'OPEN';
+      btnGateOpen.classList.toggle('active', isOpen);
+      btnGateClosed.classList.toggle('active', !isOpen);
+      btnGateClosed.classList.toggle('closed', !isOpen);
+    }
+
+    // Live Risk Metrics Box
+    const mReach = document.getElementById('metricReach');
+    const mBasinDist = document.getElementById('metricBasinDist');
+    const mTimeContam = document.getElementById('metricTimeContam');
+    const mPhThreat = document.getElementById('metricPhThreat');
+
+    if (mReach) mReach.textContent = `${metrics.plumeReachKm} km Downwind`;
+    if (mBasinDist) mBasinDist.textContent = `${metrics.distBasin} km`;
+    if (mTimeContam) mTimeContam.textContent = `${metrics.timeContamMin} mins`;
+    if (mPhThreat) mPhThreat.textContent = `${metrics.lakePhStart} → ${metrics.lakePhEnd}`;
+
+    // Middle Row: Live Risk Overview
+    const badgeRisk = document.getElementById('badgeLiveRisk');
+    const ovReach = document.getElementById('ovDispersionReach');
+    const ovBasinDist = document.getElementById('ovWaterBasinDist');
+    const ovTime = document.getElementById('ovTimeRemaining');
+    const ovPh = document.getElementById('ovPhChange');
+
+    if (badgeRisk) {
+      badgeRisk.textContent = metrics.riskLevel;
+      badgeRisk.className = `badge-status-pill ${metrics.riskClass === 'danger' ? 'critical' : metrics.riskClass}`;
+    }
+    if (ovReach) ovReach.textContent = `${metrics.plumeReachKm} km`;
+    if (ovBasinDist) ovBasinDist.textContent = `${metrics.distBasin} km`;
+    if (ovTime) ovTime.textContent = `${metrics.timeContamMin} min`;
+    if (ovPh) ovPh.textContent = `${metrics.lakePhStart} → ${metrics.lakePhEnd}`;
+
+    // Middle Row: Why is this critical?
+    const whyMain = document.getElementById('whyMainText');
+    const whyBullets = document.getElementById('whyBullets');
+    const valConf = document.getElementById('valConfidence');
+    const fillConf = document.getElementById('fillConfidence');
+
+    if (whyMain) {
+      whyMain.textContent = metrics.isLakeBreached 
+        ? 'Wind is carrying pollution directly toward the water basin.' 
+        : 'Plume corridor active; lateral dispersion monitored.';
+    }
+    if (whyBullets) {
+      whyBullets.innerHTML = `
+        <li>• SO₂ concentration + wind direction (${metrics.windDir}° ${getCompassSector(metrics.windDir)})</li>
+        <li>• ${metrics.distBasin} km downstream distance</li>
+        <li class="impact-highlight">${metrics.isLakeBreached ? '= HIGH IMPACT RISK.' : '= BUFFER ACTIVE.'}</li>
+      `;
+    }
+    if (valConf && fillConf) {
+      const confVal = metrics.isLakeBreached ? 91 : 86;
+      valConf.textContent = `${confVal}%`;
+      fillConf.style.width = `${confVal}%`;
+    }
+
+    // Middle Row: What-If Scenario Sliders
+    const sValDir = document.getElementById('simValWindDir');
+    const sValSpeed = document.getElementById('simValWindSpeed');
+    const sValEm = document.getElementById('simValEmission');
+    const sSlideDir = document.getElementById('simSliderWindDir');
+    const sSlideSpeed = document.getElementById('simSliderWindSpeed');
+    const sSlideEm = document.getElementById('simSliderEmission');
+
+    if (sValDir) sValDir.textContent = `${appState.simulation.windDirection}° ${getCompassSector(appState.simulation.windDirection)}`;
+    if (sValSpeed) sValSpeed.textContent = `${appState.simulation.windSpeed.toFixed(1)} km/h`;
+    if (sValEm) sValEm.textContent = `${appState.simulation.emission}%`;
+    if (sSlideDir) sSlideDir.value = appState.simulation.windDirection;
+    if (sSlideSpeed) sSlideSpeed.value = appState.simulation.windSpeed;
+    if (sSlideEm) sSlideEm.value = appState.simulation.emission;
+
+    // Bottom Row: Simulation Result Table
+    const rCurReach = document.getElementById('resCurReach');
+    const rCurImpact = document.getElementById('resCurImpact');
+    const rCurTime = document.getElementById('resCurTime');
+    const rCurPh = document.getElementById('resCurPh');
+
+    if (rCurReach) rCurReach.textContent = `${metrics.plumeReachKm} km`;
+    if (rCurImpact) rCurImpact.textContent = metrics.riskLevel;
+    if (rCurTime) rCurTime.textContent = `${metrics.timeContamMin} min`;
+    if (rCurPh) rCurPh.textContent = `${metrics.lakePhStart} → ${metrics.lakePhEnd}`;
+
+    // After Mitigation column
+    const rMitReach = document.getElementById('resMitReach');
+    const rMitImpact = document.getElementById('resMitImpact');
+    const rMitTime = document.getElementById('resMitTime');
+    const rMitPh = document.getElementById('resMitPh');
+
+    if (rMitReach) rMitReach.innerHTML = `1.6 km <strong class="arrow-down">↓ 43%</strong>`;
+    if (rMitImpact) rMitImpact.innerHTML = `LOW <strong class="arrow-down">↓ 100%</strong>`;
+    if (rMitTime) rMitTime.innerHTML = `31 min <strong class="arrow-up">↑ 117%</strong>`;
+    if (rMitPh) rMitPh.innerHTML = `7.2 → 6.8 <strong class="arrow-up">↑ 82%</strong>`;
+
+    // Playbook Execution Button
+    const btnExec = document.getElementById('btnExecutePlaybook');
+    if (btnExec) {
+      if (appState.playbook.isExecuted) {
+        btnExec.textContent = '✔ PLAYBOOK ACTIVE (60% FEED)';
+        btnExec.style.background = 'linear-gradient(135deg, #047857, #10b981)';
+      } else {
+        btnExec.textContent = '▶ EXECUTE PLAYBOOK';
+        btnExec.style.background = '';
+      }
+    }
+
+    // ========================================================================
+    // RESIDENTIAL CITIZEN VIEW UPDATES
+    // ========================================================================
+    const citCoords = document.getElementById('citizenCoordsReadout');
+    const citExposure = document.getElementById('citizenExposureStatus');
+    const citLocPill = document.getElementById('citizenLocPillText');
+
+    if (citCoords) citCoords.innerHTML = `<span class="pin-icon">📍</span> ${metrics.curComm.coordsStr}`;
+    if (citLocPill) citLocPill.innerHTML = `Your Sector: <strong>${metrics.curComm.name}</strong>`;
+
+    if (citExposure) {
+      if (metrics.isCitizenInPlume) {
+        citExposure.textContent = '⚠️ INSIDE HAZARD CORRIDOR';
+        citExposure.className = 'field-val-badge danger';
+      } else {
+        citExposure.textContent = '✔ BUFFER SAFE ZONE';
+        citExposure.className = 'field-val-badge safe';
+      }
+    }
+
+    // Citizen Advisory Badges and Four Circles
+    const citAdvisoryBadge = document.getElementById('citizenAdvisoryBadge');
+    const citArrival = document.getElementById('citArrivalTimer');
+    const citAqi = document.getElementById('citPeakAqi');
+    const citSluice = document.getElementById('citSluiceLock');
+    const citSo2 = document.getElementById('citSo2Peak');
+
+    if (citAdvisoryBadge) {
+      citAdvisoryBadge.textContent = metrics.isCitizenInPlume ? 'INBOUND HAZARD' : 'SAFE ZONE';
+      citAdvisoryBadge.className = `badge-status-pill ${metrics.isCitizenInPlume ? 'critical' : 'safe'}`;
+    }
+
+    if (citArrival) {
+      citArrival.textContent = metrics.isCitizenInPlume ? `${metrics.citizenArrivalMin} min` : 'Clear';
+      citArrival.className = `circle-val ${metrics.isCitizenInPlume ? 'danger' : 'safe'}`;
+    }
+    if (citAqi) {
+      citAqi.textContent = `${metrics.peakAqi} AQI`;
+      citAqi.className = `circle-val ${metrics.peakAqi > 100 ? 'danger' : 'safe'}`;
+    }
+    if (citSluice) {
+      const isSluiceLocked = appState.factory.sluiceGate === 'CLOSED' || appState.playbook.isExecuted;
+      citSluice.textContent = isSluiceLocked ? 'LOCKED' : 'OPEN';
+      citSluice.className = `circle-val ${isSluiceLocked ? 'safe' : 'danger'}`;
+    }
+    if (citSo2) {
+      citSo2.textContent = `${metrics.peakSo2} µg`;
+      citSo2.className = `circle-val ${metrics.peakSo2 > 50 ? 'danger' : 'safe'}`;
+    }
+
+    // Drinking water status box
+    const wsBadge = document.getElementById('wsBadge');
+    const wsDesc = document.getElementById('wsDesc');
+    const wsTap = document.getElementById('wsTapStatus');
+    const isSluiceLocked = appState.factory.sluiceGate === 'CLOSED' || appState.playbook.isExecuted;
+
+    if (wsBadge) {
+      wsBadge.textContent = isSluiceLocked ? '✔ AUTOMATED WEIR ISOLATION ACTIVE' : '⚠️ RAW SURFACE WATER RISK';
+      wsBadge.style.color = isSluiceLocked ? 'var(--safe-green)' : 'var(--danger-red)';
+    }
+    if (wsDesc) {
+      wsDesc.textContent = isSluiceLocked
+        ? 'Municipal Intake Sluice #4 closed automatically upon plume detection. The city tap water network is fed exclusively from isolated deep aquifers.'
+        : 'Sluice gate is currently open. Tap water remains treated, but direct surface extraction from canals is strictly forbidden.';
+    }
+    if (wsTap) {
+      wsTap.textContent = isSluiceLocked ? 'Protected & Safe' : 'Filter/Boil Advised';
+      wsTap.className = isSluiceLocked ? 'text-safe' : 'text-danger';
+    }
+
+    // Citizen Notifications Feed Rendering
+    renderCitizenNotifications();
+
+    // Re-render SVG Map Layer
+    renderSvgOverlays();
+  }
+
+  function renderCitizenNotifications() {
+    const list = document.getElementById('citizenNotificationList');
+    if (!list) return;
+    list.innerHTML = appState.citizen.notifications.map(item => `
+      <div class="feed-item ${item.type || 'info'}">
+        <span class="feed-time">${item.time}</span>
+        <span class="feed-text">${escapeHtml(item.text)}</span>
+      </div>
+    `).join('');
+  }
+
+  /* ==========================================================================
+     6. PERSONA SWITCHER LOGIC
+     ========================================================================== */
+  function switchPersona(targetPersona) {
+    appState.persona = targetPersona;
+    
+    const btnFactory = document.getElementById('btnPersonaFactory');
+    const btnCitizen = document.getElementById('btnPersonaCitizen');
+    const viewFactory = document.getElementById('viewFactory');
+    const viewCitizen = document.getElementById('viewCitizen');
+
+    if (targetPersona === 'factory') {
+      btnFactory?.classList.add('active');
+      btnFactory?.setAttribute('aria-selected', 'true');
+      btnCitizen?.classList.remove('active');
+      btnCitizen?.setAttribute('aria-selected', 'false');
+
+      if (viewFactory) viewFactory.style.display = 'block';
+      if (viewCitizen) viewCitizen.style.display = 'none';
+
+      if (factoryMapInstance) {
+        setTimeout(() => factoryMapInstance.invalidateSize(), 50);
+      }
+    } else {
+      btnCitizen?.classList.add('active');
+      btnCitizen?.setAttribute('aria-selected', 'true');
+      btnFactory?.classList.remove('active');
+      btnFactory?.setAttribute('aria-selected', 'false');
+
+      if (viewCitizen) viewCitizen.style.display = 'block';
+      if (viewFactory) viewFactory.style.display = 'none';
+
+      if (citizenMapInstance) {
+        setTimeout(() => citizenMapInstance.invalidateSize(), 50);
+      }
+    }
+
+    updateAllUI();
+  }
+
+  /* ==========================================================================
+     7. EVENT LISTENERS & INITIALIZATION
      ========================================================================== */
   function setupEventListeners() {
-    // Accessible Tabs
-    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
-    const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+    // 1. Persona Switcher Buttons
+    document.getElementById('btnPersonaFactory')?.addEventListener('click', () => switchPersona('factory'));
+    document.getElementById('btnPersonaCitizen')?.addEventListener('click', () => switchPersona('citizen'));
 
-    window.switchTab = function(targetId) {
-      appState.activeTab = targetId;
-      tabButtons.forEach(btn => {
-        const isSelected = btn.dataset.tab === targetId;
-        btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
-        btn.setAttribute('tabindex', isSelected ? '0' : '-1');
-      });
-      tabPanels.forEach(panel => {
-        panel.classList.toggle('active', panel.id === targetId);
-      });
-      updateAllUI();
-    };
+    // 2. Trigger Incident Leak Button (Centerpiece)
+    document.getElementById('btnTriggerLeak')?.addEventListener('click', () => {
+      appState.isLeakTriggered = !appState.isLeakTriggered;
 
-    window.setSimPreset = function(preset) {
-      appState.simulation.isActive = true;
-      const p = getEffectiveParams();
-      if (preset === 'shift40') {
-        appState.simulation.windDirection = (appState.settings.lakeBearing + 50) % 360;
-        appState.simulation.windSpeed = p.windSpeed;
-        appState.simulation.emission = p.emission;
-        showToast(`Sensitivity preset: Wind shifted to ${appState.simulation.windDirection}° (corridor cleared).`, 'info');
-      } else if (preset === 'calm') {
-        appState.simulation.windSpeed = 6.0;
-        appState.simulation.windDirection = p.windDirection;
-        appState.simulation.emission = p.emission;
-        showToast('Sensitivity preset: Calm conditions (<8 km/h).', 'info');
-      }
-      updateAllUI();
-    };
+      if (appState.isLeakTriggered) {
+        playAlertBeep(880, 0.35, 'sawtooth');
+        showToast('CRITICAL BREACH TRIGGERED: Boiler spiked to 150%, acidic plume expanding!', 'danger');
 
-    tabButtons.forEach((btn, idx) => {
-      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-      btn.addEventListener('keydown', (e) => {
-        let nextIdx = idx;
-        if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabButtons.length;
-        else if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabButtons.length) % tabButtons.length;
-        else if (e.key === 'Home') nextIdx = 0;
-        else if (e.key === 'End') nextIdx = tabButtons.length - 1;
-        else return;
-
-        e.preventDefault();
-        tabButtons[nextIdx].focus();
-        switchTab(tabButtons[nextIdx].dataset.tab);
-      });
-    });
-
-    // Autopilot 3-way toggle
-    document.querySelectorAll('.seg-auto').forEach(btn => {
-      btn.addEventListener('click', () => {
-        appState.autopilotMode = btn.dataset.mode;
-        cancelAutopilotCountdown();
-        logIncidentEvent(`Autopilot mode switched to [${appState.autopilotMode.toUpperCase()}].`, 'info');
-        updateAllUI();
-      });
-    });
-
-    // Live vs Demo toggle
-    const btnToggleMode = document.getElementById('btnToggleMode');
-    if (btnToggleMode) {
-      btnToggleMode.addEventListener('click', () => {
-        if (appState.mode === 'live') {
-          startDemoScenario();
-        } else {
-          stopDemoScenario();
-        }
-      });
-    }
-
-    // Trigger Leak button
-    const btnTriggerLeak = document.getElementById('btnTriggerLeak');
-    if (btnTriggerLeak) {
-      btnTriggerLeak.addEventListener('click', () => {
-        appState.plant.isLeakTriggered = !appState.plant.isLeakTriggered;
-        if (appState.plant.isLeakTriggered) {
-          appState.plant.emission = 150;
-          logIncidentEvent('Operator triggered simulated chemical leak! Stack emission forced to 150%.', 'critical');
-          showToast('Simulated leak triggered! Emissions at 150%.', 'danger');
-        } else {
-          appState.plant.emission = 100;
-          logIncidentEvent('Simulated leak reset. Emissions returned to nominal 100%.', 'info');
-          showToast('Leak cleared. Emissions at 100%.', 'info');
-        }
-        processIncidentTick();
-        updateAllUI();
-      });
-    }
-
-    // Cancel Autopilot Button in countdown banner
-    const btnCancelAp = document.getElementById('btnCancelAutopilot');
-    if (btnCancelAp) btnCancelAp.addEventListener('click', cancelAutopilotCountdown);
-
-    // Apply Recommended Actions (Tab 1 button)
-    const btnApplyAll = document.getElementById('btnApplyAllDash');
-    if (btnApplyAll) {
-      btnApplyAll.addEventListener('click', () => {
-        const allOn = appState.incident.actions.reduceEmissions40 &&
-                      appState.incident.actions.closeEffluentGate &&
-                      appState.incident.actions.alertDownstream;
-        if (allOn) {
-          appState.incident.actions.reduceEmissions40 = false;
-          appState.incident.actions.closeEffluentGate = false;
-          appState.incident.actions.alertDownstream = false;
-          logIncidentEvent('Operator cleared all active actions.', 'warning');
-        } else {
-          applyAction('reduceEmissions40', false);
-          applyAction('closeEffluentGate', false);
-          applyAction('alertDownstream', false);
-        }
-        updateAllUI();
-      });
-    }
-
-    // Replay Controls (Tab 2)
-    const replaySlider = document.getElementById('replaySlider');
-    if (replaySlider) {
-      replaySlider.addEventListener('input', (e) => {
-        appState.replay.step = parseInt(e.target.value, 10);
-        updateAllUI();
-      });
-    }
-
-    const btnPlayReplay = document.getElementById('btnPlayReplay');
-    if (btnPlayReplay) {
-      btnPlayReplay.addEventListener('click', () => {
-        if (appState.replay.isPlaying) {
-          clearInterval(appState.replay.intervalId);
-          appState.replay.intervalId = null;
-          appState.replay.isPlaying = false;
-          btnPlayReplay.textContent = 'Play replay';
-        } else {
-          appState.replay.isPlaying = true;
-          btnPlayReplay.textContent = 'Pause';
-          appState.replay.intervalId = setInterval(() => {
-            appState.replay.step = (appState.replay.step + 1) % 7;
-            updateAllUI();
-          }, 1100);
-        }
-      });
-    }
-
-    // Action buttons (Tab 4)
-    document.getElementById('btnAct1')?.addEventListener('click', () => applyAction('reduceEmissions40', false));
-    document.getElementById('btnAct2')?.addEventListener('click', () => applyAction('closeEffluentGate', false));
-    document.getElementById('btnAct3')?.addEventListener('click', () => {
-      applyAction('alertDownstream', false);
-      openAlertModal();
-    });
-
-    document.getElementById('btnOpenAlertModal')?.addEventListener('click', openAlertModal);
-    document.getElementById('btnCloseAlertModal')?.addEventListener('click', closeAlertModal);
-
-    // Export report
-    document.getElementById('btnExportReport')?.addEventListener('click', exportIncidentReport);
-
-    // Copy Alert Message
-    document.getElementById('btnCopyAlertMsg')?.addEventListener('click', () => {
-      const msg = document.getElementById('alertMessageText');
-      if (msg) {
-        navigator.clipboard.writeText(msg.value).then(() => {
-          showToast('Advisory message copied to clipboard!', 'success');
+        // Add emergency notification to citizen feed
+        const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        appState.citizen.notifications.unshift({
+          time: nowTime,
+          text: '🚨 [EMERGENCY CIVIL DEFENSE]: Chemical leak confirmed at Apex Petrochem. Plume inbound along Yamuna Basin corridor.',
+          type: 'urgent'
         });
-      }
-    });
 
-    // Share Alert Message (Web Share API)
-    document.getElementById('btnShareAlertMsg')?.addEventListener('click', async () => {
-      const msg = document.getElementById('alertMessageText');
-      if (navigator.share && msg) {
-        try {
-          await navigator.share({
-            title: 'EcoAI Flow Advisory',
-            text: msg.value
-          });
-          showToast('Message shared.', 'success');
-        } catch (e) {
-          // Fallback to copy
-          navigator.clipboard.writeText(msg.value);
-          showToast('Copied to clipboard.', 'info');
+        // If in citizen mode, pop up the alert modal immediately
+        if (appState.persona === 'citizen') {
+          openCitizenWarningModal();
         }
-      } else if (msg) {
-        navigator.clipboard.writeText(msg.value);
-        showToast('Web Share not supported; copied to clipboard.', 'info');
+      } else {
+        showToast('Incident breach reset. Telemetry returned to baseline monitoring.', 'success');
+        appState.playbook.isExecuted = false;
+        appState.factory.boilerOutput = 85;
       }
+
+      updateAllUI();
     });
 
-    // What-If Sliders (Tab 5)
-    const simSpeed = document.getElementById('simRangeSpeed');
-    const simDir = document.getElementById('simRangeDir');
-    const simEm = document.getElementById('simRangeEmission');
+    // 3. Factory Details Inputs
+    document.getElementById('factoryPresetSelect')?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      appState.factory.name = val;
+      if (val === 'Apex Petrochem') {
+        appState.factory.lat = 28.61;
+        appState.factory.lng = 77.23;
+        appState.factory.coordsStr = '28.61° N, 77.23° E';
+        appState.factory.emissionType = 'SO₂ & Acid Vapors';
+      } else if (val === 'Refinery Beta') {
+        appState.factory.lat = 28.63;
+        appState.factory.lng = 77.21;
+        appState.factory.coordsStr = '28.63° N, 77.21° E';
+        appState.factory.emissionType = 'Hydrocarbon & VOC Plume';
+      } else if (val === 'Smelter Gamma') {
+        appState.factory.lat = 28.59;
+        appState.factory.lng = 77.25;
+        appState.factory.coordsStr = '28.59° N, 77.25° E';
+        appState.factory.emissionType = 'Heavy Particulates & SO₂';
+      }
+      showToast(`Loaded preset: ${val}`, 'info');
+      updateAllUI();
+    });
 
-    function onSimSliderChange() {
+    // Boiler Output Slider
+    const sliderBoiler = document.getElementById('sliderBoiler');
+    if (sliderBoiler) {
+      sliderBoiler.addEventListener('input', (e) => {
+        appState.factory.boilerOutput = parseInt(e.target.value, 10);
+        updateAllUI();
+      });
+    }
+
+    // Sluice Gate Buttons
+    document.getElementById('btnGateOpen')?.addEventListener('click', () => {
+      appState.factory.sluiceGate = 'OPEN';
+      showToast('Effluent sluice gate set to OPEN.', 'info');
+      updateAllUI();
+    });
+    document.getElementById('btnGateClosed')?.addEventListener('click', () => {
+      appState.factory.sluiceGate = 'CLOSED';
+      showToast('Effluent sluice gate CLOSED (diverted to retention basin).', 'success');
+      updateAllUI();
+    });
+
+    // Playbook Execution Button
+    document.getElementById('btnExecutePlaybook')?.addEventListener('click', () => {
+      appState.playbook.isExecuted = !appState.playbook.isExecuted;
+      if (appState.playbook.isExecuted) {
+        appState.factory.boilerOutput = 51; // de-rated by 40%
+        appState.factory.sluiceGate = 'CLOSED';
+        playAlertBeep(520, 0.2, 'sine');
+        showToast('AI Mitigation Playbook Executed: Boiler de-rated 40%, Sluice gate locked.', 'success');
+        
+        const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        appState.citizen.notifications.unshift({
+          time: nowTime,
+          text: '✔ [FACILITY UPDATE]: Apex Petrochem activated alkaline scrubbers and diverted weir. Downwind risk descending.',
+          type: 'safe'
+        });
+      } else {
+        showToast('Playbook de-activated; normal baseline restored.', 'info');
+      }
+      updateAllUI();
+    });
+
+    // Map Zoom & Reset Controls
+    document.getElementById('btnMapZoomIn')?.addEventListener('click', () => {
+      if (factoryMapInstance) factoryMapInstance.zoomIn();
+      if (citizenMapInstance) citizenMapInstance.zoomIn();
+    });
+    document.getElementById('btnMapReset')?.addEventListener('click', () => {
+      if (factoryMapInstance) factoryMapInstance.setView([28.58, 77.26], 13);
+      if (citizenMapInstance) citizenMapInstance.setView([28.58, 77.26], 13);
+      showToast('Map view reset to default center.', 'info');
+    });
+
+    // What-If Scenario Simulator Sliders
+    const sDir = document.getElementById('simSliderWindDir');
+    const sSpeed = document.getElementById('simSliderWindSpeed');
+    const sEm = document.getElementById('simSliderEmission');
+
+    function onSimInputChange() {
       appState.simulation.isActive = true;
-      appState.simulation.windSpeed = parseFloat(simSpeed.value);
-      appState.simulation.windDirection = parseInt(simDir.value, 10);
-      appState.simulation.emission = parseInt(simEm.value, 10);
+      if (sDir) appState.simulation.windDirection = parseInt(sDir.value, 10);
+      if (sSpeed) appState.simulation.windSpeed = parseFloat(sSpeed.value);
+      if (sEm) appState.simulation.emission = parseInt(sEm.value, 10);
       updateAllUI();
     }
 
-    simSpeed?.addEventListener('input', onSimSliderChange);
-    simDir?.addEventListener('input', onSimSliderChange);
-    simEm?.addEventListener('input', onSimSliderChange);
+    sDir?.addEventListener('input', onSimInputChange);
+    sSpeed?.addEventListener('input', onSimInputChange);
+    sEm?.addEventListener('input', onSimInputChange);
 
-    document.getElementById('btnResetToLive')?.addEventListener('click', () => {
+    document.getElementById('btnRunSimulation')?.addEventListener('click', () => {
+      appState.simulation.isActive = true;
+      playAlertBeep(600, 0.15, 'triangle');
+      showToast('What-If Scenario Simulation Projected.', 'info');
+      updateAllUI();
+    });
+
+    // Citizen Community Selector
+    document.getElementById('citizenCommunitySelect')?.addEventListener('change', (e) => {
+      appState.citizen.selectedCommunityKey = e.target.value;
+      showToast(`Selected Neighborhood: ${e.target.value}`, 'info');
+      updateAllUI();
+    });
+
+    // Citizen Shelter Toggle
+    document.getElementById('btnShelterIndoors')?.addEventListener('click', () => {
+      appState.citizen.shelterStatus = 'INDOORS';
+      document.getElementById('btnShelterIndoors')?.classList.add('active');
+      document.getElementById('btnShelterOutdoors')?.classList.remove('active');
+      showToast('Status updated: Sheltered INDOORS.', 'info');
+    });
+    document.getElementById('btnShelterOutdoors')?.addEventListener('click', () => {
+      appState.citizen.shelterStatus = 'OUTDOORS';
+      document.getElementById('btnShelterOutdoors')?.classList.add('active');
+      document.getElementById('btnShelterIndoors')?.classList.remove('active');
+      showToast('Warning: High outdoor exposure in plume vicinity.', 'danger');
+    });
+
+    // Citizen Simulator Wind Shift Slider
+    const citShift = document.getElementById('citSimShiftSlider');
+    const citShiftVal = document.getElementById('citSimShiftVal');
+    citShift?.addEventListener('input', (e) => {
+      const shift = parseInt(e.target.value, 10);
+      appState.citizen.windShiftSim = shift;
+      if (citShiftVal) citShiftVal.textContent = shift === 0 ? '0° (Direct Vector)' : `${shift > 0 ? '+' : ''}${shift}° Shift`;
+      appState.simulation.isActive = true;
+      appState.simulation.windDirection = (appState.weather.windDirection + shift + 360) % 360;
+      updateAllUI();
+    });
+
+    document.getElementById('btnCitizenShiftSafe')?.addEventListener('click', () => {
+      if (citShift) citShift.value = 45;
+      appState.citizen.windShiftSim = 45;
+      if (citShiftVal) citShiftVal.textContent = '+45° (Safe Vector)';
+      appState.simulation.isActive = true;
+      appState.simulation.windDirection = (appState.weather.windDirection + 45) % 360;
+      showToast('Simulating wind vector shift away from residential corridor.', 'success');
+      updateAllUI();
+    });
+
+    document.getElementById('btnCitizenResetLive')?.addEventListener('click', () => {
+      if (citShift) citShift.value = 0;
+      appState.citizen.windShiftSim = 0;
+      if (citShiftVal) citShiftVal.textContent = '0° (Direct Vector)';
       appState.simulation.isActive = false;
-      showToast('Simulation cleared; synced with live telemetry.', 'info');
+      showToast('Synced with live NASA POWER weather data.', 'info');
       updateAllUI();
     });
 
-    // Presets in Tab 5
-    document.getElementById('simPresetCalm')?.addEventListener('click', () => {
-      appState.simulation.isActive = true;
-      appState.simulation.windSpeed = 6.0;
-      appState.simulation.windDirection = 138;
-      appState.simulation.emission = 100;
-      updateAllUI();
+    // Citizen Send Test Alert Button
+    document.getElementById('btnSendTestCitizenAlert')?.addEventListener('click', () => {
+      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      appState.citizen.notifications.unshift({
+        time: nowTime,
+        text: `📢 [TEST PUSH ALERT]: Civil Defense broadcast received on local community cell towers.`,
+        type: 'info'
+      });
+      playAlertBeep(700, 0.15, 'sine');
+      showToast('Test emergency push alert dispatched to community cell phones.', 'info');
+      renderCitizenNotifications();
     });
 
-    document.getElementById('simPresetStrong')?.addEventListener('click', () => {
-      appState.simulation.isActive = true;
-      appState.simulation.windSpeed = 32.0;
-      appState.simulation.windDirection = 138;
-      appState.simulation.emission = 100;
-      updateAllUI();
+    // Modal Close Buttons
+    document.getElementById('btnCloseCitizenModal')?.addEventListener('click', closeCitizenWarningModal);
+    document.getElementById('btnAckCitizenModal')?.addEventListener('click', closeCitizenWarningModal);
+    document.getElementById('btnSwitchToFactoryModal')?.addEventListener('click', () => {
+      closeCitizenWarningModal();
+      switchPersona('factory');
     });
 
-    document.getElementById('simPresetWorst')?.addEventListener('click', () => {
-      appState.simulation.isActive = true;
-      appState.simulation.windSpeed = 28.0;
-      appState.simulation.windDirection = 138;
-      appState.simulation.emission = 150;
-      updateAllUI();
-    });
-
-    // Settings Drawer Controls
-    const drawer = document.getElementById('settingsDrawer');
-    document.getElementById('btnOpenSettings')?.addEventListener('click', () => {
-      drawer?.classList.add('open');
-      populateSettingsForm();
-    });
-    document.getElementById('btnCloseSettings')?.addEventListener('click', () => {
-      drawer?.classList.remove('open');
-    });
-
-    document.getElementById('btnSaveSettings')?.addEventListener('click', () => {
-      saveSettingsFromForm();
-      drawer?.classList.remove('open');
-      showToast('Settings saved and applied.', 'success');
-      updateAllUI();
-    });
-
-    document.getElementById('btnResetSettings')?.addEventListener('click', () => {
-      appState.settings = Object.assign({}, DEFAULT_SETTINGS);
-      saveSettings(appState.settings);
-      populateSettingsForm();
-      showToast('Settings reset to defaults.', 'info');
-      updateAllUI();
-    });
-
-    // Test Sound Button in Settings
-    document.getElementById('btnTestSound')?.addEventListener('click', () => {
-      playAlertBeep(700, 0.3, 'sine');
-      showToast('Test tone played.', 'info');
-    });
-
-    // Theme Toggle
-    document.getElementById('btnToggleTheme')?.addEventListener('click', () => {
-      appState.settings.theme = appState.settings.theme === 'dark' ? 'light' : 'dark';
-      saveSettings(appState.settings);
-      applyTheme();
+    // Window resize event to keep map overlays crisp
+    window.addEventListener('resize', () => {
+      if (factoryMapInstance) factoryMapInstance.invalidateSize();
+      if (citizenMapInstance) citizenMapInstance.invalidateSize();
+      renderSvgOverlays();
     });
   }
 
-  function applyTheme() {
-    document.body.classList.toggle('theme-light', appState.settings.theme === 'light');
-    const themeBtn = document.getElementById('btnToggleTheme');
-    if (themeBtn) {
-      themeBtn.textContent = appState.settings.theme === 'dark' ? '☀️ Light' : '🌙 Dark';
-    }
+  function openCitizenWarningModal() {
+    const modal = document.getElementById('citizenWarningModal');
+    const cdText = document.getElementById('modalCountdownText');
+    const metrics = computeDispersionMetrics();
+    if (cdText) cdText.textContent = `${metrics.citizenArrivalMin} MINUTES`;
+    if (modal) modal.style.display = 'flex';
   }
 
-  function populateSettingsForm() {
-    const s = appState.settings;
-    setFormVal('setSiteName', s.siteName);
-    setFormVal('setWaterBodyName', s.waterBodyName);
-    setFormVal('setWaterDistance', s.waterDistanceKm);
-    setFormVal('setLat', s.latitude);
-    setFormVal('setLon', s.longitude);
-    setFormVal('setLakeBearing', s.lakeBearing);
-    setFormVal('setPop', s.population);
-    setFormVal('setApCountdown', s.autopilotCountdown);
-    setFormChecked('setEnableSound', s.enableSound);
-    setFormChecked('setEnableNotif', s.enableNotifications);
+  function closeCitizenWarningModal() {
+    const modal = document.getElementById('citizenWarningModal');
+    if (modal) modal.style.display = 'none';
   }
 
-  function saveSettingsFromForm() {
-    const s = appState.settings;
-    s.siteName = getFormVal('setSiteName') || s.siteName;
-    s.waterBodyName = getFormVal('setWaterBodyName') || s.waterBodyName;
-    s.waterDistanceKm = parseFloat(getFormVal('setWaterDistance')) || s.waterDistanceKm;
-    s.latitude = parseFloat(getFormVal('setLat')) || s.latitude;
-    s.longitude = parseFloat(getFormVal('setLon')) || s.longitude;
-    s.lakeBearing = parseInt(getFormVal('setLakeBearing'), 10) || s.lakeBearing;
-    s.population = parseInt(getFormVal('setPop'), 10) || s.population;
-    s.autopilotCountdown = parseInt(getFormVal('setApCountdown'), 10) || s.autopilotCountdown;
-    s.enableSound = getFormChecked('setEnableSound');
-    s.enableNotifications = getFormChecked('setEnableNotif');
-
-    if (s.enableNotifications && 'Notification' in window && Notification.permission !== 'granted') {
-      Notification.requestPermission();
-    }
-
-    saveSettings(s);
-  }
-
-  function setFormVal(id, val) { const el = document.getElementById(id); if (el) el.value = val; }
-  function getFormVal(id) { const el = document.getElementById(id); return el ? el.value : null; }
-  function setFormChecked(id, bool) { const el = document.getElementById(id); if (el) el.checked = bool; }
-  function getFormChecked(id) { const el = document.getElementById(id); return el ? el.checked : false; }
+  window.closeCitizenWarningModal = closeCitizenWarningModal;
+  window.switchPersona = switchPersona;
 
   /* ==========================================================================
-     11. PWA INSTALLATION PROMPT & INITIALIZATION
+     8. APP BOOTSTRAP
      ========================================================================== */
-  let deferredInstallPrompt = null;
-
-  function initPwa() {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('[PWA] Service Worker registered:', reg.scope))
-          .catch(err => console.warn('[PWA] Service Worker error:', err));
-      });
-    }
-
-    const btnInstall = document.getElementById('btnInstallPwa');
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredInstallPrompt = e;
-      if (btnInstall) btnInstall.style.display = 'inline-flex';
-    });
-
-    if (btnInstall) {
-      btnInstall.addEventListener('click', async () => {
-        if (!deferredInstallPrompt) return;
-        deferredInstallPrompt.prompt();
-        const choice = await deferredInstallPrompt.userChoice;
-        if (choice.outcome === 'accepted') {
-          showToast('EcoAI Flow installed to home screen!', 'success');
-        }
-        deferredInstallPrompt = null;
-        btnInstall.style.display = 'none';
-      });
-    }
-  }
-
-  // Master Startup
-  function initApp() {
-    applyTheme();
+  document.addEventListener('DOMContentLoaded', () => {
+    initLeafletMaps();
     setupEventListeners();
-    initPwa();
-
-    // Initial Live Fetches
-    fetchLiveWeather();
-    fetchLiveAQI();
-    fetchNasaPower();
-
-    // Periodic live background intervals
-    setInterval(fetchLiveWeather, appState.settings.weatherInterval * 1000);
-    setInterval(fetchLiveAQI, appState.settings.aqiInterval * 1000);
-    setInterval(updateSimulatedPlantSensors, appState.settings.sensorInterval * 1000);
-
-    // Initial UI render
     updateAllUI();
-    logIncidentEvent('EcoAI Flow system initialized in normal monitoring state.', 'info');
-  }
 
-  // Launch when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-  } else {
-    initApp();
-  }
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(err => {
+        console.warn('SW registration skipped:', err);
+      });
+    }
+  });
 
 })();
