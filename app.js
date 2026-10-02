@@ -1,17 +1,14 @@
 /**
  * EcoFlow AI — Geospatial Risk Network & Industrial Early-Warning Dashboard
- * Dual-Persona & Multi-Tab Window Architecture:
- * 1. Factory Operator Window (7 Persistent Sub-Tabs):
- *    - Tab 1: Dashboard (Parameters, Live Metrics, Compliance, 6h Forecast Timeline)
- *    - Tab 2: Map & Spatial Replay (CartoDB Dark Matter tiles, 7-step replay slider)
- *    - Tab 3: Why This Risk? (Alignment analysis, wind regime, SO2 decay curve, sensitivity tiles)
- *    - Tab 4: AI Action Playbook (Scrubbers, ZLD sluice, municipal API, SOP windows, Audit log)
- *    - Tab 5: What-If Simulator (Atmospheric lab sliders, live projected metrics, interactive steering map)
- *    - Tab 6: Pollution Journey (6-stop linear corridor stack from stack to wetland sanctuary)
- *    - Tab 7: Before vs. After (Dual trajectory comparison chart with 35 pt benchmark, summary metrics)
- * 2. Residential Citizen Window (5 Persistent Sub-Tabs):
- *    - Tab 1: Citizen Safety Dashboard (Residence details, arrival countdown, health directives, 4 dials)
- *    - Tab 2: Neighborhood Threat Radar Map (CartoDB Dark Matter map with pulsing radar halo)
+ * Dual-Persona Architecture:
+ * 1. Factory Operator Dashboard (Unified Industrial View with Real CartoDB Dark Matter Map API)
+ *    - Left Sidebar: Factory Configuration, Live Risk Metrics, AI Mitigation Playbook
+ *    - Main Content: Real Interactive Geospatial Map (CartoDB tiles + SVG Plume), Live Risk Overview (4 dials),
+ *                    Why Is This Critical? (Explainability & confidence), What-If Atmospheric Simulator,
+ *                    Comparative Simulation Results, and AI Insights
+ * 2. Residential Citizen Window (Clean 5-Subtab System):
+ *    - Tab 1: Citizen Safety Dashboard (Arrival countdown, health directives, 4 telemetry dials)
+ *    - Tab 2: Neighborhood Threat Radar Map (Real CartoDB map with citizen pulsing radar halo)
  *    - Tab 3: Drinking Water & Health Advisory (Weir isolation status, aquifer confidence, symptom protocol)
  *    - Tab 4: What-If Neighborhood Simulator (Wind shift slider -90° to +90°, citizen radar steering view)
  *    - Tab 5: Civil Broadcast Feed & Emergency Checklist (Timestamped push feed, checklist, helplines)
@@ -25,10 +22,7 @@
      ========================================================================== */
   const appState = {
     persona: 'factory', // 'factory' | 'citizen'
-    activeSubTabs: {
-      factoryWindow: 'fact-tab-1',
-      citizenWindow: 'cit-tab-1'
-    },
+    activeCitizenTab: 'cit-tab-1',
     isLeakTriggered: false,
 
     // Factory Configuration & Location
@@ -64,30 +58,16 @@
       baselineAqi: 42
     },
 
-    // Tab 2 Replay State
-    replay: {
-      step: 0, // 0 to 6
-      isPlaying: false,
-      intervalId: null
-    },
-
-    // Tab 4 Mitigation Playbook State
+    // AI Mitigation Playbook State
     playbook: {
-      derateBoiler: false,
-      divertEffluent: false,
-      dispatchWarning: false,
+      derateBoiler: true,
+      divertEffluent: true,
+      dispatchWarning: true,
       emergencyInspect: false,
       isExecuted: false
     },
 
-    // Tab 4 Audit Log
-    auditLog: [
-      { time: '10:52:10 AM', text: 'Telemetry linked: NASA POWER 19.4 km/h @ 138° SE', type: 'info' },
-      { time: '10:48:32 AM', text: 'Automated intake sluice gate #4 armed for zero-liquid diversion', type: 'safe' },
-      { time: '10:45:00 AM', text: 'Baseline operational audit recorded nominal buffer compliance', type: 'info' }
-    ],
-
-    // Tab 5 What-If Scenario Simulator
+    // What-If Scenario Simulator
     simulation: {
       windDirection: 138,
       windSpeed: 22.0,
@@ -221,17 +201,14 @@
     const windDir = isSim ? appState.simulation.windDirection : appState.weather.windDirection;
     const boiler = appState.isLeakTriggered ? 150 : (isSim ? appState.simulation.emission : appState.factory.boilerOutput);
     
-    // Playbook effect: if executed or derated, reduces effective flux
-    const isDerated = appState.playbook.derateBoiler || (appState.playbook.isExecuted);
+    // Playbook effect: if executed, reduces effective flux by 40%
+    const isDerated = appState.playbook.isExecuted && appState.playbook.derateBoiler;
     const effectiveBoiler = isDerated ? Math.round(boiler * 0.6) : boiler;
     
-    // Replay scaling (T+0 to T+6 hr)
-    const replayFactor = 1 + (appState.replay.step * 0.12);
-
     // Plume reach calculation
     const boilerScale = Math.sqrt(effectiveBoiler / 85);
     const speedScale = Math.pow(windSpeed / 19.4, 0.45);
-    let plumeReachKm = parseFloat((2.8 * boilerScale * speedScale * replayFactor).toFixed(1));
+    let plumeReachKm = parseFloat((2.8 * boilerScale * speedScale).toFixed(1));
     if (appState.isLeakTriggered) {
       plumeReachKm = Math.max(plumeReachKm, 4.2);
     }
@@ -248,11 +225,11 @@
     // Lake pH threat
     let lakePhStart = 7.4;
     let lakePhEnd = isLakeBreached ? (appState.isLeakTriggered ? 5.2 : 5.6) : (isAligned ? 6.4 : 7.2);
-    if (appState.playbook.divertEffluent || appState.factory.sluiceGate === 'CLOSED' || appState.playbook.isExecuted) {
+    if (appState.playbook.isExecuted && appState.playbook.divertEffluent) {
       lakePhEnd = 6.8;
     }
 
-    // Risk Score Calculation (0-100)
+    // Risk Score & Level
     let riskScore = 88;
     if (appState.isLeakTriggered) {
       riskScore = 96;
@@ -314,14 +291,13 @@
   }
 
   /* ==========================================================================
-     4. MAP ENGINE (CartoDB Dark Matter Tiles + Dynamic SVG Overlays)
+     4. MAP ENGINE (Real CartoDB Dark Matter Map API + Dynamic SVG Plume)
      ========================================================================== */
   const cartoTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
   const cartoSubdomains = ['a', 'b', 'c', 'd'];
   const cartoAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
   let factoryMapInstance = null;
-  let simLabMapInstance = null;
   let citizenMapInstance = null;
   let citLabMapInstance = null;
 
@@ -355,16 +331,13 @@
       }
     }
 
-    // 1. Factory Operator Dark Map (Tab 2)
+    // 1. Factory Operator Real Map (Main Dashboard)
     factoryMapInstance = createDarkMap('factoryLeafletMap');
 
-    // 2. What-If Simulator Lab Map (Tab 5)
-    simLabMapInstance = createDarkMap('simLabLeafletMap');
-
-    // 3. Citizen Threat Radar Map (Citizen Tab 2)
+    // 2. Citizen Threat Radar Map (Citizen Tab 2)
     citizenMapInstance = createDarkMap('citizenLeafletMap');
 
-    // 4. Citizen Simulator Steering Map (Citizen Tab 4)
+    // 3. Citizen Simulator Steering Map (Citizen Tab 4)
     citLabMapInstance = createDarkMap('citLabLeafletMap');
 
     renderSvgOverlays();
@@ -408,8 +381,8 @@
   function renderSvgOverlays() {
     const metrics = computeDispersionMetrics();
     
-    // 1. Factory Operator Map Overlay (Tab 2)
-    const fLayer = document.getElementById('factorySvgDynamicLayer');
+    // 1. Factory Dashboard Real Map Overlay
+    const fLayer = document.getElementById('svgDynamicLayer');
     if (fLayer) {
       const srcPt = getProjectedPoint(factoryMapInstance, appState.factory.lat, appState.factory.lng, 240, 160);
       const lakePt = getProjectedPoint(factoryMapInstance, appState.waterBody.lat, appState.waterBody.lng, 680, 360);
@@ -417,16 +390,7 @@
       fLayer.innerHTML = generateMapSvgContent(metrics, 'factory', srcPt.x, srcPt.y, lakePt.x, lakePt.y, r1km, factoryMapInstance);
     }
 
-    // 2. What-If Simulator Lab Map Overlay (Tab 5)
-    const simLayer = document.getElementById('simLabSvgDynamicLayer');
-    if (simLayer) {
-      const srcPtS = getProjectedPoint(simLabMapInstance, appState.factory.lat, appState.factory.lng, 240, 160);
-      const lakePtS = getProjectedPoint(simLabMapInstance, appState.waterBody.lat, appState.waterBody.lng, 680, 360);
-      const r1kmS = getProjectedRadius1Km(simLabMapInstance, appState.factory.lat, appState.factory.lng, 110);
-      simLayer.innerHTML = generateMapSvgContent(metrics, 'factory', srcPtS.x, srcPtS.y, lakePtS.x, lakePtS.y, r1kmS, simLabMapInstance);
-    }
-
-    // 3. Citizen Threat Radar Map Overlay (Citizen Tab 2)
+    // 2. Citizen Threat Radar Map Overlay (Citizen Tab 2)
     const cLayer = document.getElementById('citizenSvgDynamicLayer');
     if (cLayer) {
       const srcPtC = getProjectedPoint(citizenMapInstance, appState.factory.lat, appState.factory.lng, 240, 160);
@@ -435,7 +399,7 @@
       cLayer.innerHTML = generateMapSvgContent(metrics, 'citizen', srcPtC.x, srcPtC.y, lakePtC.x, lakePtC.y, r1kmC, citizenMapInstance);
     }
 
-    // 4. Citizen What-If Steering Map Overlay (Citizen Tab 4)
+    // 3. Citizen Simulator Steering Map Overlay (Citizen Tab 4)
     const citLabLayer = document.getElementById('citLabSvgDynamicLayer');
     if (citLabLayer) {
       const srcPtCL = getProjectedPoint(citLabMapInstance, appState.factory.lat, appState.factory.lng, 240, 160);
@@ -469,18 +433,6 @@
     const isBreach = metrics.isLakeBreached || appState.isLeakTriggered;
 
     let svgHtml = `
-      <defs>
-        <linearGradient id="plumeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#ef4444" stop-opacity="0.75"/>
-          <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.45"/>
-          <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.15"/>
-        </linearGradient>
-        <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur"/>
-          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-        </filter>
-      </defs>
-
       <!-- Hydrological Corridor (Photorealistic River Channel & Lake Basin) -->
       <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(14, 116, 144, 0.35)" stroke-width="48" stroke-linecap="round"/>
       <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(6, 182, 212, 0.48)" stroke-width="24" stroke-linecap="round"/>
@@ -579,7 +531,7 @@
   }
 
   /* ==========================================================================
-     5. PERSONA & SUB-TAB NAVIGATION
+     5. PERSONA SWITCHER & CITIZEN SUB-TAB NAVIGATION
      ========================================================================== */
   function switchPersona(targetPersona) {
     appState.persona = targetPersona;
@@ -595,14 +547,12 @@
       btnCitizen?.classList.remove('active');
       btnCitizen?.setAttribute('aria-selected', 'false');
 
-      if (windowFactory) windowFactory.style.display = 'flex';
+      if (windowFactory) windowFactory.style.display = 'block';
       if (windowCitizen) windowCitizen.style.display = 'none';
 
-      // Invalidate current active factory tab map
+      // Refresh factory map frame
       setTimeout(() => {
-        const curTab = appState.activeSubTabs.factoryWindow;
-        if (curTab === 'fact-tab-2' && factoryMapInstance) factoryMapInstance.invalidateSize();
-        if (curTab === 'fact-tab-5' && simLabMapInstance) simLabMapInstance.invalidateSize();
+        if (factoryMapInstance) factoryMapInstance.invalidateSize();
         renderSvgOverlays();
       }, 60);
     } else {
@@ -614,11 +564,10 @@
       if (windowCitizen) windowCitizen.style.display = 'flex';
       if (windowFactory) windowFactory.style.display = 'none';
 
-      // Invalidate current active citizen tab map
+      // Refresh active citizen map frame
       setTimeout(() => {
-        const curTab = appState.activeSubTabs.citizenWindow;
-        if (curTab === 'cit-tab-2' && citizenMapInstance) citizenMapInstance.invalidateSize();
-        if (curTab === 'cit-tab-4' && citLabMapInstance) citLabMapInstance.invalidateSize();
+        if (appState.activeCitizenTab === 'cit-tab-2' && citizenMapInstance) citizenMapInstance.invalidateSize();
+        if (appState.activeCitizenTab === 'cit-tab-4' && citLabMapInstance) citLabMapInstance.invalidateSize();
         renderSvgOverlays();
       }, 60);
     }
@@ -630,9 +579,11 @@
     const parentWindow = document.getElementById(windowId);
     if (!parentWindow) return;
 
-    appState.activeSubTabs[windowId] = tabTarget;
+    if (windowId === 'citizenWindow') {
+      appState.activeCitizenTab = tabTarget;
+    }
 
-    // 1. Update sub-tab buttons in this window
+    // Update sub-tab buttons in this window
     const btns = parentWindow.querySelectorAll('.sub-tab-btn');
     btns.forEach(btn => {
       const isTarget = btn.getAttribute('data-target') === tabTarget;
@@ -640,17 +591,15 @@
       btn.setAttribute('aria-selected', isTarget ? 'true' : 'false');
     });
 
-    // 2. Update sub-tab panels
+    // Update sub-tab panels
     const panels = parentWindow.querySelectorAll('.sub-tab-panel');
     panels.forEach(panel => {
       const isTarget = panel.id === tabTarget;
       panel.classList.toggle('active', isTarget);
     });
 
-    // 3. Map invalidation on tab change
+    // Invalidate map on tab change
     setTimeout(() => {
-      if (tabTarget === 'fact-tab-2' && factoryMapInstance) factoryMapInstance.invalidateSize();
-      if (tabTarget === 'fact-tab-5' && simLabMapInstance) simLabMapInstance.invalidateSize();
       if (tabTarget === 'cit-tab-2' && citizenMapInstance) citizenMapInstance.invalidateSize();
       if (tabTarget === 'cit-tab-4' && citLabMapInstance) citLabMapInstance.invalidateSize();
       renderSvgOverlays();
@@ -663,7 +612,7 @@
   window.switchSubTab = switchSubTab;
 
   /* ==========================================================================
-     6. UI CONTROLLER & DATA BINDINGS ACROSS ALL TABS
+     6. UI CONTROLLER & DATA BINDINGS ACROSS DASHBOARD & CITIZEN PORTAL
      ========================================================================== */
   function updateAllUI() {
     const metrics = computeDispersionMetrics();
@@ -695,36 +644,10 @@
       }
     }
 
-    // 2. FACTORY TAB 1: DASHBOARD
-    updateFactoryDashboard(metrics);
-
-    // 3. FACTORY TAB 2: MAP & REPLAY
-    updateFactoryMapReplay(metrics);
-
-    // 4. FACTORY TAB 3: WHY THIS RISK?
-    updateFactoryWhyThisRisk(metrics);
-
-    // 5. FACTORY TAB 4: AI ACTION PLAYBOOK
-    updateFactoryPlaybook(metrics);
-
-    // 6. FACTORY TAB 5: WHAT-IF SIMULATOR LAB
-    updateFactorySimulator(metrics);
-
-    // 7. FACTORY TAB 6: POLLUTION JOURNEY
-    updateFactoryJourney(metrics);
-
-    // 8. FACTORY TAB 7: BEFORE VS AFTER
-    updateFactoryBeforeAfter(metrics);
-
-    // 9. RESIDENTIAL CITIZEN TABS (1–5)
-    updateCitizenTabs(metrics);
-
-    // 10. Re-render SVG Layers
-    renderSvgOverlays();
-  }
-
-  /* --- FACTORY TAB 1 --- */
-  function updateFactoryDashboard(metrics) {
+    // ========================================================================
+    // 2. UNIFIED FACTORY OPERATOR DASHBOARD
+    // ========================================================================
+    // Sidebar
     const rCoords = document.getElementById('readoutCoords');
     const rEmission = document.getElementById('readoutEmission');
     const valBoiler = document.getElementById('valBoiler');
@@ -737,12 +660,13 @@
     if (valBoiler) valBoiler.textContent = `${metrics.effectiveBoiler}%`;
     if (sBoiler) sBoiler.value = appState.factory.boilerOutput;
 
-    const isOpen = appState.factory.sluiceGate === 'OPEN';
+    const isGateOpen = appState.factory.sluiceGate === 'OPEN';
     if (btnOpen && btnClosed) {
-      btnOpen.classList.toggle('active', isOpen);
-      btnClosed.classList.toggle('active', !isOpen);
+      btnOpen.classList.toggle('active', isGateOpen);
+      btnClosed.classList.toggle('active', !isGateOpen);
     }
 
+    // Live Risk Metrics in sidebar
     const mReach = document.getElementById('metricReach');
     const mBasinDist = document.getElementById('metricBasinDist');
     const mTimeContam = document.getElementById('metricTimeContam');
@@ -753,27 +677,35 @@
     if (mTimeContam) mTimeContam.textContent = `${metrics.timeContamMin} mins`;
     if (mPhThreat) mPhThreat.textContent = `${metrics.lakePhStart} → ${metrics.lakePhEnd}`;
 
-    // Hero Box
-    const factHeroBadge = document.getElementById('factHeroBadge');
-    const factHeroSentence = document.getElementById('factHeroSentence');
-    if (factHeroBadge) {
-      factHeroBadge.textContent = metrics.riskLevel === 'CRITICAL' ? 'CRITICAL IMPACT RISK' : (metrics.riskLevel === 'MODERATE' ? 'CAUTION: ADVECTION CONE' : 'CONTAINED / LOW RISK');
-      factHeroBadge.className = `hero-badge ${metrics.riskClass === 'danger' ? 'critical' : metrics.riskClass}`;
-    }
-    if (factHeroSentence) {
-      factHeroSentence.textContent = metrics.isLakeBreached
-        ? `The municipal drinking reservoir is directly in the active plume corridor. Estimated arrival: ${metrics.timeContamMin} minutes.`
-        : (metrics.isAligned
-          ? `Downwind alignment active toward ${appState.waterBody.name}. Continuous scrubber monitoring advised.`
-          : `Plume steering safely off municipal axis. Lateral dispersion factor within compliant limits.`);
+    // Playbook Execution Button
+    const btnExec = document.getElementById('btnExecutePlaybook');
+    if (btnExec) {
+      if (appState.playbook.isExecuted) {
+        btnExec.textContent = '✔ PLAYBOOK ACTIVE (60% FEED)';
+        btnExec.style.background = 'linear-gradient(135deg, #047857, #10b981)';
+      } else {
+        btnExec.textContent = '▶ EXECUTE PLAYBOOK';
+        btnExec.style.background = '';
+      }
     }
 
-    // 4 Dials
+    // Map Wind text
+    const mapWindText = document.getElementById('mapWindText');
+    if (mapWindText) {
+      mapWindText.textContent = `NASA Wind: ${metrics.windSpeed.toFixed(1)} km/h @ ${metrics.windDir}° ${getCompassSector(metrics.windDir)}`;
+    }
+
+    // Middle Row: Live Risk Overview (4 dials)
+    const badgeRisk = document.getElementById('badgeLiveRisk');
     const ovReach = document.getElementById('ovDispersionReach');
     const ovBasin = document.getElementById('ovWaterBasinDist');
     const ovTime = document.getElementById('ovTimeRemaining');
     const ovPh = document.getElementById('ovPhChange');
 
+    if (badgeRisk) {
+      badgeRisk.textContent = metrics.riskLevel;
+      badgeRisk.className = `badge-status-pill ${metrics.riskClass === 'danger' ? 'critical' : metrics.riskClass}`;
+    }
     if (ovReach) ovReach.textContent = `${metrics.plumeReachKm} km`;
     if (ovBasin) ovBasin.textContent = `${metrics.distBasin} km`;
     if (ovTime) {
@@ -785,373 +717,81 @@
       ovPh.className = `circle-val ${metrics.lakePhEnd < 6.0 ? 'danger' : 'safe'}`;
     }
 
-    // Buffer compliance card
-    const dashBuffer = document.getElementById('dashBufferStatus');
-    const dashLake = document.getElementById('dashLakeIntakeThreat');
-    if (dashBuffer) {
-      dashBuffer.textContent = metrics.isLakeBreached ? 'INTAKE THREATENED' : 'BUFFER COMPLIANT';
-      dashBuffer.className = `badge-status-pill ${metrics.isLakeBreached ? 'critical' : 'safe'}`;
+    // Middle Row: Why is this critical?
+    const whyMain = document.getElementById('whyMainText');
+    const whyBullets = document.getElementById('whyBullets');
+    const valConf = document.getElementById('valConfidence');
+    const fillConf = document.getElementById('fillConfidence');
+
+    if (whyMain) {
+      whyMain.textContent = metrics.isLakeBreached 
+        ? 'Wind is carrying pollution directly toward the water basin.' 
+        : (metrics.isAligned ? 'Downwind vector aligned with intake corridor.' : 'Plume vector deflected; buffer zone intact.');
     }
-    if (dashLake) {
-      dashLake.textContent = metrics.isLakeBreached
-        ? '⚠️ Plume centerline alignment detected. Raw water sluice closure recommended.'
-        : '✔ Plume corridor clears raw water intake weir. Sluice gate nominal.';
-      dashLake.className = `comp-status ${metrics.isLakeBreached ? 'danger' : 'safe'}`;
-    }
-
-    // 6-Hour Forecast Timeline
-    renderForecastTimeline(metrics);
-  }
-
-  function renderForecastTimeline(metrics) {
-    const cont = document.getElementById('forecastTimelineContainer');
-    if (!cont) return;
-
-    const hours = ['NOW', '+1h', '+2h', '+3h', '+4h', '+5h'];
-    const baseScore = metrics.riskScore;
-
-    cont.innerHTML = hours.map((h, i) => {
-      // Projected diurnal decay or escalation
-      let score = Math.max(15, Math.min(99, Math.round(baseScore + (i * 2) - (appState.playbook.isExecuted ? i * 8 : 0))));
-      const fillClass = score > 68 ? 'danger' : (score > 35 ? 'amber' : 'safe');
-      return `
-        <div class="f-bar-col">
-          <div class="f-bar-track">
-            <div class="f-bar-fill ${fillClass}" style="height: ${score}%;"></div>
-          </div>
-          <span class="f-val-label">${score}</span>
-          <span class="f-hour-label">${h}</span>
-        </div>
+    if (whyBullets) {
+      whyBullets.innerHTML = `
+        <li>• SO₂ concentration + wind direction (${metrics.windDir}° ${getCompassSector(metrics.windDir)})</li>
+        <li>• ${metrics.distBasin} km downstream distance</li>
+        <li class="impact-highlight">${metrics.isLakeBreached ? '= HIGH IMPACT RISK.' : '= BUFFER ACTIVE.'}</li>
       `;
-    }).join('');
+    }
+    if (valConf && fillConf) {
+      const confVal = metrics.isLakeBreached ? 91 : 86;
+      valConf.textContent = `${confVal}%`;
+      fillConf.style.width = `${confVal}%`;
+    }
+
+    // Middle Row: What-If Sliders
+    const sValDir = document.getElementById('simValWindDir');
+    const sValSpeed = document.getElementById('simValWindSpeed');
+    const sValEm = document.getElementById('simValEmission');
+    const sSlideDir = document.getElementById('simSliderWindDir');
+    const sSlideSpeed = document.getElementById('simSliderWindSpeed');
+    const sSlideEm = document.getElementById('simSliderEmission');
+
+    if (sValDir) sValDir.textContent = `${appState.simulation.windDirection}° ${getCompassSector(appState.simulation.windDirection)}`;
+    if (sValSpeed) sValSpeed.textContent = `${appState.simulation.windSpeed.toFixed(1)} km/h`;
+    if (sValEm) sValEm.textContent = `${appState.simulation.emission}%`;
+    if (sSlideDir) sSlideDir.value = appState.simulation.windDirection;
+    if (sSlideSpeed) sSlideSpeed.value = appState.simulation.windSpeed;
+    if (sSlideEm) sSlideEm.value = appState.simulation.emission;
+
+    // Bottom Row: Simulation Result Table
+    const rCurReach = document.getElementById('resCurReach');
+    const rCurImpact = document.getElementById('resCurImpact');
+    const rCurTime = document.getElementById('resCurTime');
+    const rCurPh = document.getElementById('resCurPh');
+
+    if (rCurReach) rCurReach.textContent = `${metrics.plumeReachKm} km`;
+    if (rCurImpact) {
+      rCurImpact.textContent = metrics.riskLevel;
+      rCurImpact.className = metrics.riskLevel === 'CRITICAL' ? 'text-danger' : (metrics.riskLevel === 'MODERATE' ? 'text-amber' : 'text-safe');
+    }
+    if (rCurTime) rCurTime.textContent = `${metrics.timeContamMin} min`;
+    if (rCurPh) rCurPh.textContent = `${metrics.lakePhStart} → ${metrics.lakePhEnd}`;
+
+    // After Mitigation column
+    const rMitReach = document.getElementById('resMitReach');
+    const rMitImpact = document.getElementById('resMitImpact');
+    const rMitTime = document.getElementById('resMitTime');
+    const rMitPh = document.getElementById('resMitPh');
+
+    if (rMitReach) rMitReach.innerHTML = `1.6 km <strong class="arrow-down">↓ 43%</strong>`;
+    if (rMitImpact) rMitImpact.innerHTML = `LOW <strong class="arrow-down">↓ 100%</strong>`;
+    if (rMitTime) rMitTime.innerHTML = `31 min <strong class="arrow-up">↑ 117%</strong>`;
+    if (rMitPh) rMitPh.innerHTML = `7.2 → 6.8 <strong class="arrow-up">↑ 82%</strong>`;
+
+    // ========================================================================
+    // 3. RESIDENTIAL CITIZEN TABS (1–5)
+    // ========================================================================
+    updateCitizenTabs(metrics);
+
+    // 4. Re-render SVG Map Layer
+    renderSvgOverlays();
   }
 
-  /* --- FACTORY TAB 2: MAP & SPATIAL REPLAY --- */
-  function updateFactoryMapReplay(metrics) {
-    const replayDisplay = document.getElementById('replayStepDisplay');
-    const replaySlider = document.getElementById('replaySlider');
-    const mapWindText = document.getElementById('mapWindText');
-
-    if (replayDisplay) {
-      replayDisplay.textContent = appState.replay.step === 0 ? 'NOW' : `T+${appState.replay.step}h`;
-    }
-    if (replaySlider) {
-      replaySlider.value = appState.replay.step;
-    }
-    if (mapWindText) {
-      mapWindText.textContent = `${metrics.windSpeed.toFixed(1)} km/h @ ${metrics.windDir}° ${getCompassSector(metrics.windDir)}`;
-    }
-  }
-
-  /* --- FACTORY TAB 3: WHY THIS RISK? --- */
-  function updateFactoryWhyThisRisk(metrics) {
-    const alignBadge = document.getElementById('whyAlignBadge');
-    const alignMetric = document.getElementById('whyAlignMetric');
-    const alignSub = document.getElementById('whyAlignSub');
-    const alignExpl = document.getElementById('whyAlignExpl');
-
-    const alignPct = Math.max(0, Math.round((1 - (metrics.angleDiff / 90)) * 100));
-    if (alignBadge) {
-      alignBadge.textContent = metrics.isAligned ? 'DIRECT HIT' : 'DEFLECTED';
-      alignBadge.className = `badge-status-pill ${metrics.isAligned ? 'critical' : 'safe'}`;
-    }
-    if (alignMetric) {
-      alignMetric.textContent = `${alignPct}% Vector Alignment`;
-      alignMetric.style.color = metrics.isAligned ? 'var(--danger-red)' : 'var(--safe-green)';
-    }
-    if (alignSub) {
-      alignSub.textContent = `Wind vector aligns with 138° basin corridor (${metrics.angleDiff}° offset)`;
-    }
-    if (alignExpl) {
-      alignExpl.textContent = metrics.isAligned
-        ? 'Severe direct alignment. The industrial emission cone is steered directly along the aquatic corridor, channeling acid gases straight toward intake gates with minimal atmospheric lateral dispersion.'
-        : 'Favorable vector offset. Prevailing wind steers the dispersion cone away from the municipal reservoir axis, providing ample atmospheric dissipation buffer.';
-    }
-
-    // Speed regime
-    const speedBadge = document.getElementById('whySpeedBadge');
-    const speedMetric = document.getElementById('whySpeedMetric');
-    const speedSub = document.getElementById('whySpeedSub');
-    const speedExpl = document.getElementById('whySpeedExpl');
-
-    if (speedBadge) {
-      speedBadge.textContent = metrics.windSpeed >= 18 ? 'RAPID ADVECTION' : 'DIFFUSION BUFFER';
-      speedBadge.className = `badge-status-pill ${metrics.windSpeed >= 18 ? 'amber' : 'safe'}`;
-    }
-    if (speedMetric) speedMetric.textContent = `${metrics.windSpeed.toFixed(1)} km/h Direct Flow`;
-    if (speedSub) speedSub.textContent = `Basin Arrival Window: ${metrics.timeContamMin} minutes`;
-    if (speedExpl) {
-      speedExpl.textContent = `At ${metrics.windSpeed.toFixed(1)} km/h, advection dominates over atmospheric cross-diffusion, transporting acid vapors rapidly across the 2.4 km corridor before vertical mixing can dilute ground concentration.`;
-    }
-
-    // SO2 Decay Curve
-    renderDecayCurve(metrics);
-
-    // Sensitivity Scores
-    const sWind40 = document.getElementById('scoreWind40');
-    const sDerate = document.getElementById('scoreDerate');
-    const sCloseGate = document.getElementById('scoreCloseGate');
-    const sCalm = document.getElementById('scoreCalm');
-
-    if (sWind40) sWind40.textContent = '0';
-    if (sDerate) sDerate.textContent = '51';
-    if (sCloseGate) sCloseGate.textContent = '35';
-    if (sCalm) sCalm.textContent = '65';
-  }
-
-  function renderDecayCurve(metrics) {
-    const cont = document.getElementById('decayGraphBox');
-    if (!cont) return;
-
-    const stops = [
-      { km: '0.0 km (Stack)', val: metrics.isLeakTriggered ? 480 : 310, max: 500 },
-      { km: '1.0 km (Buffer)', val: metrics.isLeakTriggered ? 340 : 215, max: 500 },
-      { km: '2.4 km (Basin)', val: metrics.isLakeBreached ? (metrics.isLeakTriggered ? 260 : 155) : 38, max: 500 },
-      { km: '3.8 km (Canal)', val: metrics.isLakeBreached ? 90 : 22, max: 500 },
-      { km: '5.2 km (Wetlands)', val: 18, max: 500 }
-    ];
-
-    cont.innerHTML = stops.map(s => {
-      const pct = Math.round((s.val / s.max) * 100);
-      const fillClass = s.val > 200 ? 'danger' : (s.val > 70 ? 'amber' : 'safe');
-      return `
-        <div class="decay-row">
-          <span class="decay-label">${s.km}</span>
-          <div class="decay-bar-track">
-            <div class="decay-bar-fill ${fillClass}" style="width: ${pct}%;"></div>
-          </div>
-          <span class="decay-val">${s.val} µg</span>
-        </div>
-      `;
-    }).join('');
-  }
-
-  /* --- FACTORY TAB 4: AI ACTION PLAYBOOK --- */
-  function updateFactoryPlaybook(metrics) {
-    const card1 = document.getElementById('cardAction1');
-    const tag1 = document.getElementById('tagAction1');
-    const btn1 = document.getElementById('btnAction1');
-
-    const card2 = document.getElementById('cardAction2');
-    const tag2 = document.getElementById('tagAction2');
-    const btn2 = document.getElementById('btnAction2');
-
-    const card3 = document.getElementById('cardAction3');
-    const tag3 = document.getElementById('tagAction3');
-    const btn3 = document.getElementById('btnAction3');
-
-    // Scrubber
-    const isAct1 = appState.playbook.derateBoiler;
-    card1?.classList.toggle('active', isAct1);
-    if (tag1) {
-      tag1.textContent = isAct1 ? 'ACTIVE (-40%)' : 'STANDBY';
-      tag1.className = `action-status-tag ${isAct1 ? 'active' : ''}`;
-    }
-    if (btn1) btn1.textContent = isAct1 ? 'Disengage Scrubbers' : 'Apply 40% De-rate & Scrubbers';
-
-    // Sluice Gate
-    const isAct2 = appState.playbook.divertEffluent || appState.factory.sluiceGate === 'CLOSED';
-    card2?.classList.toggle('active', isAct2);
-    if (tag2) {
-      tag2.textContent = isAct2 ? 'LOCKED / DIVERTED' : 'OPEN WEIR';
-      tag2.className = `action-status-tag ${isAct2 ? 'active' : ''}`;
-    }
-    if (btn2) btn2.textContent = isAct2 ? 'Unlock Effluent Gate' : 'Lock Effluent Sluice Gate';
-
-    // Municipal Warning API
-    const isAct3 = appState.playbook.dispatchWarning;
-    card3?.classList.toggle('active', isAct3);
-    if (tag3) {
-      tag3.textContent = isAct3 ? 'TRANSMITTED (ACK)' : 'QUEUED';
-      tag3.className = `action-status-tag ${isAct3 ? 'active' : ''}`;
-    }
-    if (btn3) btn3.textContent = isAct3 ? 'Resend Warning Broadcast' : 'Transmit Intake Warning Notice';
-
-    // Full Playbook Button
-    const btnFull = document.getElementById('btnExecutePlaybookFull');
-    if (btnFull) {
-      if (appState.playbook.isExecuted) {
-        btnFull.textContent = '✔ FULL PLAYBOOK EXECUTED & VERIFIED';
-        btnFull.style.background = 'linear-gradient(135deg, #047857 0%, #059669 100%)';
-      } else {
-        btnFull.textContent = '▶ EXECUTE FULL MITIGATION PLAYBOOK';
-        btnFull.style.background = '';
-      }
-    }
-
-    // Render Audit Log
-    renderFactoryAuditLog();
-  }
-
-  function renderFactoryAuditLog() {
-    const box = document.getElementById('factoryAuditLogBox');
-    if (!box) return;
-    box.innerHTML = appState.auditLog.map(entry => `
-      <div class="audit-entry ${entry.type || 'info'}">
-        <span class="audit-time">${entry.time}</span>
-        <span>${escapeHtml(entry.text)}</span>
-      </div>
-    `).join('');
-  }
-
-  /* --- FACTORY TAB 5: WHAT-IF SIMULATOR LAB --- */
-  function updateFactorySimulator(metrics) {
-    const sDirVal = document.getElementById('labValWindDir');
-    const sSpeedVal = document.getElementById('labValWindSpeed');
-    const sEmVal = document.getElementById('labValEmission');
-    const sDir = document.getElementById('labSliderWindDir');
-    const sSpeed = document.getElementById('labSliderWindSpeed');
-    const sEm = document.getElementById('labSliderEmission');
-
-    if (sDirVal) sDirVal.textContent = `${appState.simulation.windDirection}° ${getCompassSector(appState.simulation.windDirection)}`;
-    if (sSpeedVal) sSpeedVal.textContent = `${appState.simulation.windSpeed.toFixed(1)} km/h`;
-    if (sEmVal) sEmVal.textContent = `${appState.simulation.emission}%`;
-
-    if (sDir) sDir.value = appState.simulation.windDirection;
-    if (sSpeed) sSpeed.value = appState.simulation.windSpeed;
-    if (sEm) sEm.value = appState.simulation.emission;
-
-    const outReach = document.getElementById('labOutReach');
-    const outBreach = document.getElementById('labOutBreach');
-    const outPh = document.getElementById('labOutPh');
-    const outComms = document.getElementById('labOutComms');
-
-    if (outReach) outReach.textContent = `${metrics.plumeReachKm} km`;
-    if (outBreach) {
-      outBreach.textContent = metrics.isLakeBreached ? `IMPACT (${metrics.timeContamMin} min)` : 'SAFE BUFFER';
-      outBreach.className = metrics.isLakeBreached ? 'text-danger' : 'text-safe';
-    }
-    if (outPh) outPh.textContent = `${metrics.lakePhStart} → ${metrics.lakePhEnd}`;
-    if (outComms) {
-      outComms.textContent = metrics.isAligned ? 'Community B (Sector 14)' : (metrics.plumeReachKm >= 1.2 ? 'Community A' : 'None (Buffer Clear)');
-    }
-  }
-
-  /* --- FACTORY TAB 6: POLLUTION JOURNEY --- */
-  function updateFactoryJourney(metrics) {
-    const badge = document.getElementById('journeyActionWindowBadge');
-    if (badge) {
-      badge.textContent = `⏱️ Action Window: ~${metrics.timeContamMin} minutes until plume impinges on municipal intake`;
-    }
-
-    const stack = document.getElementById('journeyMilestoneStack');
-    if (!stack) return;
-
-    const stops = [
-      {
-        num: '1',
-        title: 'Factory Stack Epicenter',
-        dist: '0.0 km · T+0 min',
-        desc: `${appState.factory.emissionType} discharged from ${appState.factory.stackHeightM}m stack at ${metrics.effectiveBoiler}% boiler output.`,
-        status: 'DISCHARGING',
-        type: 'danger'
-      },
-      {
-        num: '2',
-        title: 'Community A Perimeter',
-        dist: '0.8 km · T+4 min',
-        desc: 'Enters northern buffer zone. Local air quality monitoring station triggers early warning sensor.',
-        status: metrics.plumeReachKm >= 0.8 ? 'IMPINGED' : 'CLEAR',
-        type: metrics.plumeReachKm >= 0.8 ? 'amber' : 'safe'
-      },
-      {
-        num: '3',
-        title: 'Community B (Sector 14)',
-        dist: '1.8 km · T+10 min',
-        desc: 'Densely populated residential neighborhood. Acid aerosol concentrations exceed civil defense thresholds.',
-        status: metrics.isCitizenInPlume ? 'HAZARD CORRIDOR' : 'MONITORED',
-        type: metrics.isCitizenInPlume ? 'danger' : 'safe'
-      },
-      {
-        num: '4',
-        title: 'Lake Yamuna Municipal Basin',
-        dist: '2.4 km · T+14 min',
-        desc: 'Critical municipal drinking intake weir. Raw water extraction susceptible to acid sulfate acidification.',
-        status: metrics.isLakeBreached ? 'BREACH DETECTED' : 'BUFFER INTACT',
-        type: metrics.isLakeBreached ? 'danger' : 'safe'
-      },
-      {
-        num: '5',
-        title: 'Outflow Canal Feeder',
-        dist: '3.8 km · T+22 min',
-        desc: 'Downstream agricultural distribution canal. Automated floating barrier booms prevent chemical spread.',
-        status: metrics.plumeReachKm >= 3.8 ? 'ELEVATED' : 'NOMINAL',
-        type: metrics.plumeReachKm >= 3.8 ? 'amber' : 'safe'
-      },
-      {
-        num: '6',
-        title: 'Wetland Bio-Sanctuary',
-        dist: '5.2 km · T+30 min',
-        desc: 'Downstream ecological sanctuary. Natural vegetative buffer provides final biological neutralization.',
-        status: 'PROTECTED',
-        type: 'safe'
-      }
-    ];
-
-    stack.innerHTML = stops.map(s => `
-      <div class="journey-milestone-card ${s.type}">
-        <div class="journey-ms-num">${s.num}</div>
-        <div>
-          <div class="journey-ms-title">${s.title}</div>
-          <div style="font-size: 0.72rem; color: var(--accent-cyan); font-weight: 700;">${s.dist}</div>
-        </div>
-        <div class="journey-ms-desc">${s.desc}</div>
-        <div class="journey-ms-time">${s.dist.split('·')[1]}</div>
-        <div class="journey-ms-badge ${s.type}">${s.status}</div>
-      </div>
-    `).join('');
-  }
-
-  /* --- FACTORY TAB 7: BEFORE VS AFTER --- */
-  function updateFactoryBeforeAfter(metrics) {
-    const netDrop = document.getElementById('baMetricNetDrop');
-    const reachDrop = document.getElementById('baMetricReachDrop');
-    const sluiceStatus = document.getElementById('baMetricSluiceStatus');
-    const popShield = document.getElementById('baMetricPopShield');
-
-    const ptsRemoved = appState.playbook.isExecuted ? 56 : (appState.isLeakTriggered ? 64 : 46);
-    if (netDrop) netDrop.textContent = `-${ptsRemoved} points`;
-    if (reachDrop) reachDrop.textContent = `${metrics.plumeReachKm} km → 1.6 km`;
-    if (sluiceStatus) {
-      const isClosed = appState.playbook.divertEffluent || appState.factory.sluiceGate === 'CLOSED' || appState.playbook.isExecuted;
-      sluiceStatus.textContent = isClosed ? 'SECURED (DIVERTED)' : 'OPEN WEIR';
-      sluiceStatus.style.color = isClosed ? 'var(--safe-green)' : 'var(--danger-red)';
-    }
-    if (popShield) popShield.textContent = '18,000 residents';
-
-    renderDualTrajectoryChart(metrics);
-  }
-
-  function renderDualTrajectoryChart(metrics) {
-    const cont = document.getElementById('baChartBarsContainer');
-    if (!cont) return;
-
-    const timePoints = ['T+0', 'T+1h', 'T+2h', 'T+3h', 'T+4h', 'T+5h'];
-    const uncheckedBase = metrics.isLeakTriggered ? 96 : 88;
-    const mitigatedBase = 32;
-
-    cont.innerHTML = timePoints.map((t, i) => {
-      const valWithout = Math.min(99, uncheckedBase + (i * 2));
-      const valWith = Math.max(18, mitigatedBase - (i * 2));
-      return `
-        <div class="traj-col">
-          <div class="traj-pair">
-            <div class="traj-bar without" style="height: ${valWithout}%;">
-              <span class="traj-val-label">${valWithout}</span>
-            </div>
-            <div class="traj-bar with" style="height: ${valWith}%;">
-              <span class="traj-val-label">${valWith}</span>
-            </div>
-          </div>
-          <span class="traj-time-label">${t}</span>
-        </div>
-      `;
-    }).join('');
-  }
-
-  /* --- RESIDENTIAL CITIZEN TABS (1–5) --- */
   function updateCitizenTabs(metrics) {
-    // 1. Citizen Tab 1: Safety Dashboard
+    // Citizen Tab 1: Safety Dashboard
     const citCoords = document.getElementById('citCoordsReadout');
     const citExposure = document.getElementById('citExposureStatus');
     const citHeroBadge = document.getElementById('citHeroBadge');
@@ -1196,7 +836,7 @@
       citSo2.className = `circle-val ${metrics.peakSo2 > 50 ? 'danger' : 'safe'}`;
     }
 
-    // 2. Citizen Tab 2: Threat Radar
+    // Citizen Tab 2: Threat Radar
     const locPill = document.getElementById('citLocPillText');
     const citWind = document.getElementById('citizenWindText');
     if (locPill) {
@@ -1206,7 +846,7 @@
       citWind.textContent = `${metrics.windSpeed.toFixed(1)} km/h @ ${metrics.windDir}° ${getCompassSector(metrics.windDir)}`;
     }
 
-    // 3. Citizen Tab 3: Water & Health Advisory
+    // Citizen Tab 3: Water & Health Advisory
     const wsBadge = document.getElementById('citWsBadge');
     const wsDesc = document.getElementById('citWsDesc');
     const wsTap = document.getElementById('citWsTap');
@@ -1226,7 +866,7 @@
       wsTap.className = isLocked ? 'text-safe' : 'text-danger';
     }
 
-    // 4. Citizen Tab 4: Neighborhood Simulator
+    // Citizen Tab 4: Neighborhood Simulator
     const citShiftVal = document.getElementById('citSimShiftVal');
     const citShift = document.getElementById('citSimShiftSlider');
     if (citShiftVal && citShift) {
@@ -1245,7 +885,7 @@
     if (simAqi) simAqi.textContent = `${metrics.peakAqi} AQI`;
     if (simArrival) simArrival.textContent = metrics.isCitizenInPlume ? `${metrics.citizenArrivalMin} min` : 'Clear';
 
-    // 5. Citizen Tab 5: Broadcast Feed
+    // Citizen Tab 5: Broadcast Feed
     renderCitizenNotifications();
   }
 
@@ -1268,7 +908,7 @@
     document.getElementById('btnPersonaFactory')?.addEventListener('click', () => switchPersona('factory'));
     document.getElementById('btnPersonaCitizen')?.addEventListener('click', () => switchPersona('citizen'));
 
-    // 2. Sub-Tab Bar Buttons
+    // 2. Sub-Tab Bar Buttons (for Citizen Window)
     document.querySelectorAll('.sub-tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const parentWindow = btn.closest('.persona-window');
@@ -1294,27 +934,16 @@
           type: 'urgent'
         });
 
-        appState.auditLog.unshift({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          text: 'CRITICAL BREACH: Boiler load spiked to 150%. SO2 flux > 480 µg/m³.',
-          type: 'danger'
-        });
-
         // Automatically open warning modal for citizens
         openCitizenWarningModal();
       } else {
         showToast('Incident resolved. Telemetry returned to baseline parameters.', 'safe');
-        appState.auditLog.unshift({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-          text: 'Incident cleared by operator. Factory telemetry nominal.',
-          type: 'safe'
-        });
       }
 
       updateAllUI();
     });
 
-    // 4. Factory Tab 1: Configuration Inputs
+    // 4. Factory Configuration Inputs
     document.getElementById('factoryPresetSelect')?.addEventListener('change', (e) => {
       const val = e.target.value;
       appState.factory.name = val;
@@ -1357,29 +986,33 @@
       updateAllUI();
     });
 
-    // 5. Factory Tab 2: Map Replay Controls
-    const replaySlider = document.getElementById('replaySlider');
-    replaySlider?.addEventListener('input', (e) => {
-      appState.replay.step = parseInt(e.target.value, 10);
+    // 5. Factory AI Playbook Execution
+    document.getElementById('btnExecutePlaybook')?.addEventListener('click', () => {
+      appState.playbook.isExecuted = !appState.playbook.isExecuted;
+      
+      const checkDerate = document.getElementById('checkDerateBoiler');
+      const checkDivert = document.getElementById('checkDivertEffluent');
+      const checkWarn = document.getElementById('checkDispatchWarning');
+      const checkInspect = document.getElementById('checkEmergencyInspect');
+
+      if (checkDerate) appState.playbook.derateBoiler = checkDerate.checked;
+      if (checkDivert) appState.playbook.divertEffluent = checkDivert.checked;
+      if (checkWarn) appState.playbook.dispatchWarning = checkWarn.checked;
+      if (checkInspect) appState.playbook.emergencyInspect = checkInspect.checked;
+
+      if (appState.playbook.isExecuted) {
+        if (appState.playbook.divertEffluent) appState.factory.sluiceGate = 'CLOSED';
+        playAlertBeep(520, 0.2, 'sine');
+        setTimeout(() => playAlertBeep(659, 0.25, 'sine'), 120);
+        showToast('AI Mitigation Playbook Executed: 40% de-rate applied & sluice locked.', 'safe');
+      } else {
+        showToast('Playbook reset to baseline feed.', 'info');
+      }
+
       updateAllUI();
     });
 
-    const btnPlayReplay = document.getElementById('btnPlayReplay');
-    btnPlayReplay?.addEventListener('click', () => {
-      if (appState.replay.isPlaying) {
-        clearInterval(appState.replay.intervalId);
-        appState.replay.isPlaying = false;
-        btnPlayReplay.textContent = '▶ Play Replay';
-      } else {
-        appState.replay.isPlaying = true;
-        btnPlayReplay.textContent = '⏸ Pause Replay';
-        appState.replay.intervalId = setInterval(() => {
-          appState.replay.step = (appState.replay.step + 1) % 7;
-          updateAllUI();
-        }, 1200);
-      }
-    });
-
+    // 6. Factory Map Controls
     document.getElementById('btnMapZoomIn')?.addEventListener('click', () => {
       if (factoryMapInstance) factoryMapInstance.zoomIn();
     });
@@ -1388,141 +1021,31 @@
       if (factoryMapInstance) factoryMapInstance.setView([28.58, 77.26], 13);
     });
 
-    // 6. Factory Tab 3: Sensitivity Preset Handlers
-    window.applySensitivityPreset = function(type) {
+    // 7. Factory What-If Scenario Sliders
+    const sDir = document.getElementById('simSliderWindDir');
+    const sSpeed = document.getElementById('simSliderWindSpeed');
+    const sEm = document.getElementById('simSliderEmission');
+
+    function onSimInputChange() {
       appState.simulation.isActive = true;
-      if (type === 'shift40') {
-        appState.simulation.windDirection = (appState.weather.windDirection + 40) % 360;
-        showToast('Sensitivity Applied: Wind turned 40° away from basin corridor.', 'safe');
-      } else if (type === 'derate') {
-        appState.simulation.emission = 50;
-        showToast('Sensitivity Applied: Boiler output de-rated by 40%.', 'safe');
-      } else if (type === 'closeGate') {
-        appState.factory.sluiceGate = 'CLOSED';
-        appState.playbook.divertEffluent = true;
-        showToast('Sensitivity Applied: Effluent sluice gate closed & diverted.', 'safe');
-      } else if (type === 'calm') {
-        appState.simulation.windSpeed = 6.0;
-        showToast('Sensitivity Applied: Wind speed <8 km/h modeled (extended lead time buffer).', 'info');
-      }
-      updateAllUI();
-    };
-
-    // 7. Factory Tab 4: Playbook Buttons
-    document.getElementById('btnAction1')?.addEventListener('click', () => {
-      appState.playbook.derateBoiler = !appState.playbook.derateBoiler;
-      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      appState.auditLog.unshift({
-        time: now,
-        text: appState.playbook.derateBoiler ? 'Engaged 40% boiler de-rate & lime slurry injection' : 'Disengaged lime slurry scrubbers',
-        type: appState.playbook.derateBoiler ? 'safe' : 'caution'
-      });
-      playAlertBeep(600, 0.15, 'sine');
-      showToast(appState.playbook.derateBoiler ? 'Scrubbers active (-40% flux).' : 'Scrubbers standby.', 'info');
-      updateAllUI();
-    });
-
-    document.getElementById('btnAction2')?.addEventListener('click', () => {
-      appState.playbook.divertEffluent = !appState.playbook.divertEffluent;
-      appState.factory.sluiceGate = appState.playbook.divertEffluent ? 'CLOSED' : 'OPEN';
-      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      appState.auditLog.unshift({
-        time: now,
-        text: appState.playbook.divertEffluent ? 'ZLD lockdown: Dropped effluent sluice gate into retention pond' : 'Reopened effluent weir sluice gate',
-        type: appState.playbook.divertEffluent ? 'safe' : 'caution'
-      });
-      playAlertBeep(700, 0.15, 'triangle');
-      showToast(appState.playbook.divertEffluent ? 'Effluent sluice locked.' : 'Effluent weir reopened.', 'info');
-      updateAllUI();
-    });
-
-    document.getElementById('btnAction3')?.addEventListener('click', () => {
-      appState.playbook.dispatchWarning = !appState.playbook.dispatchWarning;
-      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      appState.auditLog.unshift({
-        time: now,
-        text: appState.playbook.dispatchWarning ? 'Municipal Early Warning API dispatched: Intake isolation confirmed' : 'Municipal early warning notice revoked',
-        type: 'info'
-      });
-      playAlertBeep(750, 0.15, 'sine');
-      showToast('Municipal water authority alert dispatched.', 'info');
-      updateAllUI();
-    });
-
-    document.getElementById('btnExecutePlaybookFull')?.addEventListener('click', () => {
-      appState.playbook.derateBoiler = true;
-      appState.playbook.divertEffluent = true;
-      appState.playbook.dispatchWarning = true;
-      appState.playbook.isExecuted = true;
-      appState.factory.sluiceGate = 'CLOSED';
-
-      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      appState.auditLog.unshift({
-        time: now,
-        text: 'FULL AI MITIGATION PLAYBOOK EXECUTED: All containment controls deployed',
-        type: 'safe'
-      });
-
-      playAlertBeep(520, 0.2, 'sine');
-      setTimeout(() => playAlertBeep(659, 0.25, 'sine'), 120);
-      showToast('FULL PLAYBOOK DEPLOYED: Risk dropped to 32 pts (below 35 pt legal threshold).', 'safe');
-      updateAllUI();
-    });
-
-    window.exportAuditLog = function() {
-      const logText = appState.auditLog.map(e => `[${e.time}] ${e.text}`).join('\n');
-      const blob = new Blob([logText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ecoflow_audit_log_${Date.now()}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Audit log exported to text file.', 'info');
-    };
-
-    // 8. Factory Tab 5: Simulator Lab Controls
-    window.setSimPresetLab = function(preset) {
-      appState.simulation.isActive = true;
-      if (preset === 'calm') {
-        appState.simulation.windSpeed = 6.0;
-        appState.simulation.windDirection = 138;
-        appState.simulation.emission = 75;
-      } else if (preset === 'strong') {
-        appState.simulation.windSpeed = 31.0;
-        appState.simulation.windDirection = 138;
-        appState.simulation.emission = 95;
-      } else if (preset === 'worst') {
-        appState.simulation.windSpeed = 24.0;
-        appState.simulation.windDirection = 138;
-        appState.simulation.emission = 140;
-      } else if (preset === 'reset') {
-        appState.simulation.isActive = false;
-        appState.simulation.windDirection = appState.weather.windDirection;
-        appState.simulation.windSpeed = appState.weather.windSpeed;
-        appState.simulation.emission = appState.factory.boilerOutput;
-      }
-      playAlertBeep(600, 0.1, 'triangle');
-      updateAllUI();
-    };
-
-    const labDir = document.getElementById('labSliderWindDir');
-    const labSpeed = document.getElementById('labSliderWindSpeed');
-    const labEm = document.getElementById('labSliderEmission');
-
-    function onLabSliderChange() {
-      appState.simulation.isActive = true;
-      if (labDir) appState.simulation.windDirection = parseInt(labDir.value, 10);
-      if (labSpeed) appState.simulation.windSpeed = parseFloat(labSpeed.value);
-      if (labEm) appState.simulation.emission = parseInt(labEm.value, 10);
+      if (sDir) appState.simulation.windDirection = parseInt(sDir.value, 10);
+      if (sSpeed) appState.simulation.windSpeed = parseFloat(sSpeed.value);
+      if (sEm) appState.simulation.emission = parseInt(sEm.value, 10);
       updateAllUI();
     }
 
-    labDir?.addEventListener('input', onLabSliderChange);
-    labSpeed?.addEventListener('input', onLabSliderChange);
-    labEm?.addEventListener('input', onLabSliderChange);
+    sDir?.addEventListener('input', onSimInputChange);
+    sSpeed?.addEventListener('input', onSimInputChange);
+    sEm?.addEventListener('input', onSimInputChange);
 
-    // 9. Citizen Tabs: Community Selector & Shelter Toggle
+    document.getElementById('btnRunSimulation')?.addEventListener('click', () => {
+      appState.simulation.isActive = true;
+      playAlertBeep(600, 0.15, 'triangle');
+      showToast('What-If Scenario Simulation Projected.', 'info');
+      updateAllUI();
+    });
+
+    // 8. Citizen Community Selector & Shelter Toggle
     document.getElementById('citizenCommunitySelect')?.addEventListener('change', (e) => {
       appState.citizen.selectedCommunityKey = e.target.value;
       showToast(`Selected Neighborhood: ${e.target.value}`, 'info');
@@ -1543,7 +1066,7 @@
       showToast('Warning: High outdoor exposure in plume vicinity.', 'danger');
     });
 
-    // 10. Citizen Tab 4: Wind Shift Slider
+    // 9. Citizen Tab 4: Wind Shift Slider
     const citShift = document.getElementById('citSimShiftSlider');
     const citShiftVal = document.getElementById('citSimShiftVal');
 
@@ -1575,7 +1098,7 @@
       updateAllUI();
     });
 
-    // 11. Citizen Tab 5: Dispatch Test Push Alert
+    // 10. Citizen Tab 5: Dispatch Test Push Alert
     document.getElementById('btnSendTestCitizenAlert')?.addEventListener('click', () => {
       const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       appState.citizen.notifications.unshift({
@@ -1588,7 +1111,7 @@
       renderCitizenNotifications();
     });
 
-    // 12. Modal Buttons
+    // 11. Modal Buttons
     document.getElementById('btnCloseCitizenModal')?.addEventListener('click', closeCitizenWarningModal);
     document.getElementById('btnAckCitizenModal')?.addEventListener('click', closeCitizenWarningModal);
     document.getElementById('btnSwitchToFactoryModal')?.addEventListener('click', () => {
@@ -1599,7 +1122,6 @@
     // Window resize event for responsive Leaflet map frames
     window.addEventListener('resize', () => {
       if (factoryMapInstance) factoryMapInstance.invalidateSize();
-      if (simLabMapInstance) simLabMapInstance.invalidateSize();
       if (citizenMapInstance) citizenMapInstance.invalidateSize();
       if (citLabMapInstance) citLabMapInstance.invalidateSize();
       renderSvgOverlays();
