@@ -1,27 +1,26 @@
 /**
- * EcoFlow AI — Geospatial Risk Network & Industrial Early-Warning System
- * Dual-Persona Modular Architecture:
+ * EcoFlow — Industrial Dispersion & Receptor Risk Monitoring System
+ * Clean, Professional White Theme Architecture:
  * 
- * 1. Factory Operator Window (Persistent Left Sidebar + 7 Dedicated Sub-Tabs):
- *    - Persistent Sidebar: Factory Name, Full Street Address, GPS Coords, Stack Emission Selector,
- *                          Boiler Output Slider (20%-150%), Sluice Gate Toggle, Live Telemetry.
- *    - Tab 1: Dashboard (Live Risk Score, 4 Telemetry Dials, Aquatic Buffer Compliance, 6h Forecast Timeline)
- *    - Tab 2: Map & Spatial Replay (CartoDB Dark Matter map, 7-step replay slider 0-6h, distance rings 1/2/3km)
- *    - Tab 3: Why This Risk? (Wind alignment logic, speed regime, Gaussian chemical decay curve, sensitivity chips)
- *    - Tab 4: AI Action & Safe Disposal (One-click containment playbook, SOP action windows, exportable audit log)
- *    - Tab 5: What-If Simulator (Interactive sliders for wind bearing 0°-360°, speed 4-35 km/h, emission 20-150%, steering map)
- *    - Tab 6: Pollution Journey (6-stop linear corridor milestone stack)
- *    - Tab 7: Before vs. After (Risk trajectory comparison chart with 35 pt regulatory benchmark line)
+ * 1. Facility Operator Portal (Persistent Left Sidebar + 7 Dedicated Sub-Tabs):
+ *    - Persistent Sidebar: Facility Profile, Full Street Address, GPS Coords, Emission Selector,
+ *                          Thermal Burner Output Slider (20%-150%), Sluice Gate Control, Real-Time Telemetry.
+ *    - Tab 1: Overview & Compliance (Executive Status, 4 Telemetry Meters, Receptor Compliance, 6h Forecast)
+ *    - Tab 2: Dispersion Map & Replay (CartoDB Positron light map, 7-step replay slider 0-6h, distance rings)
+ *    - Tab 3: Risk Drivers & Analysis (Vector alignment, advection velocity, Gaussian chemical decay, sensitivity lab)
+ *    - Tab 4: Containment Protocols (SOP action windows, scrubber controls, sluice lockdown, exportable audit log)
+ *    - Tab 5: Atmospheric Scenario Lab (Interactive sliders for wind bearing 0°-360°, speed 4-35 km/h, steering map)
+ *    - Tab 6: Corridor Propagation (6 sequential corridor milestones from stack to wetland reserve)
+ *    - Tab 7: Mitigation Trajectory (Dual trajectory comparison chart against CPCB 35 pt benchmark)
  * 
- * 2. Residential Citizen Window (Persistent Left Sidebar + 5 Dedicated Sub-Tabs):
- *    - Persistent Sidebar: Full Residential Address, GPS Coords, Sector Selector, Shelter Toggle,
- *                          Live Directives (Arrival countdown, AQI delta, tap water status, active advice).
- *    - Tab 1: Citizen Safety Dashboard (Hero status sentence, 4 civilian meters, health directives)
- *    - Tab 2: Threat Radar Map (Multi-Factory cluster context, focused single-plume hazard corridor,
- *             glowing residence pin with pulsing halo, intake weir isolation status)
- *    - Tab 3: Water & Health Advisory (Aquifer isolation confidence, tap water notice, symptom guidance)
- *    - Tab 4: Neighborhood Simulator (Wind shift slider -90° to +90°, citizen radar steering view)
- *    - Tab 5: Broadcast Feed & Checklist (Emergency push alerts, family readiness checklist, helplines)
+ * 2. Resident Portal (Persistent Left Sidebar + 5 Dedicated Sub-Tabs):
+ *    - Persistent Sidebar: Full Residential Address, GPS Coords, Sector Selector, Shelter Status Toggle,
+ *                          Live Directives (Arrival countdown, AQI delta, tap water notice, actionable guidance).
+ *    - Tab 1: Community Safety Dashboard (Emergency advisory banner, 4 civilian meters, health directives)
+ *    - Tab 2: Threat Radar Map (Multi-Factory cluster context, clean focused plume, glowing residence pinpoint)
+ *    - Tab 3: Drinking Water & Health Advisory (Aquifer isolation confidence, tap water notice, symptom guidance)
+ *    - Tab 4: Neighborhood Scenario Simulator (Wind shift slider -90° to +90°, resident radar steering view)
+ *    - Tab 5: Emergency Broadcast Feed & Checklist (Civil defense push alerts, family readiness checklist)
  */
 
 (function() {
@@ -41,7 +40,7 @@
     factories: {
       'Apex Petrochem': {
         name: 'Apex Petrochem (Chemical Plant Alpha)',
-        shortName: 'Factory Alpha',
+        shortName: 'Plant Alpha',
         type: 'Chemical & Polymer Refining',
         street: 'Plot 42, Phase-II Industrial Corridor, Okhla Industrial Area, New Delhi - 110020',
         lat: 28.6139,
@@ -54,7 +53,7 @@
       },
       'Refinery Beta': {
         name: 'Refinery Beta (Thermal Power & Cracking)',
-        shortName: 'Factory Beta',
+        shortName: 'Plant Beta',
         type: 'Thermal Power & Catalytic Cracking',
         street: 'Gate 7, Northern Energy Complex, Badarpur Industrial Link, New Delhi - 110044',
         lat: 28.6310,
@@ -67,7 +66,7 @@
       },
       'Smelter Gamma': {
         name: 'Smelter Gamma (Metal Smelting Works)',
-        shortName: 'Factory Gamma',
+        shortName: 'Plant Gamma',
         type: 'Heavy Pyrometallurgy & Smelting',
         street: 'Unit 9, Heavy Engineering Belt, Mohan Cooperative, New Delhi - 110044',
         lat: 28.5920,
@@ -197,7 +196,7 @@
       shelterStatus: 'INDOORS', // 'INDOORS' | 'OUTDOORS'
       windShiftSim: 0, // deg offset from current wind
       notifications: [
-        { time: '10:52 AM', text: '[FACTORY TELEMETRY]: Burner flux monitored at 85%. Plume dispersion cone active toward SE corridor.', type: 'info' },
+        { time: '10:52 AM', text: '[CEMS TELEMETRY]: Burner flux monitored at 85%. Plume dispersion cone active toward SE corridor.', type: 'info' },
         { time: '10:48 AM', text: '[MUNICIPAL WATER BOARD]: Automated intake sluice gate #4 armed for zero-liquid diversion.', type: 'safe' },
         { time: '10:45 AM', text: '[CIVIL DEFENSE]: Community B (Sector 14) marked inside downwind buffer. Atmospheric monitors active.', type: 'caution' },
         { time: '10:40 AM', text: '[NASA POWER API]: Telemetry stream synchronized: WS10M=19.4 km/h, WD10M=138° SE.', type: 'info' }
@@ -225,7 +224,7 @@
       const gain = audioCtx.createGain();
       osc.type = type;
       osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -236,7 +235,7 @@
     }
   }
 
-  function showToast(message, type = 'info', duration = 4000) {
+  function showToast(message, type = 'info', duration = 3800) {
     const container = document.getElementById('toastContainer');
     if (!container) return;
     const toast = document.createElement('div');
@@ -249,8 +248,8 @@
     container.appendChild(toast);
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px)';
-      setTimeout(() => toast.remove(), 250);
+      toast.style.transform = 'translateY(6px)';
+      setTimeout(() => toast.remove(), 200);
     }, duration);
   }
 
@@ -404,9 +403,10 @@
   }
 
   /* ==========================================================================
-     4. MAP ENGINE (Real CartoDB Dark Matter Map API + Dynamic SVG Plumes)
+     4. MAP ENGINE (CartoDB Positron Light Map API + Dynamic SVG Overlays)
      ========================================================================== */
-  const cartoTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  // Free, legal, clean light tiles from CARTO Positron
+  const cartoTileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
   const cartoSubdomains = ['a', 'b', 'c', 'd'];
   const cartoAttribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
@@ -419,7 +419,7 @@
     const centerCoords = [28.58, 77.26];
     const zoomLevel = 13;
 
-    function createDarkMap(containerId) {
+    function createLightMap(containerId) {
       const container = document.getElementById(containerId);
       if (!container || typeof L === 'undefined') return null;
       try {
@@ -446,16 +446,16 @@
     }
 
     // 1. Factory Operator Map (Tab 2)
-    factoryMapInstance = createDarkMap('factoryLeafletMap');
+    factoryMapInstance = createLightMap('factoryLeafletMap');
 
     // 2. Factory What-If Simulator Map (Tab 5)
-    simLabMapInstance = createDarkMap('simLabLeafletMap');
+    simLabMapInstance = createLightMap('simLabLeafletMap');
 
     // 3. Citizen Threat Radar Map (Tab 2)
-    citizenMapInstance = createDarkMap('citizenLeafletMap');
+    citizenMapInstance = createLightMap('citizenLeafletMap');
 
     // 4. Citizen Simulator Steering Map (Tab 4)
-    citLabMapInstance = createDarkMap('citLabLeafletMap');
+    citLabMapInstance = createLightMap('citLabLeafletMap');
 
     renderSvgOverlays();
   }
@@ -531,6 +531,7 @@
 
   /**
    * Generates SVG for Factory Operator Maps (Tabs 2 & 5)
+   * Styled specifically for a crisp, legible white theme.
    */
   function generateFactorySvgContent(metrics, srcX, srcY, lakeX, lakeY, r1km = 110, mapInst = null) {
     const rad = (metrics.windDir - 90) * (Math.PI / 180);
@@ -554,68 +555,80 @@
     const isBreach = metrics.isLakeBreached || appState.isLeakTriggered;
 
     let svgHtml = `
-      <!-- Hydrological Corridor (Photorealistic River Channel & Lake Basin) -->
-      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(14, 116, 144, 0.35)" stroke-width="48" stroke-linecap="round"/>
-      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(6, 182, 212, 0.48)" stroke-width="24" stroke-linecap="round"/>
-      <ellipse cx="${lakeX}" cy="${lakeY}" rx="95" ry="46" fill="rgba(8, 51, 68, 0.55)" stroke="rgba(6, 182, 212, 0.65)" stroke-width="2"/>
+      <defs>
+        <!-- Atmospheric Dispersion Plume Gradient for Light Basemap -->
+        <linearGradient id="plumeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ef4444" stop-opacity="0.52"/>
+          <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.12"/>
+        </linearGradient>
+        <filter id="svgSoftShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="#0f172a" flood-opacity="0.12"/>
+        </filter>
+      </defs>
+
+      <!-- Hydrological Corridor (Photorealistic River Channel & Lake Basin on White Map) -->
+      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(2, 132, 199, 0.2)" stroke-width="48" stroke-linecap="round"/>
+      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakeX} ${lakeY} Q 820 420 1000 440" fill="none" stroke="rgba(2, 132, 199, 0.45)" stroke-width="24" stroke-linecap="round"/>
+      <ellipse cx="${lakeX}" cy="${lakeY}" rx="95" ry="46" fill="rgba(224, 242, 254, 0.78)" stroke="#0284c7" stroke-width="2"/>
 
       <!-- Concentric Distance Hazard Rings (1km, 2km, 3km) -->
-      <g stroke="rgba(6, 182, 212, 0.3)" stroke-width="1.2" stroke-dasharray="6,6" fill="none">
+      <g stroke="rgba(100, 116, 139, 0.45)" stroke-width="1.2" stroke-dasharray="6,6" fill="none">
         <circle cx="${srcX}" cy="${srcY}" r="${r1km}"/>
-        <text x="${srcX + r1km + 4}" y="${srcY - 4}" fill="#06b6d4" font-size="10" font-weight="700">1.0 km</text>
+        <text x="${srcX + r1km + 4}" y="${srcY - 4}" fill="#475569" font-size="10" font-weight="700">1.0 km</text>
 
         <circle cx="${srcX}" cy="${srcY}" r="${r1km * 2}"/>
-        <text x="${srcX + r1km * 2 + 4}" y="${srcY - 4}" fill="#06b6d4" font-size="10" font-weight="700">2.0 km</text>
+        <text x="${srcX + r1km * 2 + 4}" y="${srcY - 4}" fill="#475569" font-size="10" font-weight="700">2.0 km</text>
 
         <circle cx="${srcX}" cy="${srcY}" r="${r1km * 3}"/>
-        <text x="${srcX + r1km * 3 + 4}" y="${srcY - 4}" fill="#06b6d4" font-size="10" font-weight="700">3.0 km</text>
+        <text x="${srcX + r1km * 3 + 4}" y="${srcY - 4}" fill="#475569" font-size="10" font-weight="700">3.0 km</text>
       </g>
 
       <!-- 1.0 km Hazard Zone High-Alert Dashed Ring -->
-      <circle cx="${srcX}" cy="${srcY}" r="${r1km}" stroke="rgba(239, 68, 68, 0.65)" stroke-width="2" stroke-dasharray="5,4" fill="rgba(239, 68, 68, 0.08)"/>
+      <circle cx="${srcX}" cy="${srcY}" r="${r1km}" stroke="rgba(220, 38, 38, 0.65)" stroke-width="2" stroke-dasharray="5,4" fill="rgba(254, 226, 226, 0.25)"/>
 
       <!-- Trajectory vector connecting stack to water basin (2.4 km) -->
-      <line x1="${srcX}" y1="${srcY}" x2="${lakeX}" y2="${lakeY}" stroke="rgba(255, 255, 255, 0.45)" stroke-width="1.8" stroke-dasharray="6,4"/>
-      <rect x="${(srcX + lakeX)/2 - 32}" y="${(srcY + lakeY)/2 - 12}" width="64" height="20" rx="4" fill="rgba(7, 14, 23, 0.85)" stroke="#162a45"/>
-      <text x="${(srcX + lakeX)/2}" y="${(srcY + lakeY)/2 + 2}" fill="#ffffff" font-size="10.5" font-weight="800" text-anchor="middle">2.4 km</text>
+      <line x1="${srcX}" y1="${srcY}" x2="${lakeX}" y2="${lakeY}" stroke="rgba(71, 85, 105, 0.55)" stroke-width="1.8" stroke-dasharray="6,4"/>
+      <rect x="${(srcX + lakeX)/2 - 32}" y="${(srcY + lakeY)/2 - 12}" width="64" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" filter="url(#svgSoftShadow)"/>
+      <text x="${(srcX + lakeX)/2}" y="${(srcY + lakeY)/2 + 2}" fill="#0f172a" font-size="10" font-weight="700" text-anchor="middle">2.4 km</text>
 
       <!-- Predicted Plume Dispersion Cone -->
-      <path d="${plumePath}" fill="url(#plumeGrad)" stroke="#f59e0b" stroke-width="1.5" stroke-opacity="0.8" class="${isBreach ? 'breach-pulsing' : ''}"/>
+      <path d="${plumePath}" fill="url(#plumeGrad)" stroke="#dc2626" stroke-width="1.5" class="${isBreach ? 'breach-pulsing' : ''}"/>
 
       <!-- Plume Corridor Label Badge -->
       <g transform="translate(${(srcX + tipX)/2}, ${(srcY + tipY)/2 - 15})">
-        <rect x="-70" y="-12" width="140" height="22" rx="4" fill="rgba(185, 28, 28, 0.85)" stroke="#ef4444" stroke-width="1.2"/>
-        <text x="0" y="2" fill="#ffffff" font-size="10" font-weight="800" text-anchor="middle">Predicted Plume Corridor</text>
+        <rect x="-70" y="-12" width="140" height="22" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2" filter="url(#svgSoftShadow)"/>
+        <text x="0" y="2" fill="#b91c1c" font-size="10" font-weight="700" text-anchor="middle">Active Plume Corridor</text>
       </g>
 
       <!-- Downwind Vector Indicator Arrow -->
-      <g stroke="#ffffff" stroke-width="2.5" fill="none">
+      <g stroke="#0f172a" stroke-width="2.2" fill="none">
         <line x1="${srcX}" y1="${srcY}" x2="${arrowEndX}" y2="${arrowEndY}" stroke-linecap="round"/>
-        <polygon points="${arrowEndX},${arrowEndY} ${arrowEndX - 10 * Math.cos(rad - 0.4)},${arrowEndY - 10 * Math.sin(rad - 0.4)} ${arrowEndX - 10 * Math.cos(rad + 0.4)},${arrowEndY - 10 * Math.sin(rad + 0.4)}" fill="#ffffff" stroke="none"/>
+        <polygon points="${arrowEndX},${arrowEndY} ${arrowEndX - 9 * Math.cos(rad - 0.4)},${arrowEndY - 9 * Math.sin(rad - 0.4)} ${arrowEndX - 9 * Math.cos(rad + 0.4)},${arrowEndY - 9 * Math.sin(rad + 0.4)}" fill="#0f172a" stroke="none"/>
       </g>
-      <text x="${arrowEndX + 14 * Math.cos(rad)}" y="${arrowEndY + 14 * Math.sin(rad)}" fill="#e0f2fe" font-size="11" font-weight="800">
+      <text x="${arrowEndX + 14 * Math.cos(rad)}" y="${arrowEndY + 14 * Math.sin(rad)}" fill="#0f172a" font-size="11" font-weight="700">
         Wind ${metrics.windDir}° ${getCompassSector(metrics.windDir)}
       </text>
 
       <!-- Factory Source Marker -->
       <g transform="translate(${srcX}, ${srcY})">
-        <circle cx="0" cy="0" r="22" fill="#ea580c" stroke="#ffffff" stroke-width="2.5"/>
-        <text x="0" y="5" fill="#ffffff" font-size="14" font-weight="900" text-anchor="middle">🏭</text>
-        <rect x="-65" y="-36" width="130" height="20" rx="3" fill="rgba(7, 14, 23, 0.9)" stroke="#ea580c"/>
-        <text x="0" y="-22" fill="#ffffff" font-size="10" font-weight="800" text-anchor="middle">${appState.factory.preset}</text>
-        <text x="28" y="16" fill="#fca5a5" font-size="9.5" font-weight="700">1.0 km Buffer</text>
+        <circle cx="0" cy="0" r="20" fill="#ea580c" stroke="#ffffff" stroke-width="2.5" filter="url(#svgSoftShadow)"/>
+        <text x="0" y="5" fill="#ffffff" font-size="13" font-weight="800" text-anchor="middle">🏭</text>
+        <rect x="-65" y="-36" width="130" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" filter="url(#svgSoftShadow)"/>
+        <text x="0" y="-22" fill="#0f172a" font-size="10" font-weight="700" text-anchor="middle">${appState.factory.preset}</text>
+        <text x="26" y="16" fill="#b91c1c" font-size="9.5" font-weight="600">1.0 km Buffer</text>
       </g>
 
       <!-- Downstream Water Body Target -->
       <g transform="translate(${lakeX}, ${lakeY})">
-        <circle cx="0" cy="0" r="${isBreach ? '28' : '22'}" fill="${isBreach ? '#ef4444' : '#0284c7'}" stroke="#ffffff" stroke-width="2.5" class="${isBreach ? 'breach-pulsing' : ''}"/>
-        <text x="0" y="6" fill="#ffffff" font-size="15" text-anchor="middle">💧</text>
+        <circle cx="0" cy="0" r="${isBreach ? '24' : '20'}" fill="${isBreach ? '#dc2626' : '#0284c7'}" stroke="#ffffff" stroke-width="2.5" class="${isBreach ? 'breach-pulsing' : ''}" filter="url(#svgSoftShadow)"/>
+        <text x="0" y="6" fill="#ffffff" font-size="14" text-anchor="middle">💧</text>
         <g transform="translate(18, -14)">
-          <rect x="0" y="-12" width="170" height="26" rx="4" fill="${isBreach ? 'rgba(127, 29, 29, 0.92)' : 'rgba(7, 24, 44, 0.9)'}" stroke="${isBreach ? '#ef4444' : '#0ea5e9'}" stroke-width="1.5"/>
-          <text x="10" y="4" fill="${isBreach ? '#fca5a5' : '#7dd3fc'}" font-size="10" font-weight="800">
+          <rect x="0" y="-12" width="180" height="26" rx="4" fill="#ffffff" stroke="${isBreach ? '#dc2626' : '#0284c7'}" stroke-width="1.5" filter="url(#svgSoftShadow)"/>
+          <text x="10" y="4" fill="${isBreach ? '#b91c1c' : '#0284c7'}" font-size="9.5" font-weight="700">
             ${isBreach ? '⚠️ WATER BASIN INTRUSION' : '✔ WATER BASIN BUFFER'}
           </text>
-          <text x="10" y="24" fill="#ffffff" font-size="11" font-weight="800">${appState.waterBody.name}</text>
+          <text x="10" y="24" fill="#0f172a" font-size="10.5" font-weight="700">${appState.waterBody.name}</text>
         </g>
       </g>
     `;
@@ -628,9 +641,9 @@
 
       svgHtml += `
         <g transform="translate(${pt.x}, ${pt.y})">
-          <circle cx="0" cy="0" r="7" fill="${isBreachedComm ? '#ef4444' : '#10b981'}" stroke="#ffffff" stroke-width="1.8"/>
-          <rect x="10" y="-9" width="90" height="17" rx="3" fill="rgba(7, 14, 23, 0.88)" stroke="#162a45"/>
-          <text x="14" y="3" fill="#ffffff" font-size="9" font-weight="700">${c.sector}</text>
+          <circle cx="0" cy="0" r="7" fill="${isBreachedComm ? '#dc2626' : '#16a34a'}" stroke="#ffffff" stroke-width="1.8"/>
+          <rect x="10" y="-9" width="95" height="18" rx="3" fill="#ffffff" stroke="#cbd5e1" filter="url(#svgSoftShadow)"/>
+          <text x="14" y="3" fill="#0f172a" font-size="9" font-weight="600">${c.sector}</text>
         </g>
       `;
     });
@@ -663,17 +676,28 @@
     const isBreach = metrics.isCitizenInPlume || appState.isLeakTriggered;
 
     let svgHtml = `
+      <defs>
+        <linearGradient id="plumeGradCit" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ef4444" stop-opacity="0.52"/>
+          <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.12"/>
+        </linearGradient>
+        <filter id="svgSoftShadowCit" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="#0f172a" flood-opacity="0.12"/>
+        </filter>
+      </defs>
+
       <!-- Hydrological Waterway -->
-      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakePt.x} ${lakePt.y} Q 820 420 1000 440" fill="none" stroke="rgba(14, 116, 144, 0.35)" stroke-width="48" stroke-linecap="round"/>
-      <ellipse cx="${lakePt.x}" cy="${lakePt.y}" rx="95" ry="46" fill="rgba(8, 51, 68, 0.55)" stroke="rgba(6, 182, 212, 0.65)" stroke-width="2"/>
+      <path d="M 0 100 Q 180 130 310 190 T 500 270 T ${lakePt.x} ${lakePt.y} Q 820 420 1000 440" fill="none" stroke="rgba(2, 132, 199, 0.2)" stroke-width="48" stroke-linecap="round"/>
+      <ellipse cx="${lakePt.x}" cy="${lakePt.y}" rx="95" ry="46" fill="rgba(224, 242, 254, 0.78)" stroke="#0284c7" stroke-width="2"/>
 
       <!-- Clean Focused Single Plume Corridor from Active Plant Only -->
-      <path d="${plumePath}" fill="url(#plumeGrad)" stroke="#f59e0b" stroke-width="1.5" stroke-opacity="0.8" class="${isBreach ? 'breach-pulsing' : ''}"/>
+      <path d="${plumePath}" fill="url(#plumeGradCit)" stroke="#dc2626" stroke-width="1.5" class="${isBreach ? 'breach-pulsing' : ''}"/>
 
       <!-- Plume Direction Badge -->
       <g transform="translate(${(activePt.x + tipX)/2}, ${(activePt.y + tipY)/2 - 12})">
-        <rect x="-65" y="-11" width="130" height="20" rx="3" fill="rgba(185, 28, 28, 0.88)" stroke="#ef4444" stroke-width="1"/>
-        <text x="0" y="3" fill="#ffffff" font-size="9.5" font-weight="800" text-anchor="middle">Active Hazard Corridor</text>
+        <rect x="-65" y="-11" width="130" height="20" rx="4" fill="#ffffff" stroke="#dc2626" stroke-width="1.2" filter="url(#svgSoftShadowCit)"/>
+        <text x="0" y="3" fill="#b91c1c" font-size="9.5" font-weight="700" text-anchor="middle">Active Hazard Corridor</text>
       </g>
     `;
 
@@ -687,21 +711,21 @@
         // Active Incident Plant Marker
         svgHtml += `
           <g transform="translate(${pt.x}, ${pt.y})">
-            <circle cx="0" cy="0" r="26" fill="rgba(234, 88, 12, 0.25)" stroke="#ea580c" stroke-width="2.5" class="breach-pulsing"/>
-            <circle cx="0" cy="0" r="18" fill="#ea580c" stroke="#ffffff" stroke-width="2"/>
-            <text x="0" y="5" fill="#ffffff" font-size="13" text-anchor="middle">🏭</text>
-            <rect x="-70" y="-34" width="140" height="20" rx="3" fill="rgba(15, 23, 42, 0.95)" stroke="#ea580c" stroke-width="1.5"/>
-            <text x="0" y="-20" fill="#ffffff" font-size="10" font-weight="800" text-anchor="middle">${fac.shortName} (Active Source)</text>
+            <circle cx="0" cy="0" r="24" fill="rgba(234, 88, 12, 0.18)" stroke="#ea580c" stroke-width="2" class="breach-pulsing"/>
+            <circle cx="0" cy="0" r="16" fill="#ea580c" stroke="#ffffff" stroke-width="2"/>
+            <text x="0" y="5" fill="#ffffff" font-size="12" text-anchor="middle">🏭</text>
+            <rect x="-70" y="-34" width="140" height="20" rx="4" fill="#ffffff" stroke="#ea580c" stroke-width="1.5" filter="url(#svgSoftShadowCit)"/>
+            <text x="0" y="-20" fill="#0f172a" font-size="9.5" font-weight="700" text-anchor="middle">${fac.shortName} (Active Source)</text>
           </g>
         `;
       } else {
         // Neighboring Non-Incident Industrial Plants (Subtle & Uncluttered)
         svgHtml += `
           <g transform="translate(${pt.x}, ${pt.y})">
-            <circle cx="0" cy="0" r="13" fill="#1e293b" stroke="#64748b" stroke-width="1.5"/>
-            <text x="0" y="4" fill="#94a3b8" font-size="10" text-anchor="middle">⚙️</text>
-            <rect x="-55" y="-27" width="110" height="17" rx="3" fill="rgba(15, 23, 42, 0.88)" stroke="#334155" stroke-width="1"/>
-            <text x="0" y="-15" fill="#cbd5e1" font-size="9" font-weight="700" text-anchor="middle">${fac.shortName}</text>
+            <circle cx="0" cy="0" r="12" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5"/>
+            <text x="0" y="4" fill="#64748b" font-size="10" text-anchor="middle">⚙️</text>
+            <rect x="-55" y="-27" width="110" height="17" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+            <text x="0" y="-15" fill="#334155" font-size="8.5" font-weight="600" text-anchor="middle">${fac.shortName}</text>
           </g>
         `;
       }
@@ -711,11 +735,11 @@
     const isSluiceLocked = metrics.isSluiceClosed;
     svgHtml += `
       <g transform="translate(${lakePt.x}, ${lakePt.y})">
-        <circle cx="0" cy="0" r="18" fill="${isSluiceLocked ? '#0284c7' : '#ef4444'}" stroke="#ffffff" stroke-width="2"/>
-        <text x="0" y="5" fill="#ffffff" font-size="12" text-anchor="middle">💧</text>
+        <circle cx="0" cy="0" r="16" fill="${isSluiceLocked ? '#0284c7' : '#dc2626'}" stroke="#ffffff" stroke-width="2"/>
+        <text x="0" y="5" fill="#ffffff" font-size="11" text-anchor="middle">💧</text>
         <g transform="translate(18, -12)">
-          <rect x="0" y="-10" width="180" height="24" rx="4" fill="rgba(7, 24, 44, 0.92)" stroke="${isSluiceLocked ? '#10b981' : '#ef4444'}" stroke-width="1.5"/>
-          <text x="8" y="5" fill="${isSluiceLocked ? '#34d399' : '#fca5a5'}" font-size="9.5" font-weight="800">
+          <rect x="0" y="-10" width="190" height="24" rx="4" fill="#ffffff" stroke="${isSluiceLocked ? '#16a34a' : '#dc2626'}" stroke-width="1.5" filter="url(#svgSoftShadowCit)"/>
+          <text x="8" y="5" fill="${isSluiceLocked ? '#15803d' : '#b91c1c'}" font-size="9" font-weight="700">
             ${isSluiceLocked ? '✔ INTAKE PROTECTED / SLUICE ISOLATED' : '⚠️ SLUICE OPEN (ATTENTION)'}
           </text>
         </g>
@@ -733,16 +757,16 @@
         svgHtml += `
           <g transform="translate(${pt.x}, ${pt.y})">
             <!-- Pulsing Boundary Radar Halo -->
-            <circle cx="0" cy="0" r="42" fill="rgba(6, 182, 212, 0.12)" stroke="#06b6d4" stroke-width="2" stroke-dasharray="4,3" class="breach-pulsing"/>
-            <circle cx="0" cy="0" r="26" fill="rgba(6, 182, 212, 0.28)" stroke="#06b6d4" stroke-width="2"/>
-            <circle cx="0" cy="0" r="15" fill="#0891b2" stroke="#ffffff" stroke-width="2.2"/>
-            <text x="0" y="5" fill="#ffffff" font-size="12" text-anchor="middle">🏠</text>
+            <circle cx="0" cy="0" r="38" fill="rgba(2, 132, 199, 0.1)" stroke="#0284c7" stroke-width="1.8" stroke-dasharray="4,3" class="breach-pulsing"/>
+            <circle cx="0" cy="0" r="22" fill="rgba(2, 132, 199, 0.2)" stroke="#0284c7" stroke-width="1.8"/>
+            <circle cx="0" cy="0" r="14" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+            <text x="0" y="5" fill="#ffffff" font-size="11" text-anchor="middle">🏠</text>
             
             <!-- Address Callout Box -->
-            <g transform="translate(20, -22)">
-              <rect x="0" y="-12" width="170" height="34" rx="4" fill="rgba(7, 14, 23, 0.95)" stroke="#06b6d4" stroke-width="1.8"/>
-              <text x="8" y="2" fill="#38bdf8" font-size="9.5" font-weight="800">YOUR RESIDENCE (PINPOINT)</text>
-              <text x="8" y="16" fill="#ffffff" font-size="9" font-weight="700">${c.title}</text>
+            <g transform="translate(18, -20)">
+              <rect x="0" y="-12" width="180" height="34" rx="4" fill="#ffffff" stroke="#0284c7" stroke-width="1.8" filter="url(#svgSoftShadowCit)"/>
+              <text x="8" y="2" fill="#0284c7" font-size="9" font-weight="700">YOUR RESIDENCE (PINPOINT)</text>
+              <text x="8" y="16" fill="#0f172a" font-size="9" font-weight="600">${c.title}</text>
             </g>
           </g>
         `;
@@ -750,9 +774,9 @@
         // Other Neighborhoods (Clean, simple marker)
         svgHtml += `
           <g transform="translate(${pt.x}, ${pt.y})">
-            <circle cx="0" cy="0" r="6" fill="#10b981" stroke="#ffffff" stroke-width="1.5"/>
-            <rect x="8" y="-7" width="85" height="15" rx="2" fill="rgba(7, 14, 23, 0.85)" stroke="#162a45"/>
-            <text x="12" y="4" fill="#cbd5e1" font-size="8.5" font-weight="700">${c.sector}</text>
+            <circle cx="0" cy="0" r="6" fill="#16a34a" stroke="#ffffff" stroke-width="1.5"/>
+            <rect x="8" y="-7" width="85" height="15" rx="2" fill="#ffffff" stroke="#cbd5e1" filter="url(#svgSoftShadowCit)"/>
+            <text x="12" y="4" fill="#475569" font-size="8.5" font-weight="600">${c.sector}</text>
           </g>
         `;
       }
@@ -763,7 +787,7 @@
 
   /* ==========================================================================
      5. PERSONA SWITCHER & SUB-TAB NAVIGATION
-     ========================================================================== */
+     ========================================================================= */
   function switchPersona(targetPersona) {
     appState.persona = targetPersona;
 
@@ -876,7 +900,7 @@
         btnLeakText.textContent = '↺ Reset Baseline';
       } else {
         btnLeak.classList.remove('active-breach');
-        btnLeakText.textContent = 'Trigger Incident Leak';
+        btnLeakText.textContent = 'Simulate Incident Release';
       }
     }
 
@@ -921,12 +945,12 @@
     const factHeroBadge = document.getElementById('factHeroBadge');
     const factHeroSentence = document.getElementById('factHeroSentence');
     if (factHeroBadge) {
-      factHeroBadge.textContent = metrics.riskLevel === 'CRITICAL' ? 'CRITICAL IMPACT RISK' : (metrics.riskLevel === 'MODERATE' ? 'CAUTION BUFFER' : 'SAFE BUFFER');
+      factHeroBadge.textContent = metrics.riskLevel === 'CRITICAL' ? 'CRITICAL RECEPTOR RISK' : (metrics.riskLevel === 'MODERATE' ? 'CAUTION BUFFER' : 'SAFE BUFFER');
       factHeroBadge.className = `hero-badge ${metrics.riskClass === 'danger' ? 'critical' : metrics.riskClass}`;
     }
     if (factHeroSentence) {
       factHeroSentence.textContent = metrics.isLakeBreached
-        ? `The municipal drinking reservoir is directly in the active plume corridor. Estimated arrival: ${metrics.timeContamMin} minutes.`
+        ? `Active plume centerline is aligned with the municipal water intake. Estimated arrival window: ${metrics.timeContamMin} minutes.`
         : `Plume dispersion vector is deflected from intake gates. Buffer safety margin: ${(metrics.distBasin - metrics.plumeReachKm).toFixed(1)} km.`;
     }
 
@@ -971,19 +995,19 @@
       replayStepDisp.textContent = appState.replay.step === 0 ? 'NOW' : `+${appState.replay.step}h`;
     }
 
-    // D. Factory Tab 3: Why This Risk?
+    // D. Factory Tab 3: Risk Drivers & Analysis
     updateWhyThisRiskTab(metrics);
 
-    // E. Factory Tab 4: AI Action & Safe Disposal
+    // E. Factory Tab 4: Containment Protocols
     updateAiActionTab(metrics);
 
-    // F. Factory Tab 5: What-If Simulator
+    // F. Factory Tab 5: Atmospheric Scenario Lab
     updateWhatIfSimulatorTab(metrics);
 
-    // G. Factory Tab 6: Pollution Journey
+    // G. Factory Tab 6: Corridor Propagation
     updatePollutionJourneyTab(metrics);
 
-    // H. Factory Tab 7: Before vs. After
+    // H. Factory Tab 7: Mitigation Trajectory
     updateBeforeVsAfterTab(metrics);
 
     // ========================================================================
@@ -1036,12 +1060,12 @@
 
     if (wAlignBadge && wAlignMetric && wAlignSub && wAlignExpl) {
       if (metrics.isAligned) {
-        wAlignBadge.textContent = 'DIRECT HIT';
+        wAlignBadge.textContent = 'DIRECT ALIGNMENT';
         wAlignBadge.className = 'badge-status-pill critical';
         wAlignMetric.textContent = '100% Vector Alignment';
         wAlignMetric.style.color = 'var(--danger-red)';
         wAlignSub.textContent = `Wind vector aligns with 138° basin corridor (${metrics.angleDiff}° offset)`;
-        wAlignExpl.textContent = 'Severe direct alignment. The industrial emission cone is steered directly along the aquatic corridor, channeling acid gases and particulate matter straight toward intake gates with minimal atmospheric lateral dispersion.';
+        wAlignExpl.textContent = 'Direct alignment channels the industrial emission cone straight along the aquatic corridor toward municipal intake gates with minimal lateral dispersion.';
       } else {
         wAlignBadge.textContent = 'DEFLECTED';
         wAlignBadge.className = 'badge-status-pill safe';
@@ -1057,9 +1081,9 @@
     const wSpeedSub = document.getElementById('whySpeedSub');
 
     if (wSpeedBadge && wSpeedMetric && wSpeedSub) {
-      wSpeedBadge.textContent = metrics.windSpeed > 20 ? 'HIGH ADVECTION' : 'MODERATE';
+      wSpeedBadge.textContent = metrics.windSpeed > 20 ? 'HIGH ADVECTION' : 'MODERATE ADVECTION';
       wSpeedMetric.textContent = `${metrics.windSpeed.toFixed(1)} km/h (${metrics.windSpeed > 20 ? 'Rapid Advection' : 'Steady Advection'})`;
-      wSpeedSub.textContent = `Hydraulic arrival window: ~${metrics.timeContamMin} minutes`;
+      wSpeedSub.textContent = `Estimated transport arrival window: ~${metrics.timeContamMin} minutes`;
     }
 
     // Render Chemical Decay Curve
@@ -1105,11 +1129,11 @@
     } else if (preset === 'derate') {
       appState.factory.boilerOutput = 50;
       appState.playbook.action1Done = true;
-      showToast('Sensitivity Preset Applied: Boiler de-rated to 50%.', 'safe');
+      showToast('Sensitivity Preset Applied: Burner output de-rated to 50%.', 'safe');
     } else if (preset === 'closeGate') {
       appState.factory.sluiceGate = 'CLOSED';
       appState.playbook.action2Done = true;
-      showToast('Sensitivity Preset Applied: Effluent sluice gate CLOSED.', 'safe');
+      showToast('Sensitivity Preset Applied: Effluent discharge gate CLOSED.', 'safe');
     } else if (preset === 'calm') {
       appState.simulation.isActive = true;
       appState.simulation.windSpeed = 6.0;
@@ -1131,7 +1155,7 @@
 
     if (tag1 && btn1) {
       if (appState.playbook.action1Done || appState.playbook.isExecuted) {
-        tag1.textContent = 'ENGAGED (60% FEED)';
+        tag1.textContent = 'ENGAGED (60% FLUX)';
         tag1.className = 'action-status-tag safe';
         btn1.textContent = '✔ Scrubbers Active';
       } else {
@@ -1167,11 +1191,11 @@
 
     if (btnFull) {
       if (appState.playbook.isExecuted) {
-        btnFull.textContent = '✔ FULL PLAYBOOK ACTIVE (REGULATORY COMPLIANT)';
-        btnFull.style.background = 'linear-gradient(135deg, #047857, #10b981)';
+        btnFull.textContent = '✔ CONTAINMENT PROTOCOL ACTIVE (CPCB COMPLIANT)';
+        btnFull.style.background = '#15803d';
       } else {
-        btnFull.textContent = '▶ EXECUTE FULL MITIGATION PLAYBOOK';
-        btnFull.style.background = '';
+        btnFull.textContent = '▶ EXECUTE FULL CONTAINMENT PROTOCOL';
+        btnFull.style.background = '#0284c7';
       }
     }
 
@@ -1196,10 +1220,10 @@
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `ecoflow_audit_log_${Date.now()}.csv`;
+    link.download = `ecoflow_compliance_audit_${Date.now()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    showToast('Exported audit event log to CSV.', 'safe');
+    showToast('Exported operational compliance log to CSV.', 'safe');
   }
 
   window.exportAuditLog = exportAuditLog;
@@ -1248,23 +1272,23 @@
       appState.simulation.windSpeed = 6.0;
       appState.simulation.windDirection = 110;
       appState.simulation.emission = 60;
-      showToast('Lab Preset: Calm Day loaded.', 'info');
+      showToast('Scenario Preset: Calm Weather loaded.', 'info');
     } else if (preset === 'strong') {
       appState.simulation.windSpeed = 32.0;
       appState.simulation.windDirection = 138;
       appState.simulation.emission = 120;
-      showToast('Lab Preset: High-Velocity Wind loaded.', 'amber');
+      showToast('Scenario Preset: High-Velocity Wind loaded.', 'amber');
     } else if (preset === 'worst') {
       appState.simulation.windSpeed = 28.0;
       appState.simulation.windDirection = 138;
       appState.simulation.emission = 150;
-      showToast('Lab Preset: Maximum Worst-Case Scenario loaded.', 'danger');
+      showToast('Scenario Preset: Worst-Case Release loaded.', 'danger');
     } else if (preset === 'reset') {
       appState.simulation.isActive = false;
       appState.simulation.windSpeed = appState.weather.windSpeed;
       appState.simulation.windDirection = appState.weather.windDirection;
       appState.simulation.emission = appState.factory.boilerOutput;
-      showToast('Reset simulator to live NASA POWER weather data.', 'info');
+      showToast('Reset scenario to live NASA POWER weather telemetry.', 'info');
     }
     updateAllUI();
   }
@@ -1335,7 +1359,7 @@
         </div>
         <p class="m-desc">${s.desc}</p>
         <div class="m-footer">
-          <span>Distance: <strong>${s.dist}</strong></span>
+          <span>Distance from Epicenter: <strong>${s.dist}</strong></span>
           <span class="m-status-tag ${s.status}">${s.status === 'danger' ? 'HAZARD IMPACT' : 'BUFFER CLEAR'}</span>
         </div>
       </div>
@@ -1351,8 +1375,8 @@
     const sBox = document.getElementById('baDeltaSentenceBox');
     if (sBox) {
       sBox.textContent = appState.playbook.isExecuted
-        ? 'Playbook engaged: Industrial risk reduced by 56 points, securely below the 35 pt regulatory benchmark.'
-        : 'Acting now cuts predicted risk by 56 points, diving securely below the legal regulatory threshold of 35 pts.';
+        ? 'Containment engaged: Industrial risk reduced by 56 points, securely below the 35 pt CPCB regulatory benchmark.'
+        : 'Active containment cuts predicted receptor risk by 56 points, diving securely below the legal regulatory threshold of 35 pts.';
     }
 
     const netDrop = document.getElementById('baMetricNetDrop');
@@ -1363,7 +1387,7 @@
     if (netDrop) netDrop.textContent = '-56 points';
     if (reachDrop) reachDrop.textContent = `${metrics.plumeReachKm} km → 1.8 km`;
     if (sluiceStatus) {
-      sluiceStatus.textContent = metrics.isSluiceClosed ? 'SECURED (LOCKED)' : 'DIVERT ON ACTION';
+      sluiceStatus.textContent = metrics.isSluiceClosed ? 'SECURED (CLOSED)' : 'DIVERT ON ACTION';
       sluiceStatus.className = metrics.isSluiceClosed ? 'text-safe' : 'text-amber';
     }
     if (popShield) popShield.textContent = '22,500 residents';
@@ -1418,7 +1442,7 @@
 
     if (citExposure) {
       citExposure.textContent = metrics.isCitizenInPlume ? '⚠️ INSIDE HAZARD CORRIDOR' : '✔ BUFFER SAFE ZONE';
-      citExposure.className = `field-val-badge ${metrics.isCitizenInPlume ? 'danger' : 'safe'}`;
+      citExposure.style.color = metrics.isCitizenInPlume ? 'var(--danger-red)' : 'var(--safe-green)';
     }
 
     if (sideArrival) {
@@ -1490,7 +1514,7 @@
     const citLocPill = document.getElementById('citLocPillText');
     const citWind = document.getElementById('citizenWindText');
     if (citLocPill) {
-      citLocPill.innerHTML = `<span class="pin-icon">📍</span> Sector: <strong>${curComm.title} (${curComm.distKm} km)</strong>`;
+      citLocPill.innerHTML = `Sector: <strong>${curComm.title} (${curComm.distKm} km)</strong>`;
     }
     if (citWind) {
       citWind.textContent = `${metrics.windSpeed.toFixed(1)} km/h @ ${metrics.windDir}° ${getCompassSector(metrics.windDir)}`;
@@ -1573,21 +1597,21 @@
       appState.isLeakTriggered = !appState.isLeakTriggered;
 
       if (appState.isLeakTriggered) {
-        playAlertBeep(880, 0.35, 'sawtooth');
-        showToast('CRITICAL BREACH TRIGGERED: Boiler spiked to 150%, acidic plume expanding!', 'danger');
+        playAlertBeep(880, 0.35, 'sine');
+        showToast('CRITICAL BREACH SIMULATION: Burner output spiked to 150%, acidic plume expanding.', 'danger');
 
         const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         appState.citizen.notifications.unshift({
           time: now,
-          text: '🚨 [CRITICAL ALERT]: Industrial leak detected at stack epicenter. Inbound plume vector active toward Okhla basin.',
+          text: '🚨 [CRITICAL ALERT]: Industrial release detected at stack epicenter. Downwind plume vector active toward Okhla basin.',
           type: 'urgent'
         });
 
-        addAuditEntry('CRIT', 'EMERGENCY: Incident leak simulated. Plume reach expanded to 4.2 km.');
+        addAuditEntry('CRIT', 'EMERGENCY: Incident release simulated. Plume reach expanded to 4.2 km.');
         openCitizenWarningModal();
       } else {
-        showToast('Incident resolved. Telemetry returned to baseline parameters.', 'safe');
-        addAuditEntry('INFO', 'Incident resolved. System operating parameters restored.');
+        showToast('Incident scenario resolved. Telemetry returned to normal baseline.', 'safe');
+        addAuditEntry('INFO', 'Incident scenario resolved. System operating parameters restored.');
       }
 
       updateAllUI();
@@ -1608,7 +1632,7 @@
         appState.factory.emissionType = f.emissionType;
         appState.factory.boilerOutput = f.boilerOutput;
       }
-      showToast(`Loaded Industrial Preset: ${val}`, 'info');
+      showToast(`Monitored Facility: ${val}`, 'info');
       addAuditEntry('INFO', `Switched active facility to ${val}.`);
       updateAllUI();
     });
@@ -1628,16 +1652,16 @@
     document.getElementById('btnGateOpen')?.addEventListener('click', () => {
       appState.factory.sluiceGate = 'OPEN';
       appState.playbook.action2Done = false;
-      showToast('Effluent sluice gate OPEN.', 'info');
-      addAuditEntry('WARN', 'Effluent sluice gate manually OPENED.');
+      showToast('Effluent discharge gate OPEN.', 'info');
+      addAuditEntry('WARN', 'Effluent discharge gate manually OPENED.');
       updateAllUI();
     });
 
     document.getElementById('btnGateClosed')?.addEventListener('click', () => {
       appState.factory.sluiceGate = 'CLOSED';
       appState.playbook.action2Done = true;
-      showToast('Effluent sluice gate CLOSED. Zero-liquid discharge engaged.', 'safe');
-      addAuditEntry('SAFE', 'Effluent sluice gate LOCKED. Runoff diverted to retention pond.');
+      showToast('Effluent discharge gate CLOSED. Zero-liquid discharge engaged.', 'safe');
+      addAuditEntry('SAFE', 'Effluent sluice gate LOCKED. Runoff diverted to retention basin.');
       updateAllUI();
     });
 
@@ -1679,12 +1703,12 @@
       }
     });
 
-    // 6. Factory Tab 4: AI Playbook Actions
+    // 6. Factory Tab 4: Containment Protocol Actions
     document.getElementById('btnAction1')?.addEventListener('click', () => {
       appState.playbook.action1Done = !appState.playbook.action1Done;
       if (appState.playbook.action1Done) {
         playAlertBeep(520, 0.2, 'sine');
-        showToast('Action 1 Engaged: Boiler de-rated by 40% & lime slurry active.', 'safe');
+        showToast('Action 1 Engaged: Burner de-rated by 40% & lime scrubbers active.', 'safe');
         addAuditEntry('SAFE', 'Action 1: 40% de-rate applied to burner flux.');
       } else {
         showToast('Action 1 Disengaged.', 'info');
@@ -1710,12 +1734,12 @@
       appState.playbook.action3Done = !appState.playbook.action3Done;
       if (appState.playbook.action3Done) {
         playAlertBeep(640, 0.2, 'sine');
-        showToast('Action 3 Engaged: Municipal early warning notice transmitted.', 'safe');
+        showToast('Action 3 Engaged: Municipal intake isolation notice transmitted.', 'safe');
         addAuditEntry('INFO', 'Action 3: Municipal early-warning webhook transmitted to water authority.');
         const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         appState.citizen.notifications.unshift({
           time: now,
-          text: '📢 [MUNICIPAL WEIR NOTICE]: Industrial facility engaged upstream zero-discharge diversion. Water treatment intake secure.',
+          text: '📢 [MUNICIPAL WEIR NOTICE]: Upstream facility engaged zero-discharge diversion. Water treatment intake secure.',
           type: 'safe'
         });
       } else {
@@ -1734,11 +1758,11 @@
         appState.factory.sluiceGate = 'CLOSED';
         playAlertBeep(520, 0.15, 'sine');
         setTimeout(() => playAlertBeep(659, 0.25, 'sine'), 120);
-        showToast('Full AI Mitigation Playbook Executed: All 3 containment protocols deployed.', 'safe');
-        addAuditEntry('SAFE', 'Full AI Mitigation Playbook executed. Risk suppressed to regulatory compliance (<35 pts).');
+        showToast('Full Containment Protocol Executed: All 3 containment protocols deployed.', 'safe');
+        addAuditEntry('SAFE', 'Full Containment Protocol executed. Risk suppressed to regulatory compliance (<35 pts).');
       } else {
-        showToast('Mitigation playbook reset to normal baseline.', 'info');
-        addAuditEntry('INFO', 'Mitigation playbook reset.');
+        showToast('Containment protocol reset to normal baseline.', 'info');
+        addAuditEntry('INFO', 'Containment protocol reset.');
       }
 
       updateAllUI();
@@ -1764,7 +1788,7 @@
     // 8. Citizen Community Selector & Shelter Toggle
     document.getElementById('citizenCommunitySelect')?.addEventListener('change', (e) => {
       appState.citizen.selectedCommunityKey = e.target.value;
-      showToast(`Selected Neighborhood: ${e.target.value}`, 'info');
+      showToast(`Selected Sector: ${e.target.value}`, 'info');
       updateAllUI();
     });
 
@@ -1773,7 +1797,6 @@
       document.getElementById('btnShelterIndoors')?.classList.add('active');
       document.getElementById('btnShelterOutdoors')?.classList.remove('active');
       showToast('Status updated: Sheltered INDOORS.', 'info');
-      updateAllUI();
     });
 
     document.getElementById('btnShelterOutdoors')?.addEventListener('click', () => {
@@ -1812,7 +1835,7 @@
       appState.citizen.windShiftSim = 0;
       if (citShiftVal) citShiftVal.textContent = '0° (Direct Vector)';
       appState.simulation.isActive = false;
-      showToast('Synced with live NASA POWER weather data.', 'info');
+      showToast('Synced with live NASA POWER weather telemetry.', 'info');
       updateAllUI();
     });
 
@@ -1825,7 +1848,7 @@
         type: 'info'
       });
       playAlertBeep(700, 0.15, 'sine');
-      showToast('Test emergency push alert dispatched to community devices.', 'info');
+      showToast('Test emergency broadcast dispatched to community devices.', 'info');
       renderCitizenNotifications();
     });
 

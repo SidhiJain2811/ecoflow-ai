@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EcoFlow AI — Geospatial Risk Network &amp; Industrial Early-Warning</title>
+  <title>EcoFlow — Industrial Dispersion &amp; Receptor Risk Monitoring System</title>
   
   <!-- PWA Meta Tags -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#070e17">
+  <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
   
-  <!-- Google Fonts: Bricolage Grotesque & Inter -->
+  <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Leaflet.js CSS (Free & Legal) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-  <!-- Core Control-Room Stylesheet -->
+  <!-- Core White Enterprise Stylesheet -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -28,56 +28,56 @@
   <div class="app-wrapper">
 
     <!-- ======================================================================
-         1. TOP NAVIGATION BAR (GLOBAL)
+         1. TOP NAVIGATION BAR (GLOBAL ENTERPRISE HEADER)
          ====================================================================== -->
     <header class="app-header">
       <div class="header-left">
         <div class="brand-logo">
           <div class="brand-leaf-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M11 20A7 7 0 0 1 4 13C4 8.5 8 3 20 2c1.5 12-4 16-9 18z" fill="#10b981" stroke="#059669" stroke-width="1.2"/>
-              <path d="M11 20c0-4 3-7 9-9" stroke="#064e3b" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#0284c7" stroke="#0369a1" stroke-width="1.2"/>
+              <path d="M12 7c-2.5 3-3 6 0 8 3-2 2.5-5 0-8z" fill="#ffffff" stroke="#0284c7" stroke-width="1.2"/>
             </svg>
           </div>
           <div class="brand-text">
-            <h1 class="brand-title">EcoFlow AI</h1>
-            <span class="brand-subtitle">[Geospatial Risk Network]</span>
+            <h1 class="brand-title">EcoFlow</h1>
+            <span class="brand-subtitle">Environmental Operations &amp; Risk Network</span>
           </div>
         </div>
 
-        <!-- Live NASA Connection Pill -->
+        <!-- Live Atmospheric Connection Badge -->
         <div class="nasa-status-badge" id="nasaStatusPill" title="Live satellite atmospheric telemetry">
           <span class="status-pulse-dot"></span>
-          <span class="nasa-name">NASA POWER <strong class="text-connected">Connected</strong></span>
+          <span class="nasa-name">NASA POWER <strong class="text-connected">Active</strong></span>
           <span class="nasa-telemetry" id="topWindTelemetry">(19.4 km/h @ 138° SE)</span>
         </div>
       </div>
 
-      <!-- Persona Switcher -->
+      <!-- Persona Switcher (Segmented Control) -->
       <div class="header-center">
         <div class="persona-switch-bar" role="tablist" aria-label="Portal persona switcher">
           <button id="btnPersonaFactory" class="persona-tab active" role="tab" aria-selected="true" type="button">
-            <span class="p-icon">🏭</span> Factory Operator
+            <span class="p-icon">🏭</span> Facility Operator
           </button>
           <button id="btnPersonaCitizen" class="persona-tab" role="tab" aria-selected="false" type="button">
-            <span class="p-icon">🏘️</span> Residential Citizen
+            <span class="p-icon">🏘️</span> Resident Portal
           </button>
         </div>
       </div>
 
-      <!-- Action Button: Trigger Incident Leak -->
+      <!-- Risk Status Pill & Incident Release Action -->
       <div class="header-right">
         <div class="header-risk-pill" id="globalRiskPill">
           <span id="globalRiskLevel">CRITICAL</span>
           <span id="globalRiskScore">88/100</span>
         </div>
-        <button id="btnTriggerLeak" class="btn-trigger-leak" type="button" title="Instantly trigger a chemical breach across all views">
-          <svg class="leak-alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+        <button id="btnTriggerLeak" class="btn-trigger-leak" type="button" title="Simulate emergency chemical release scenario">
+          <svg class="leak-alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
             <line x1="12" y1="9" x2="12" y2="13"/>
             <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
-          <span id="btnTriggerLeakText">Trigger Incident Leak</span>
+          <span id="btnTriggerLeakText">Simulate Incident Release</span>
         </button>
       </div>
     </header>
@@ -91,21 +91,21 @@
         <!-- PERSISTENT LEFT SIDEBAR (Visible across all 7 tabs) -->
         <aside class="portal-sidebar persistent-sidebar">
           
-          <!-- 1. Factory Profile & Control -->
+          <!-- 1. Facility Profile & CEMS Control -->
           <section class="panel-card">
             <div class="panel-header">
               <div class="panel-title-group">
                 <span class="panel-icon">🏭</span>
                 <div>
-                  <h2 class="panel-title">Facility Profile &amp; Control</h2>
-                  <span class="panel-subtitle">Industrial Emission Telemetry</span>
+                  <h2 class="panel-title">Facility Profile &amp; Controls</h2>
+                  <span class="panel-subtitle">CEMS Continuous Emission Monitoring</span>
                 </div>
               </div>
             </div>
 
             <div class="panel-body">
               <div class="field-row">
-                <label for="factoryPresetSelect" class="field-label">Active Industrial Facility</label>
+                <label for="factoryPresetSelect" class="field-label">Monitored Facility</label>
                 <select id="factoryPresetSelect" class="form-select">
                   <option value="Apex Petrochem" selected>Apex Petrochem (Chemical Plant Alpha)</option>
                   <option value="Refinery Beta">Refinery Beta (Thermal Power &amp; Cracking)</option>
@@ -124,7 +124,7 @@
               </div>
 
               <div class="field-row">
-                <label for="emissionTypeSelect" class="field-label">Stack Emission Type</label>
+                <label for="emissionTypeSelect" class="field-label">Primary Flue Emission Type</label>
                 <select id="emissionTypeSelect" class="form-select">
                   <option value="SO₂ &amp; Acid Vapors" selected>SO₂ &amp; Acid Vapors</option>
                   <option value="Hydrocarbon &amp; Mercaptans">Hydrocarbon &amp; Mercaptans</option>
@@ -134,43 +134,43 @@
 
               <div class="field-row slider-field">
                 <div class="slider-header">
-                  <label for="sliderBoiler" class="field-label">Boiler Output</label>
+                  <label for="sliderBoiler" class="field-label">Thermal Burner Output</label>
                   <span id="valBoiler" class="slider-val">85%</span>
                 </div>
                 <input type="range" id="sliderBoiler" class="neon-slider" min="20" max="150" step="1" value="85">
               </div>
 
               <div class="field-row toggle-field">
-                <span class="field-label">Effluent Sluice Gate</span>
+                <span class="field-label">Effluent Discharge Gate</span>
                 <div class="segmented-gate" role="group" aria-label="Sluice gate status">
                   <button type="button" id="btnGateOpen" class="gate-btn active">OPEN</button>
-                  <button type="button" id="btnGateClosed" class="gate-btn">CLOSED</button>
+                  <button type="button" id="btnGateClosed" class="gate-btn">CLOSED (ZLD)</button>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- 2. Live Risk Telemetry (Persistent) -->
+          <!-- 2. Real-Time Telemetry (Persistent) -->
           <section class="panel-card">
             <div class="panel-header-compact">
-              <span class="clock-icon">🕒</span>
-              <h3 class="panel-title-sm">Live Risk Telemetry</h3>
+              <span class="panel-icon">⏱️</span>
+              <h3 class="panel-title-sm">Real-Time Dispersion Telemetry</h3>
             </div>
             <div class="metrics-list" style="margin-top: 4px;">
               <div class="metric-row">
-                <span class="metric-lbl"><span class="m-icon">🎯</span> Plume Reach</span>
+                <span class="metric-lbl">Plume Reach</span>
                 <span id="metricReach" class="metric-val danger">2.8 km Downwind</span>
               </div>
               <div class="metric-row">
-                <span class="metric-lbl"><span class="m-icon">💧</span> Downstream Basin Distance</span>
-                <span id="metricBasinDist" class="metric-val">2.4 km</span>
+                <span class="metric-lbl">Downstream Receptor</span>
+                <span id="metricBasinDist" class="metric-val">2.4 km (Lake Yamuna)</span>
               </div>
               <div class="metric-row">
-                <span class="metric-lbl"><span class="m-icon">⏱️</span> Time-to-Contamination</span>
+                <span class="metric-lbl">Arrival Lead Time</span>
                 <span id="metricTimeContam" class="metric-val danger">14 mins</span>
               </div>
               <div class="metric-row">
-                <span class="metric-lbl"><span class="m-icon">🧪</span> Projected Lake pH Impact</span>
+                <span class="metric-lbl">Projected Lake pH</span>
                 <span id="metricPhThreat" class="metric-val danger">7.4 → 5.6</span>
               </div>
             </div>
@@ -182,60 +182,56 @@
         <div class="portal-main">
           
           <!-- Factory Secondary Tab Bar -->
-          <nav class="sub-tab-bar" role="tablist" aria-label="Factory Operator Navigation">
-            <button class="sub-tab-btn active" data-target="fact-tab-1" role="tab" aria-selected="true">1. Dashboard</button>
-            <button class="sub-tab-btn" data-target="fact-tab-2" role="tab" aria-selected="false">2. Map &amp; Spatial Replay</button>
-            <button class="sub-tab-btn" data-target="fact-tab-3" role="tab" aria-selected="false">3. Why This Risk?</button>
-            <button class="sub-tab-btn" data-target="fact-tab-4" role="tab" aria-selected="false">4. AI Action &amp; Safe Disposal</button>
-            <button class="sub-tab-btn" data-target="fact-tab-5" role="tab" aria-selected="false">5. What-If Simulator</button>
-            <button class="sub-tab-btn" data-target="fact-tab-6" role="tab" aria-selected="false">6. Pollution Journey</button>
-            <button class="sub-tab-btn" data-target="fact-tab-7" role="tab" aria-selected="false">7. Before vs. After</button>
+          <nav class="sub-tab-bar" role="tablist" aria-label="Facility Operator Navigation">
+            <button class="sub-tab-btn active" data-target="fact-tab-1" role="tab" aria-selected="true">1. Overview &amp; Compliance</button>
+            <button class="sub-tab-btn" data-target="fact-tab-2" role="tab" aria-selected="false">2. Dispersion Map &amp; Replay</button>
+            <button class="sub-tab-btn" data-target="fact-tab-3" role="tab" aria-selected="false">3. Risk Drivers &amp; Analysis</button>
+            <button class="sub-tab-btn" data-target="fact-tab-4" role="tab" aria-selected="false">4. Containment Protocols (SOP)</button>
+            <button class="sub-tab-btn" data-target="fact-tab-5" role="tab" aria-selected="false">5. Atmospheric Scenario Lab</button>
+            <button class="sub-tab-btn" data-target="fact-tab-6" role="tab" aria-selected="false">6. Corridor Propagation</button>
+            <button class="sub-tab-btn" data-target="fact-tab-7" role="tab" aria-selected="false">7. Mitigation Trajectory</button>
           </nav>
 
-          <!-- TAB 1: DASHBOARD -->
+          <!-- TAB 1: OVERVIEW & COMPLIANCE -->
           <div id="fact-tab-1" class="sub-tab-panel active" role="tabpanel">
             <div style="display: flex; flex-direction: column; gap: 14px;">
               
               <!-- Executive Status Hero -->
               <div class="hero-box" id="factHeroBox">
                 <div class="hero-left">
-                  <span class="hero-badge critical" id="factHeroBadge">CRITICAL IMPACT RISK</span>
+                  <span class="hero-badge critical" id="factHeroBadge">CRITICAL RECEPTOR RISK</span>
                   <h2 class="hero-sentence" id="factHeroSentence">
-                    The municipal drinking reservoir is directly in the active plume corridor. Estimated arrival: 14 minutes.
+                    Active plume centerline is aligned with the municipal water intake. Estimated arrival window: 14 minutes.
                   </h2>
                 </div>
                 <div class="hero-actions">
-                  <button class="btn btn-teal" onclick="switchSubTab('factoryWindow', 'fact-tab-4')">Deploy AI Playbook &rarr;</button>
-                  <button class="btn btn-ghost" onclick="switchSubTab('factoryWindow', 'fact-tab-2')">Inspect Dark Map &rarr;</button>
+                  <button class="btn btn-teal" onclick="switchSubTab('factoryWindow', 'fact-tab-4')">Deploy Containment Protocol &rarr;</button>
+                  <button class="btn btn-ghost" onclick="switchSubTab('factoryWindow', 'fact-tab-2')">Inspect Dispersion Map &rarr;</button>
                 </div>
               </div>
 
-              <!-- 4 Circular Telemetry Meters -->
-              <div class="four-circle-grid panel-card">
+              <!-- 4 Clean Telemetry Meters -->
+              <div class="four-circle-grid">
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">💨</span>
                     <span class="circle-val" id="ovDispersionReach">2.8 km</span>
                   </div>
                   <span class="circle-label">Downwind Dispersion Reach</span>
                 </div>
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">💧</span>
                     <span class="circle-val" id="ovWaterBasinDist">2.4 km</span>
                   </div>
                   <span class="circle-label">Water Basin Distance</span>
                 </div>
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">⏱️</span>
                     <span class="circle-val danger" id="ovTimeRemaining">14 min</span>
                   </div>
                   <span class="circle-label">Arrival Window</span>
                 </div>
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">🌊</span>
                     <span class="circle-val danger" id="ovPhChange">7.4 → 5.6</span>
                   </div>
                   <span class="circle-label">Projected Lake pH</span>
@@ -244,11 +240,11 @@
 
               <!-- Water Buffer Compliance Status -->
               <section class="panel-card">
-                <div class="card-header-flex">
-                  <h3 class="panel-title-md">Aquatic Buffer Compliance &amp; Intake Sluice Status</h3>
+                <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 class="panel-title-md">Aquatic Receptor Compliance &amp; Sluice Gate Status</h3>
                   <span class="badge-status-pill critical" id="dashBufferStatus">INTAKE THREATENED</span>
                 </div>
-                <div class="compliance-grid">
+                <div class="compliance-grid" style="margin-top: 6px;">
                   <div class="comp-item">
                     <div class="comp-title">Lake Yamuna Municipal Basin (2.4 km)</div>
                     <div class="comp-status danger" id="dashLakeIntakeThreat">⚠️ Plume centerline alignment detected. Raw water sluice closure recommended.</div>
@@ -266,9 +262,9 @@
 
               <!-- Quick 6-Hour Forecast Timeline -->
               <section class="panel-card">
-                <div class="card-header-flex">
-                  <h3 class="panel-title-md">Quick 6-Hour Environmental Dispersion Timeline</h3>
-                  <span class="text-muted" style="font-size: 0.76rem;">NASA POWER Hourly Atmospheric Model</span>
+                <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 class="panel-title-md">6-Hour Hourly Meteorological Forecast</h3>
+                  <span class="text-muted" style="font-size: 0.74rem;">NASA POWER Hourly Dispersion Model</span>
                 </div>
                 <div class="forecast-timeline-bars" id="forecastTimelineContainer">
                   <!-- Injected via JS -->
@@ -278,31 +274,30 @@
             </div>
           </div>
 
-          <!-- TAB 2: MAP & SPATIAL REPLAY -->
+          <!-- TAB 2: DISPERSION MAP & REPLAY -->
           <div id="fact-tab-2" class="sub-tab-panel" role="tabpanel">
-            <section class="panel-card map-panel-card" style="height: calc(100vh - 200px); min-height: 580px;">
+            <section class="panel-card map-panel-card" style="height: calc(100vh - 190px); min-height: 580px;">
               <div class="map-card-header">
                 <div class="map-title-group">
-                  <span class="radar-icon">📡</span>
-                  <h2 class="map-title">Interactive Dark Spatial Map &amp; 6-Hour Replay</h2>
+                  <span class="panel-icon">🗺️</span>
+                  <h2 class="map-title">Geospatial Dispersion Map &amp; 6-Hour Replay</h2>
                 </div>
                 
                 <!-- Controls bar with 7-step Replay -->
                 <div class="map-replay-toolbar">
                   <button id="btnPlayReplay" class="btn btn-teal btn-sm" type="button">▶ Play Replay</button>
                   <input type="range" id="replaySlider" class="neon-slider-sm" min="0" max="6" step="1" value="0" style="width: 140px;">
-                  <span id="replayStepDisplay" style="font-weight: 800; color: var(--accent-cyan); min-width: 50px;">NOW</span>
+                  <span id="replayStepDisplay" style="font-weight: 700; color: #0284c7; min-width: 48px;">NOW</span>
                   <div class="divider-v"></div>
                   <button id="btnMapZoomIn" class="btn-map-control" type="button">+ Zoom</button>
                   <button id="btnMapReset" class="btn-map-control" type="button">↺ Reset</button>
                   <div class="nasa-wind-badge" id="mapWindBadge">
-                    <span class="wind-icon">💨</span>
                     <span id="mapWindText">19.4 km/h @ 138° SE</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Full Map Viewport using CartoDB Dark Matter -->
+              <!-- Full Map Viewport using CartoDB Positron -->
               <div class="map-viewport" id="factoryMapViewport" style="height: 100%;">
                 <div id="factoryLeafletMap" class="leaflet-map-frame"></div>
                 <svg id="factoryMapOverlaySvg" class="map-overlay-svg" viewBox="0 0 1000 500" preserveAspectRatio="none">
@@ -311,14 +306,13 @@
 
                 <!-- Map Legend -->
                 <div class="map-legend-overlay">
-                  <div class="legend-row"><span class="legend-dot red"></span> High Hazard Zone</div>
-                  <div class="legend-row"><span class="legend-dot amber"></span> Caution Buffer</div>
-                  <div class="legend-row"><span class="legend-dot green"></span> Safe Buffer</div>
+                  <div class="legend-row"><span class="legend-dot red"></span> High Hazard Plume Zone</div>
+                  <div class="legend-row"><span class="legend-dot amber"></span> Caution Buffer Zone</div>
+                  <div class="legend-row"><span class="legend-dot green"></span> Safe Atmospheric Buffer</div>
                   <div class="legend-divider"></div>
-                  <div class="legend-row"><span class="legend-icon">🏭</span> Factory Epicenter</div>
-                  <div class="legend-row"><span class="legend-icon">💧</span> Municipal Basin</div>
-                  <div class="legend-row"><span class="legend-icon">⇢</span> Plume Vector</div>
-                  <div class="legend-row"><span class="legend-icon">⭘</span> 1.0 km Hazard Zone</div>
+                  <div class="legend-row"><span class="legend-icon">🏭</span> Active Plant Epicenter</div>
+                  <div class="legend-row"><span class="legend-icon">💧</span> Municipal Intake Weir</div>
+                  <div class="legend-row"><span class="legend-icon">⭘</span> 1.0 km Perimeter Ring</div>
                 </div>
 
                 <!-- Compass & Scale -->
@@ -333,48 +327,46 @@
             </section>
           </div>
 
-          <!-- TAB 3: WHY THIS RISK? -->
+          <!-- TAB 3: RISK DRIVERS & ANALYSIS -->
           <div id="fact-tab-3" class="sub-tab-panel" role="tabpanel">
             <div class="portal-grid" style="grid-template-columns: 1fr 1fr;">
               
               <div style="display: flex; flex-direction: column; gap: 14px;">
                 <!-- Vector Alignment Breakdown -->
                 <section class="panel-card">
-                  <div class="card-header-flex">
+                  <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="header-with-badge">
-                      <span class="robot-icon">🧭</span>
                       <h3 class="panel-title-md">Atmospheric Vector Alignment Analysis</h3>
                     </div>
-                    <span id="whyAlignBadge" class="badge-status-pill critical">DIRECT HIT</span>
+                    <span id="whyAlignBadge" class="badge-status-pill critical">DIRECT ALIGNMENT</span>
                   </div>
-                  <div id="whyAlignMetric" style="font-size: 2rem; font-weight: 800; color: var(--danger-red); margin: 6px 0;">
+                  <div id="whyAlignMetric" style="font-size: 1.8rem; font-weight: 800; color: var(--danger-red); margin: 6px 0;">
                     100% Vector Alignment
                   </div>
-                  <div id="whyAlignSub" style="font-size: 0.85rem; font-weight: 700; color: #ffffff;">
-                    Wind vector aligns with 138° basin corridor (0° offset)
+                  <div id="whyAlignSub" style="font-size: 0.85rem; font-weight: 600; color: #0f172a;">
+                    Wind vector aligns with 138° basin corridor (0° deviation)
                   </div>
-                  <p id="whyAlignExpl" style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; margin-top: 6px;">
-                    Severe direct alignment. The industrial emission cone is steered directly along the aquatic corridor, channeling acid gases and particulate matter straight toward intake gates with minimal atmospheric lateral dispersion.
+                  <p id="whyAlignExpl" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-top: 6px;">
+                    Direct alignment channels the industrial emission cone straight along the aquatic corridor toward municipal intake gates with minimal lateral dispersion.
                   </p>
                 </section>
 
                 <!-- Wind Speed Regime -->
                 <section class="panel-card">
-                  <div class="card-header-flex">
+                  <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
                     <div class="header-with-badge">
-                      <span class="robot-icon">💨</span>
-                      <h3 class="panel-title-md">Speed Effect &amp; Advection Regime</h3>
+                      <h3 class="panel-title-md">Advection Velocity &amp; Transport Regime</h3>
                     </div>
-                    <span id="whySpeedBadge" class="badge-status-pill amber">ADVECTION</span>
+                    <span id="whySpeedBadge" class="badge-status-pill amber">MODERATE ADVECTION</span>
                   </div>
-                  <div id="whySpeedMetric" style="font-size: 1.8rem; font-weight: 800; color: var(--caution-amber); margin: 6px 0;">
+                  <div id="whySpeedMetric" style="font-size: 1.6rem; font-weight: 800; color: var(--caution-amber); margin: 6px 0;">
                     19.4 km/h (Moderate Advection)
                   </div>
-                  <div id="whySpeedSub" style="font-size: 0.85rem; font-weight: 700; color: #ffffff;">
+                  <div id="whySpeedSub" style="font-size: 0.85rem; font-weight: 600; color: #0f172a;">
                     Hydraulic arrival window: ~14 minutes
                   </div>
-                  <p id="whySpeedExpl" style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.45; margin-top: 6px;">
-                    Wind velocity creates rapid linear advection, compressing emergency response lead times and carrying concentrated plume mass downstream to municipal gates before atmospheric dilution can occur.
+                  <p id="whySpeedExpl" style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-top: 6px;">
+                    Linear wind velocity creates steady advection, compressing emergency response lead times before atmospheric dilution can take place.
                   </p>
                 </section>
               </div>
@@ -383,22 +375,20 @@
                 <!-- Stack Concentration & Decay Curve -->
                 <section class="panel-card">
                   <div class="panel-header-compact">
-                    <span class="panel-icon">📉</span>
                     <h3 class="panel-title-md">SO₂ Chemical Concentration Decay Curve</h3>
                   </div>
-                  <p style="font-size: 0.8rem; color: var(--text-muted);">
-                    Exponential Gaussian plume downwind decay profile from stack exit to intake gates:
+                  <p style="font-size: 0.78rem; color: var(--text-muted);">
+                    Gaussian plume downwind decay profile from stack exit to intake gates:
                   </p>
                   <div class="decay-graph-container" id="decayGraphBox">
                     <!-- Injected by JS -->
                   </div>
                 </section>
 
-                <!-- What Would Lower the Risk? (Sensitivity Chips) -->
+                <!-- Sensitivity Lab -->
                 <section class="panel-card">
                   <div class="panel-header-compact">
-                    <span class="panel-icon">💡</span>
-                    <h3 class="panel-title-md">What Would Lower the Risk? (Sensitivity Lab)</h3>
+                    <h3 class="panel-title-md">Corrective Sensitivity Analysis (Impact on Risk Index)</h3>
                   </div>
                   <div class="sensitivity-grid">
                     <div class="sens-tile" onclick="applySensitivityPreset('shift40')">
@@ -407,7 +397,7 @@
                         <span class="sens-badge safe">-88 pts</span>
                       </div>
                       <div class="sens-title">Wind turned 40° away</div>
-                      <div class="sens-sub">Misses water basin entirely</div>
+                      <div class="sens-sub">Bypasses water basin completely</div>
                     </div>
 
                     <div class="sens-tile" onclick="applySensitivityPreset('derate')">
@@ -416,7 +406,7 @@
                         <span class="sens-badge amber">-37 pts</span>
                       </div>
                       <div class="sens-title">De-rate boiler by 40%</div>
-                      <div class="sens-sub">Neutralizes stack acid flux</div>
+                      <div class="sens-sub">Suppresses stack acid flux</div>
                     </div>
 
                     <div class="sens-tile" onclick="applySensitivityPreset('closeGate')">
@@ -425,7 +415,7 @@
                         <span class="sens-badge safe">-53 pts</span>
                       </div>
                       <div class="sens-title">Close effluent sluice gate</div>
-                      <div class="sens-sub">Diverts to retention pond</div>
+                      <div class="sens-sub">Diverts to retention basin</div>
                     </div>
 
                     <div class="sens-tile" onclick="applySensitivityPreset('calm')">
@@ -443,7 +433,7 @@
             </div>
           </div>
 
-          <!-- TAB 4: AI ACTION & SAFE DISPOSAL -->
+          <!-- TAB 4: CONTAINMENT PROTOCOLS (SOP) -->
           <div id="fact-tab-4" class="sub-tab-panel" role="tabpanel">
             <div class="portal-grid" style="grid-template-columns: 1.3fr 1fr;">
               
@@ -451,8 +441,7 @@
                 <!-- Concrete Containment Controls -->
                 <section class="panel-card">
                   <div class="panel-header-compact">
-                    <span class="shield-icon">🛡️</span>
-                    <h3 class="panel-title-md">Automated Containment Controls</h3>
+                    <h3 class="panel-title-md">Emergency Containment Protocols</h3>
                   </div>
 
                   <div class="action-card-list">
@@ -481,8 +470,8 @@
                     <div class="eng-action-card" id="cardAction3">
                       <div class="eng-action-top">
                         <div>
-                          <h4 class="eng-action-title">3. Municipal Early Warning API &amp; Intake Isolation Notice</h4>
-                          <p class="eng-action-desc">Dispatches automated API dispatch and encrypted SMS alerts to the municipal water treatment authority to isolate gate #4.</p>
+                          <h4 class="eng-action-title">3. Municipal Early Warning Dispatch &amp; Intake Isolation</h4>
+                          <p class="eng-action-desc">Transmits automated API dispatch and encrypted alerts to the municipal water treatment authority to isolate gate #4.</p>
                         </div>
                         <span class="action-status-tag" id="tagAction3">QUEUED</span>
                       </div>
@@ -491,25 +480,24 @@
                   </div>
 
                   <button id="btnExecutePlaybookFull" class="btn-execute-playbook" type="button" style="margin-top: 10px;">
-                    ▶ EXECUTE FULL MITIGATION PLAYBOOK
+                    ▶ EXECUTE FULL CONTAINMENT PROTOCOL
                   </button>
                 </section>
 
                 <!-- Operational SOP Response Playbook -->
                 <section class="panel-card">
                   <div class="panel-header-compact">
-                    <span class="panel-icon">📋</span>
-                    <h3 class="panel-title-md">Standard Operating Procedure (SOP) Action Windows</h3>
+                    <h3 class="panel-title-md">Standard Operating Procedure (SOP) Windows</h3>
                   </div>
                   <div class="sop-rows">
                     <div class="sop-row">
                       <span class="sop-time">0–30 min</span>
-                      <span>Inject alkaline lime slurry, de-rate burner to 60%, close effluent sluice, and broadcast early intake warning.</span>
+                      <span>Inject alkaline lime slurry, de-rate burner to 60%, close effluent sluice, and broadcast intake warning.</span>
                       <span class="sop-priority p1">Priority 1</span>
                     </div>
                     <div class="sop-row">
                       <span class="sop-time">30–90 min</span>
-                      <span>Confirm municipal intake sluice #4 closure, deploy floating absorbent booms at canal headworks, switch city to reserve aquifers.</span>
+                      <span>Confirm municipal intake sluice #4 closure, deploy floating booms at canal headworks, switch city to reserve aquifers.</span>
                       <span class="sop-priority p2">Priority 2</span>
                     </div>
                     <div class="sop-row">
@@ -521,14 +509,11 @@
                 </section>
               </div>
 
-              <!-- Real-Time Operational Event Audit Log -->
+              <!-- Operational Event Audit Log -->
               <section class="panel-card" style="height: 100%;">
-                <div class="card-header-flex">
-                  <div class="header-with-badge">
-                    <span class="panel-icon">📜</span>
-                    <h3 class="panel-title-md">Operational Event Audit Log</h3>
-                  </div>
-                  <button class="btn btn-ghost btn-sm" onclick="exportAuditLog()">Export Audit</button>
+                <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
+                  <h3 class="panel-title-md">Operational Event Audit Log</h3>
+                  <button class="btn btn-ghost btn-sm" onclick="exportAuditLog()">Export CSV</button>
                 </div>
                 <div class="audit-log-container" id="factoryAuditLogBox">
                   <!-- Injected by JS -->
@@ -538,7 +523,7 @@
             </div>
           </div>
 
-          <!-- TAB 5: WHAT-IF SIMULATOR -->
+          <!-- TAB 5: ATMOSPHERIC SCENARIO LAB -->
           <div id="fact-tab-5" class="sub-tab-panel" role="tabpanel">
             <div class="portal-grid" style="grid-template-columns: 320px 1fr;">
               
@@ -546,20 +531,19 @@
               <div style="display: flex; flex-direction: column; gap: 12px;">
                 <section class="panel-card">
                   <div class="panel-header-compact">
-                    <span class="trend-icon">📈</span>
-                    <h3 class="panel-title-md">What-If Atmospheric Lab</h3>
+                    <h3 class="panel-title-md">Scenario Control Parameters</h3>
                   </div>
-                  <div class="sim-presets-row">
-                    <button class="btn btn-ghost btn-sm" onclick="setSimPresetLab('calm')">Calm Day</button>
-                    <button class="btn btn-ghost btn-sm" onclick="setSimPresetLab('strong')">Strong Wind</button>
-                    <button class="btn btn-ghost btn-sm" onclick="setSimPresetLab('worst')">Worst Case</button>
-                    <button class="btn btn-teal btn-sm" onclick="setSimPresetLab('reset')">Back to Live</button>
+                  <div class="sim-presets-row" style="margin-top: 6px;">
+                    <button class="btn btn-ghost btn-sm" onclick="setSimPresetLab('calm')">Calm Weather</button>
+                    <button class="btn btn-ghost btn-sm" onclick="setSimPresetLab('strong')">High Wind</button>
+                    <button class="btn btn-ghost btn-sm" onclick="setSimPresetLab('worst')">Worst-Case Release</button>
+                    <button class="btn btn-teal btn-sm" onclick="setSimPresetLab('reset')">Reset to Live</button>
                   </div>
 
                   <div class="sim-sliders-group" style="margin-top: 14px;">
                     <div class="sim-slider-row">
                       <div class="slider-header-sm">
-                        <span>Wind Direction (0°–360°)</span>
+                        <span>Wind Bearing (0°–360°)</span>
                         <span id="labValWindDir" class="sim-val">138° SE</span>
                       </div>
                       <input type="range" id="labSliderWindDir" class="neon-slider-sm" min="0" max="360" step="1" value="138">
@@ -585,7 +569,7 @@
 
                 <!-- Projected Simulated Metrics -->
                 <section class="panel-card">
-                  <h4 class="panel-title-sm">Instant Simulation Output</h4>
+                  <h4 class="panel-title-sm">Simulated Receptor Output</h4>
                   <div class="metrics-list" style="margin-top: 6px;">
                     <div class="metric-row"><span>Projected Reach</span><strong id="labOutReach">2.8 km</strong></div>
                     <div class="metric-row"><span>Basin Breach Status</span><strong id="labOutBreach" class="text-danger">IMPACT (14 min)</strong></div>
@@ -596,12 +580,12 @@
               </div>
 
               <!-- Real-Time Interactive Simulator Map -->
-              <section class="panel-card" style="height: 520px;">
+              <section class="panel-card" style="height: 520px; padding: 0; overflow: hidden;">
                 <div class="map-card-header">
-                  <h3 class="panel-title-md">Real-Time Interactive Dispersion Steering Lab</h3>
-                  <span class="text-muted" style="font-size: 0.76rem;">Drag sliders to steer plume cone in real time</span>
+                  <h3 class="panel-title-md">Dispersion Vector Steering Map</h3>
+                  <span class="text-muted" style="font-size: 0.74rem;">Adjust sliders to simulate plume vectors in real time</span>
                 </div>
-                <div class="map-viewport" id="simLabMapViewport" style="height: 440px;">
+                <div class="map-viewport" id="simLabMapViewport" style="height: calc(100% - 50px);">
                   <div id="simLabLeafletMap" class="leaflet-map-frame"></div>
                   <svg id="simLabMapOverlaySvg" class="map-overlay-svg" viewBox="0 0 1000 500" preserveAspectRatio="none">
                     <g id="simLabSvgDynamicLayer"></g>
@@ -612,12 +596,12 @@
             </div>
           </div>
 
-          <!-- TAB 6: POLLUTION JOURNEY -->
+          <!-- TAB 6: CORRIDOR PROPAGATION -->
           <div id="fact-tab-6" class="sub-tab-panel" role="tabpanel">
             <section class="panel-card">
-              <div class="card-header-flex">
+              <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
-                  <h2 class="panel-title-md" style="font-size: 1.15rem;">Pollution Dispersion Journey Along the Aquatic Corridor</h2>
+                  <h2 class="panel-title-md" style="font-size: 1.05rem;">Corridor Propagation &amp; Milestone Timeline</h2>
                   <p class="panel-subtitle">Sequential milestone propagation timeline from industrial stack to downstream wetland reserves</p>
                 </div>
                 <div class="journey-action-window-badge" id="journeyActionWindowBadge">
@@ -631,49 +615,49 @@
             </section>
           </div>
 
-          <!-- TAB 7: BEFORE VS. AFTER -->
+          <!-- TAB 7: MITIGATION TRAJECTORY -->
           <div id="fact-tab-7" class="sub-tab-panel" role="tabpanel">
             <div style="display: flex; flex-direction: column; gap: 14px;">
               
               <div class="delta-sentence-box" id="baDeltaSentenceBox">
-                Acting now cuts predicted risk by 46 points, diving below the legal regulatory threshold of 35 pts.
+                Acting now cuts predicted risk by 56 points, diving securely below the legal regulatory threshold of 35 pts.
               </div>
 
               <!-- 4 Comparison Summary Cards -->
               <div class="four-circle-grid">
                 <div class="panel-card stat-metric-box">
                   <span class="text-muted" style="font-size: 0.75rem;">Net Risk Drop</span>
-                  <div id="baMetricNetDrop" style="font-size: 1.6rem; font-weight: 800; color: var(--safe-green);">-46 points</div>
-                  <span class="text-faint" style="font-size: 0.7rem;">Mitigation differential</span>
+                  <div id="baMetricNetDrop" style="font-size: 1.6rem; font-weight: 800; color: var(--safe-green);">-56 points</div>
+                  <span class="text-muted" style="font-size: 0.7rem;">Mitigation differential</span>
                 </div>
 
                 <div class="panel-card stat-metric-box">
                   <span class="text-muted" style="font-size: 0.75rem;">Plume Reach Compression</span>
-                  <div id="baMetricReachDrop" style="font-size: 1.6rem; font-weight: 800; color: var(--accent-cyan);">4.0 km → 2.4 km</div>
-                  <span class="text-faint" style="font-size: 0.7rem;">Linear buffer secured</span>
+                  <div id="baMetricReachDrop" style="font-size: 1.6rem; font-weight: 800; color: #0284c7;">4.2 km → 1.8 km</div>
+                  <span class="text-muted" style="font-size: 0.7rem;">Linear buffer secured</span>
                 </div>
 
                 <div class="panel-card stat-metric-box">
                   <span class="text-muted" style="font-size: 0.75rem;">Municipal Sluice Gate</span>
-                  <div id="baMetricSluiceStatus" style="font-size: 1.4rem; font-weight: 800; color: var(--safe-green);">SECURED (DIVERTED)</div>
-                  <span class="text-faint" style="font-size: 0.7rem;">Intake weir isolated</span>
+                  <div id="baMetricSluiceStatus" style="font-size: 1.3rem; font-weight: 800; color: var(--safe-green);">SECURED (CLOSED)</div>
+                  <span class="text-muted" style="font-size: 0.7rem;">Intake weir isolated</span>
                 </div>
 
                 <div class="panel-card stat-metric-box">
                   <span class="text-muted" style="font-size: 0.75rem;">Shielded Population</span>
-                  <div id="baMetricPopShield" style="font-size: 1.6rem; font-weight: 800; color: #ffffff;">18,000 residents</div>
-                  <span class="text-faint" style="font-size: 0.7rem;">Civilian exposure shielded</span>
+                  <div id="baMetricPopShield" style="font-size: 1.6rem; font-weight: 800; color: #0f172a;">22,500 residents</div>
+                  <span class="text-muted" style="font-size: 0.7rem;">Civilian exposure shielded</span>
                 </div>
               </div>
 
               <!-- Dual Trajectory Comparison Chart -->
               <section class="panel-card">
-                <div class="card-header-flex">
+                <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
                   <div>
                     <h3 class="panel-title-md">Dual Trajectory Comparison (6-Hour Projection)</h3>
-                    <span class="text-muted" style="font-size: 0.75rem;">Unchecked Contamination Curve vs. Controlled Mitigation Trajectory</span>
+                    <span class="text-muted" style="font-size: 0.74rem;">Unchecked Contamination Curve vs. Controlled Mitigation Trajectory</span>
                   </div>
-                  <div style="display: flex; gap: 14px; font-size: 0.76rem; font-weight: 700;">
+                  <div style="display: flex; gap: 14px; font-size: 0.76rem; font-weight: 600;">
                     <span style="color: var(--danger-red);">■ Without Action (Unchecked)</span>
                     <span style="color: var(--safe-green);">■ After Mitigation (Controlled)</span>
                   </div>
@@ -713,14 +697,14 @@
                 <span class="panel-icon">🏘️</span>
                 <div>
                   <h2 class="panel-title">Residential Profile</h2>
-                  <span class="panel-subtitle">Localized Civilian Telemetry</span>
+                  <span class="panel-subtitle">Localized Civilian Safety</span>
                 </div>
               </div>
             </div>
 
             <div class="panel-body">
               <div class="field-row">
-                <label for="citizenCommunitySelect" class="field-label">Neighborhood / Sector</label>
+                <label for="citizenCommunitySelect" class="field-label">Neighborhood Sector</label>
                 <select id="citizenCommunitySelect" class="form-select">
                   <option value="Community A">Community A (Riverbank North · 1.2 km)</option>
                   <option value="Community B" selected>Community B (Okhla East / Sector 14 · 1.8 km)</option>
@@ -741,7 +725,7 @@
 
               <div class="field-row">
                 <span class="field-label">Corridor Exposure Status</span>
-                <span class="field-val-badge danger" id="citExposureStatus">⚠️ INSIDE HAZARD CORRIDOR</span>
+                <span class="field-val-badge danger" id="citExposureStatus" style="font-size: 0.76rem; font-weight: 700; color: var(--danger-red);">⚠️ INSIDE HAZARD CORRIDOR</span>
               </div>
 
               <div class="field-row toggle-field">
@@ -757,20 +741,20 @@
           <!-- 2. Live Citizen Directives (Persistent) -->
           <section class="panel-card">
             <div class="panel-header-compact">
-              <span class="shield-icon">🛡️</span>
+              <span class="panel-icon">🛡️</span>
               <h3 class="panel-title-sm">Live Citizen Directives</h3>
             </div>
             <div class="metrics-list" style="margin-top: 4px;">
               <div class="metric-row">
-                <span class="metric-lbl"><span class="m-icon">⏱️</span> Plume Arrival</span>
+                <span class="metric-lbl">Plume Arrival</span>
                 <span id="sideCitArrival" class="metric-val danger">14 mins</span>
               </div>
               <div class="metric-row">
-                <span class="metric-lbl"><span class="m-icon">💨</span> Baseline vs Peak AQI</span>
+                <span class="metric-lbl">Baseline vs Peak AQI</span>
                 <span id="sideCitAqi" class="metric-val danger">42 → 285 AQI</span>
               </div>
               <div class="metric-row">
-                <span class="metric-lbl"><span class="m-icon">🚰</span> Tap Water Status</span>
+                <span class="metric-lbl">Tap Water Status</span>
                 <span id="sideCitWater" class="metric-val safe">✔ Aquifer Isolated</span>
               </div>
             </div>
@@ -787,10 +771,10 @@
           
           <!-- Citizen Secondary Tab Bar -->
           <nav class="sub-tab-bar" role="tablist" aria-label="Residential Citizen Navigation">
-            <button class="sub-tab-btn active" data-target="cit-tab-1" role="tab" aria-selected="true">1. Citizen Safety Dashboard</button>
-            <button class="sub-tab-btn" data-target="cit-tab-2" role="tab" aria-selected="false">2. Threat Radar Map (Multi-Factory)</button>
+            <button class="sub-tab-btn active" data-target="cit-tab-1" role="tab" aria-selected="true">1. Community Safety Dashboard</button>
+            <button class="sub-tab-btn" data-target="cit-tab-2" role="tab" aria-selected="false">2. Neighborhood Threat Radar</button>
             <button class="sub-tab-btn" data-target="cit-tab-3" role="tab" aria-selected="false">3. Water &amp; Health Advisory</button>
-            <button class="sub-tab-btn" data-target="cit-tab-4" role="tab" aria-selected="false">4. Neighborhood Simulator</button>
+            <button class="sub-tab-btn" data-target="cit-tab-4" role="tab" aria-selected="false">4. Neighborhood Scenario Simulator</button>
             <button class="sub-tab-btn" data-target="cit-tab-5" role="tab" aria-selected="false">5. Broadcast Feed &amp; Checklist</button>
           </nav>
 
@@ -811,32 +795,28 @@
                 </div>
               </div>
 
-              <!-- 4 Circular Telemetry Meters for Citizens -->
-              <div class="four-circle-grid panel-card">
+              <!-- 4 Telemetry Meters for Citizens -->
+              <div class="four-circle-grid">
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">⏱️</span>
                     <span class="circle-val danger" id="citArrivalTimer">14 min</span>
                   </div>
                   <span class="circle-label">Plume Arrival Countdown</span>
                 </div>
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">💨</span>
                     <span class="circle-val danger" id="citPeakAqi">285 AQI</span>
                   </div>
                   <span class="circle-label">Peak AQI Forecast (vs 42 base)</span>
                 </div>
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">🚰</span>
                     <span class="circle-val safe" id="citSluiceLock">LOCKED</span>
                   </div>
                   <span class="circle-label">Municipal Intake Gate</span>
                 </div>
                 <div class="circle-meter">
                   <div class="circle-dial">
-                    <span class="circle-icon">🧪</span>
                     <span class="circle-val danger" id="citSo2Peak">145 µg</span>
                   </div>
                   <span class="circle-label">Peak Acid Vapor Index</span>
@@ -845,22 +825,22 @@
 
               <!-- Immediate Citizen Health Directives -->
               <section class="panel-card">
-                <h3 class="panel-title-md">Immediate Citizen Health Directives</h3>
+                <h3 class="panel-title-md">Immediate Civilian Health Directives</h3>
                 <div class="directives-list" style="margin-top: 8px;">
                   <div class="directive-box urgent">
-                    <div class="dir-title">🚪 Close Windows &amp; External Entrances</div>
+                    <div class="dir-title">Close Windows &amp; External Entrances</div>
                     <div class="dir-desc">Seal all external doors, sashes, and balcony vents to prevent acid vapor infiltration.</div>
                   </div>
                   <div class="directive-box urgent">
-                    <div class="dir-title">😷 N95 Respirator Mask Advisory</div>
+                    <div class="dir-title">N95 Respirator Mask Advisory</div>
                     <div class="dir-desc">If outdoor transit is absolutely unavoidable, wear a fitted N95 respirator mask with eye protection.</div>
                   </div>
                   <div class="directive-box safe">
-                    <div class="dir-title">🚰 Municipal Tap Water Notice</div>
+                    <div class="dir-title">Municipal Tap Water Notice</div>
                     <div class="dir-desc">Municipal intake gates #4 isolated. Tap water fed from isolated deep aquifers; avoid raw well water.</div>
                   </div>
                   <div class="directive-box urgent">
-                    <div class="dir-title">🏃 Suspend Outdoor Activities</div>
+                    <div class="dir-title">Suspend Outdoor Activities</div>
                     <div class="dir-desc">Children, elderly individuals, and asthmatic patients must remain sheltered for the next 90 minutes.</div>
                   </div>
                 </div>
@@ -871,19 +851,18 @@
 
           <!-- CITIZEN TAB 2: THREAT RADAR MAP (MULTI-FACTORY CLUSTER) -->
           <div id="cit-tab-2" class="sub-tab-panel" role="tabpanel">
-            <section class="panel-card map-panel-card" style="height: calc(100vh - 200px); min-height: 580px;">
+            <section class="panel-card map-panel-card" style="height: calc(100vh - 190px); min-height: 580px;">
               <div class="map-card-header">
                 <div class="map-title-group">
-                  <span class="radar-icon">📡</span>
+                  <span class="panel-icon">📡</span>
                   <h2 class="map-title">Neighborhood Threat Radar Map</h2>
-                  <span class="badge-status-pill safe" style="font-size: 0.72rem;">Cluster: 3 Industrial Plants · Active Plume Corridor Focused</span>
+                  <span class="badge-status-pill safe" style="font-size: 0.72rem;">Cluster: 3 Industrial Facilities · Active Corridor Focused</span>
                 </div>
                 <div class="map-controls">
                   <div class="citizen-loc-pill" id="citLocPillText">
-                    <span class="pin-icon">📍</span> Sector: <strong>Community B (1.8 km Downwind)</strong>
+                    Sector: <strong>Community B (1.8 km Downwind)</strong>
                   </div>
                   <div class="nasa-wind-badge">
-                    <span class="wind-icon">💨</span>
                     <span id="citizenWindText">19.4 km/h @ 138° SE</span>
                   </div>
                 </div>
@@ -895,12 +874,12 @@
                   <g id="citizenSvgDynamicLayer"></g>
                 </svg>
                 <div class="map-legend-overlay">
-                  <div class="legend-row"><span class="legend-dot red"></span> Active Incident Plume</div>
+                  <div class="legend-row"><span class="legend-dot red"></span> Active Incident Plume Corridor</div>
                   <div class="legend-row"><span class="legend-dot green"></span> Safe Buffer Corridor</div>
                   <div class="legend-divider"></div>
-                  <div class="legend-row"><span class="legend-icon">🏠</span> Your Residence (Pulsing Halo)</div>
+                  <div class="legend-row"><span class="legend-icon">🏠</span> Your Residence (Pulsing Pinpoint)</div>
                   <div class="legend-row"><span class="legend-icon">🏭</span> Active Incident Stack</div>
-                  <div class="legend-row"><span class="legend-icon">⚙️</span> Neighboring Industrial Plants</div>
+                  <div class="legend-row"><span class="legend-icon">⚙️</span> Neighboring Industrial Facilities</div>
                   <div class="legend-row"><span class="legend-icon">💧</span> Municipal Intake Weir (Isolated)</div>
                 </div>
               </div>
@@ -914,7 +893,6 @@
               <!-- Water Safety Assessment -->
               <section class="panel-card">
                 <div class="panel-header-compact">
-                  <span class="faucet-icon">🚰</span>
                   <h3 class="panel-title-md">Municipal Drinking Water Supply Assessment</h3>
                 </div>
                 <div class="water-status-box safe" id="citWaterStatusBox" style="margin-top: 8px;">
@@ -928,7 +906,7 @@
                   <span>Raw river/canal wells: <strong class="text-danger">Strictly Restricted</strong></span>
                 </div>
                 <div class="confidence-wrapper">
-                  <div class="confidence-header">
+                  <div class="confidence-header" style="font-size: 0.76rem; font-weight: 600; color: var(--text-secondary);">
                     <span>Aquifer Isolation Confidence: <strong>94%</strong></span>
                   </div>
                   <div class="confidence-track"><div class="confidence-fill" style="width: 94%;"></div></div>
@@ -938,7 +916,6 @@
               <!-- Health & Symptom Guidance -->
               <section class="panel-card">
                 <div class="panel-header-compact">
-                  <span class="panel-icon">🩺</span>
                   <h3 class="panel-title-md">Health Protection &amp; Symptom Protocol</h3>
                 </div>
                 <div class="directives-list" style="margin-top: 8px;">
@@ -967,7 +944,7 @@
               <div style="display: flex; flex-direction: column; gap: 12px;">
                 <section class="panel-card">
                   <h3 class="panel-title-md">What-If Neighborhood Simulator</h3>
-                  <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+                  <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;">
                     Simulate how wind shifts away from or toward your neighborhood:
                   </p>
                   <div class="sim-slider-row">
@@ -978,9 +955,9 @@
                     <input type="range" id="citSimShiftSlider" class="neon-slider-sm" min="-90" max="90" step="5" value="0">
                   </div>
 
-                  <div class="citizen-quick-buttons" style="margin-top: 14px;">
-                    <button id="btnCitizenShiftSafe" class="btn btn-ghost" type="button">Test Wind Shift (+45° Safe)</button>
-                    <button id="btnCitizenResetLive" class="btn btn-teal" type="button">Sync Live Wind</button>
+                  <div class="citizen-quick-buttons" style="margin-top: 14px; display: flex; gap: 8px;">
+                    <button id="btnCitizenShiftSafe" class="btn btn-ghost btn-sm" type="button">Test Shift (+45° Safe)</button>
+                    <button id="btnCitizenResetLive" class="btn btn-teal btn-sm" type="button">Sync Live Wind</button>
                   </div>
                 </section>
 
@@ -994,9 +971,11 @@
                 </section>
               </div>
 
-              <section class="panel-card" style="height: 520px;">
-                <h3 class="panel-title-md">Citizen Radar Steering View</h3>
-                <div class="map-viewport" id="citLabMapViewport" style="height: 440px; margin-top: 8px;">
+              <section class="panel-card" style="height: 520px; padding: 0; overflow: hidden;">
+                <div class="map-card-header">
+                  <h3 class="panel-title-md">Resident Radar Steering View</h3>
+                </div>
+                <div class="map-viewport" id="citLabMapViewport" style="height: calc(100% - 50px);">
                   <div id="citLabLeafletMap" class="leaflet-map-frame"></div>
                   <svg id="citLabMapOverlaySvg" class="map-overlay-svg" viewBox="0 0 1000 500" preserveAspectRatio="none">
                     <g id="citLabSvgDynamicLayer"></g>
@@ -1013,12 +992,11 @@
               
               <!-- Broadcast Feed -->
               <section class="panel-card">
-                <div class="card-header-flex">
+                <div class="card-header-flex" style="display: flex; justify-content: space-between; align-items: center;">
                   <div class="header-with-badge">
-                    <span class="phone-icon">📱</span>
-                    <h3 class="panel-title-md">Live Emergency Civil Broadcast Feed (SMS &amp; Push)</h3>
+                    <h3 class="panel-title-md">Emergency Civil Broadcast Feed (SMS &amp; Push)</h3>
                   </div>
-                  <button id="btnSendTestCitizenAlert" class="btn btn-ghost btn-sm" type="button">🔔 Dispatch Test Alert</button>
+                  <button id="btnSendTestCitizenAlert" class="btn btn-ghost btn-sm" type="button">Dispatch Test Alert</button>
                 </div>
                 <div class="notification-feed-list" id="citizenNotificationList" style="max-height: 400px; margin-top: 8px;">
                   <!-- Injected by JS -->
@@ -1029,34 +1007,28 @@
                 <!-- Family Emergency Checklist -->
                 <section class="panel-card">
                   <div class="panel-header-compact">
-                    <span class="check-icon">📋</span>
-                    <h3 class="panel-title-md">Family Emergency Preparedness Checklist</h3>
+                    <h3 class="panel-title-md">Family Preparedness Checklist</h3>
                   </div>
                   <div class="playbook-items" style="margin-top: 6px;">
                     <label class="playbook-check-item">
                       <input type="checkbox" id="checkCitizenWindows" checked>
-                      <span class="check-box"></span>
-                      <span class="check-text">Windows &amp; external ventilation sealed</span>
+                      <span>Windows &amp; external ventilation sealed</span>
                     </label>
                     <label class="playbook-check-item">
                       <input type="checkbox" id="checkCitizenAir" checked>
-                      <span class="check-box"></span>
-                      <span class="check-text">Air filtration set to internal recirculation</span>
+                      <span>Air filtration set to internal recirculation</span>
                     </label>
                     <label class="playbook-check-item">
                       <input type="checkbox" id="checkCitizenMasks" checked>
-                      <span class="check-box"></span>
-                      <span class="check-text">N95 respirator masks ready for household</span>
+                      <span>N95 respirator masks ready for household</span>
                     </label>
                     <label class="playbook-check-item">
                       <input type="checkbox" id="checkCitizenVulnerable" checked>
-                      <span class="check-box"></span>
-                      <span class="check-text">Elderly / asthmatic family members notified</span>
+                      <span>Elderly / asthmatic family members notified</span>
                     </label>
                     <label class="playbook-check-item">
                       <input type="checkbox" id="checkCitizenWater">
-                      <span class="check-box"></span>
-                      <span class="check-text">Emergency drinking water reserves secured</span>
+                      <span>Emergency drinking water reserves secured</span>
                     </label>
                   </div>
                 </section>
@@ -1064,14 +1036,13 @@
                 <!-- Emergency Helplines -->
                 <section class="panel-card">
                   <div class="panel-header-compact">
-                    <span class="lifebuoy-icon">🆘</span>
                     <h3 class="panel-title-md">Emergency Contacts &amp; Helplines</h3>
                   </div>
                   <div class="helpline-list">
                     <div class="helpline-item"><span class="hl-name">Civil Defense &amp; Disaster Desk</span><strong class="hl-number">112</strong></div>
                     <div class="helpline-item"><span class="hl-name">Pollution Control Board</span><strong class="hl-number">1800-180-3333</strong></div>
                     <div class="helpline-item"><span class="hl-name">Municipal Water Board Hotline</span><strong class="hl-number">1916</strong></div>
-                    <div class="helpline-item"><span class="hl-name">Medical &amp; Respiratory Emergency</span><strong class="hl-number">108</strong></div>
+                    <div class="helpline-item"><span class="hl-name">Medical Emergency Desk</span><strong class="hl-number">108</strong></div>
                   </div>
                 </section>
               </div>
@@ -1089,7 +1060,7 @@
     <div id="citizenWarningModal" class="modal-overlay" role="dialog" aria-modal="true" style="display: none;">
       <div class="modal-card-urgent">
         <div class="modal-urgent-header">
-          <span class="siren-flashing">🚨</span>
+          <span style="font-size: 1.4rem;">🚨</span>
           <div>
             <h2 class="modal-urgent-title">CRITICAL PLUME INBOUND ADVISORY</h2>
             <span class="modal-urgent-sub">Civil Defense Emergency Broadcast · Priority 1 Directive</span>
@@ -1103,22 +1074,18 @@
           </div>
           <div class="urgent-action-grid">
             <div class="ua-card">
-              <div class="ua-icon">🚪</div>
               <div class="ua-title">Seal External Entrances</div>
               <div class="ua-desc">Shut all doors and window sashes tightly.</div>
             </div>
             <div class="ua-card">
-              <div class="ua-icon">🌀</div>
               <div class="ua-title">Run HEPA Air Filter</div>
               <div class="ua-desc">Set home air purifiers to highest filtration level.</div>
             </div>
             <div class="ua-card">
-              <div class="ua-icon">🚰</div>
               <div class="ua-title">Use Stored Water</div>
               <div class="ua-desc">Do NOT draw raw well or surface water until clearance.</div>
             </div>
             <div class="ua-card">
-              <div class="ua-icon">💊</div>
               <div class="ua-title">Inhaler Readiness</div>
               <div class="ua-desc">Ensure asthma medication is immediately accessible.</div>
             </div>
@@ -1126,7 +1093,7 @@
         </div>
         <div class="modal-urgent-footer">
           <button class="btn btn-teal" id="btnAckCitizenModal" type="button">I Acknowledge &amp; Understand</button>
-          <button class="btn btn-ghost" id="btnSwitchToFactoryModal" type="button">Inspect Factory Controls &rarr;</button>
+          <button class="btn btn-ghost" id="btnSwitchToFactoryModal" type="button">Inspect Facility Controls &rarr;</button>
         </div>
       </div>
     </div>
